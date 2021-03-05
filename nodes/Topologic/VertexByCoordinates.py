@@ -15,19 +15,13 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	lacing: EnumProperty(name='Lacing', items=list_match_modes, default='REPEAT', update=updateNode)
+	lacing: EnumProperty(name='Lacing', items=list_match_modes, default='REPEAT', update=updateNode) #Not implemented yet
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
 		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
 		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
 		self.outputs.new('SvStringsSocket', 'Vertex')
-
-	def draw_buttons_ext(self, context, layout):
-		layout.separator()
-		layout.label(text="Lacing:")
-		layout.prop(self, 'lacing', expand=False)
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
