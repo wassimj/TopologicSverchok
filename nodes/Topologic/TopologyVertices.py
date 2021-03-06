@@ -42,7 +42,7 @@ class SvTopologyVertices(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			self.outputs['Vertices'].sv_set([])
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)
+		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(recur(anInput))

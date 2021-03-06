@@ -5,12 +5,30 @@ from sverchok.data_structure import updateNode
 
 from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
 import cppyy
-from cppyy.gbl.std import string, list
-		
+
+
+def processItem(item):
+	stl_keys = item.Keys()
+	returnList = []
+	for aKey in stl_keys:
+		returnList.append(aKey.c_str())
+	return returnList
+
+def recur(input):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem))
+	else:
+		output = processItem(input)
+	return output
+	
 class SvDictionaryKeys(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the list of keys of the input Dictionary   
+	Tooltip: Outputs the list of values of the input Dictionary   
 	"""
 	bl_idname = 'SvDictionaryKeys'
 	bl_label = 'Dictionary.Keys'
@@ -24,15 +42,13 @@ class SvDictionaryKeys(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		
-		DictionaryList = self.inputs['Dictionary'].sv_get(deepcopy=True)
-		output = []
-		for i in range(len(DictionaryList)):
-			keys = DictionaryList[i][0].Keys()
-			py_keys = []
-			for aKey in keys:
-				py_keys.append(str(aKey))
-			output.append(py_keys)
-		self.outputs['Keys'].sv_set(output)
+		inputs = self.inputs['Dictionary'].sv_get(deepcopy=False)
+		outputs = []
+		for anInput in inputs:
+			outputs.append(recur(anInput))
+		if len(outputs) == 1:
+			outputs = outputs[0]
+		self.outputs['Keys'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvDictionaryKeys)
