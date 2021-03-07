@@ -104,6 +104,8 @@ def nodes_index():
                 ("Topologic.ClusterType", "SvClusterType"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
+				("Topologic.TopologyByString", "SvTopologyByString"),
+				("Topologic.TopologyString", "SvTopologyString"),
                 ("Topologic.TopologyVertices", "SvTopologyVertices"),
                 ("Topologic.TopologyEdges", "SvTopologyEdges"),
                 ("Topologic.TopologyWires", "SvTopologyWires"),
