@@ -31,19 +31,19 @@ def processItem(item):
 	tranDict = item[2]
 	topologyC = None
 	try:
-		topologyC = fixTopologyClass(topologyA.Union(topologyB, tranDict))
+		topologyC = fixTopologyClass(topologyA.XOR(topologyB, tranDict))
 	except:
-		print("ERROR: (Topologic>Topology.Union) operation failed.")
+		print("ERROR: (Topologic>Topology.SymmetricDifference) operation failed.")
 		topologyC = None
 	return topologyC
 
-class SvTopologyUnion(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySymmetricDifference(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Topology representing the Boolean Union of the two input Topologies
+	Tooltip: Creates a Topology representing the Boolean Symmetric Difference of the two input Topologies
 	"""
-	bl_idname = 'SvTopologyUnion'
-	bl_label = 'Topology.Union'
+	bl_idname = 'SvTopologySymmetricDifference'
+	bl_label = 'Topology.SymmetricDifference'
 	TransferDictionary: BoolProperty(name="Transfer Dictionary", default=False, update=updateNode)
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology A')
@@ -76,10 +76,10 @@ class SvTopologyUnion(bpy.types.Node, SverchCustomTreeNode):
 			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
 		end = time.time()
-		print("Union Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Symmetric Difference Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-    bpy.utils.register_class(SvTopologyUnion)
+    bpy.utils.register_class(SvTopologySymmetricDifference)
 
 def unregister():
-    bpy.utils.unregister_class(SvTopologyUnion)
+    bpy.utils.unregister_class(SvTopologySymmetricDifference)

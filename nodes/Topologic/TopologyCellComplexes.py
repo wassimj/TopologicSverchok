@@ -44,10 +44,9 @@ class SvTopologyCellComplexes(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['CellComplexes'].sv_set([])
 			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
-		outputs = []
-		for anInput in inputs:
-			print(anInput)
-			outputs.append(recur(anInput))
+		outputs = recur(input)
+		if (len(outputs) == 1):
+			outputs = outputs[0]
 		self.outputs['CellComplexes'].sv_set(outputs)
 
 def register():

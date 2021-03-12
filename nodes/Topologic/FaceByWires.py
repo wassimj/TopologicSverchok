@@ -7,25 +7,25 @@ import topologic
 import cppyy
 
 def processItem(item):
+	print(item)
 	externalBoundary = item[0]
 	internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	if isinstance(item[1], list) == False:
-		internalBoundaries = [item[1]]
-	else:
-		internalBoundaries = item[1]
-	for anInternalBoundary in internalBoundaries:
-		internalBoundaries.push_back(anInternalBoundary)
+	for ib in item[1]:
+		internalBoundaries.push_back(ib)
+	print(item[0])
+	print(item[1])
 	face = topologic.Face.ByExternalInternalBoundaries(externalBoundary, internalBoundaries)
 	return face
 
 def recur(input):
-	externalBoundary = input[0]
-	internalBoundaries = input[1]
-	if isinstance(externalBoundary, list):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
 		for anItem in input:
-			output = recur(zip(externalBoundary, internalBoundaries))
+			output.append(recur(anItem))
 	else:
-		output = processItem(zip(externalBoundary, internalBoundaries))
+		output = processItem(input)
 	return output
 		
 class SvFaceByWires(bpy.types.Node, SverchCustomTreeNode):
@@ -47,22 +47,22 @@ class SvFaceByWires(bpy.types.Node, SverchCustomTreeNode):
 		if not (ebSocket.is_linked):
 			return
 		else:
-			externalBoundaries = ebSocket.sv_get(deepcopy=False)[0]
+			externalBoundaries = ebSocket.sv_get(deepcopy=False)
 		ibSocket = self.inputs['Internal Boundaries']
 		if ibSocket.is_linked:
 			internalBoundaries = ibSocket.sv_get(deepcopy=False) #Should be list of lists. Must be same length as externalBoundary
+			if isinstance(internalBoundaries[0], list) == False:
+				internalBoundaries = [internalBoundaries]
 		else:
 			internalBoundaries = []
+		if (len(externalBoundaries) != len(internalBoundaries)) and len(internalBoundaries) > 0:
+			return
+		print(externalBoundaries)
+		print(internalBoundaries)
+		inputs = zip(externalBoundaries, internalBoundaries)
 		outputs = []
-		for i in range(len(externalBoundaries)):
-			eb = externalBoundaries[i]
-			ib = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-			for anIB in internalBoundaries:
-				if isinstance(anIB, list) == False:
-					anIB = [anIB]
-				ib.push_back(anIB[0])
-			face = topologic.Face.ByExternalInternalBoundaries(eb, ib)
-			outputs.append([face])
+		for anInput in inputs:
+			outputs.append(recur(anInput))
 		self.outputs['Face'].sv_set(outputs)
 
 def register():

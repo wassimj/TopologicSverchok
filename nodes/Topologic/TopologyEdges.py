@@ -20,7 +20,7 @@ def recur(input):
 		return []
 	if isinstance(input, list):
 		for anItem in input:
-			output = recur(anItem)
+			output.append(recur(anItem))
 	else:
 		output = processItem(input)
 	return output
@@ -47,6 +47,8 @@ class SvTopologyEdges(bpy.types.Node, SverchCustomTreeNode):
 		for anInput in inputs:
 			print(anInput)
 			outputs.append(recur(anInput))
+		if len(outputs) == 1:
+			outputs = outputs[0]
 		self.outputs['Edges'].sv_set(outputs)
 
 def register():

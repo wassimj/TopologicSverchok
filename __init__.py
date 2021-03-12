@@ -94,11 +94,13 @@ def nodes_index():
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
                 ("Topologic.WireType", "SvWireType"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
+				("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
                 ("Topologic.FaceType", "SvFaceType"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
+				("Topologic.CellComplexByCells", "SvCellComplexByCells"),
                 ("Topologic.CellComplexType", "SvCellComplexType"),
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
                 ("Topologic.ClusterType", "SvClusterType"),
@@ -117,11 +119,12 @@ def nodes_index():
                 ("Topologic.TopologyUnion", "SvTopologyUnion"),
                 ("Topologic.TopologyDifference", "SvTopologyDifference"),
                 ("Topologic.TopologyIntersect", "SvTopologyIntersect"),
-                ("Topologic.TopologyXOR", "SvTopologyXOR"),
+                ("Topologic.TopologySymmetricDifference", "SvTopologySymmetricDifference"),
                 ("Topologic.TopologyMerge", "SvTopologyMerge"),
                 ("Topologic.TopologySlice", "SvTopologySlice"),
                 ("Topologic.TopologyImpose", "SvTopologyImpose"),
                 ("Topologic.TopologyImprint", "SvTopologyImprint"),
+				("Topologic.TopologyTranslate", "SvTopologyTranslate"),
                 ("Topologic.TopologyAddContents", "SvTopologyAddContents"),
                 ("Topologic.TopologyContents", "SvTopologyContents"),
                 ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
@@ -131,7 +134,9 @@ def nodes_index():
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
                 ("Topologic.DictionaryKeys", "SvDictionaryKeys"),
-                ("Topologic.DictionaryValues", "SvDictionaryValues")
+                ("Topologic.DictionaryValues", "SvDictionaryValues"),
+				("Topologic.GraphByTopology", "SvGraphByTopology"),
+				("Topologic.GraphTopology", "SvGraphTopology")
                 ]
                 )]
 

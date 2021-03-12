@@ -5,6 +5,14 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
+def processItem(item):
+	vert = None
+	try:
+		vert = item.StartVertex()
+	except:
+		vert = None
+	return vert
+
 class SvEdgeStartVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -19,15 +27,11 @@ class SvEdgeStartVertex(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)[0]
+		inputs = self.inputs['Edge'].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:
-			try:
-				outputs.append(anInput.StartVertex())
-			except:
-				continue
-	
-		self.outputs['StartVertex'].sv_set([outputs])
+			outputs.append(processItem(anInput))
+		self.outputs['StartVertex'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvEdgeStartVertex)

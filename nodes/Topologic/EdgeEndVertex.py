@@ -5,30 +5,33 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
+def processItem(item):
+	vert = None
+	try:
+		vert = item.EndVertex()
+	except:
+		vert = None
+	return vert
+
 class SvEdgeEndVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the end Vertex of the input Edge
 	"""
 	bl_idname = 'SvEdgeEndVertex'
-	bl_label = 'Edge.EndVertex'
-	Edge: StringProperty(name="Edge", update=updateNode)
+	bl_label = 'Edge End Vertex'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edge')
-		self.outputs.new('SvStringsSocket', 'EndVertex').prop_name = 'EndVertex'
+		self.outputs.new('SvStringsSocket', 'EndVertex')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)[0]
+		inputs = self.inputs['Edge'].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:
-			try:
-				outputs.append(anInput.EndVertex())
-			except:
-				continue
-	
-		self.outputs['EndVertex'].sv_set([outputs])
+			outputs.append(processItem(anInput))
+		self.outputs['EndVertex'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvEdgeEndVertex)

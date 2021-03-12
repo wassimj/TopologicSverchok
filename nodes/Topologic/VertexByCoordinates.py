@@ -5,6 +5,17 @@ from sverchok.data_structure import updateNode, list_match_func, list_match_mode
 
 import topologic
 
+def processItem(item):
+	x = item[0]
+	y = item[1]
+	z = item[2]
+	vert = None
+	try:
+		vert = topologic.Vertex.ByCoordinates(x, y, z)
+	except:
+		vert = None
+	return vert
+
 class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -35,6 +46,7 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		xCoords = self.inputs['X'].sv_get(deepcopy=False)[0]
 		yCoords = self.inputs['Y'].sv_get(deepcopy=False)[0]
 		zCoords = self.inputs['Z'].sv_get(deepcopy=False)[0]
+		print([xCoords, yCoords, zCoords])
 		maxLength = max([len(xCoords), len(yCoords), len(zCoords)])
 		for i in range(len(xCoords), maxLength):
 			xCoords.append(xCoords[-1])
@@ -44,14 +56,11 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 			zCoords.append(zCoords[-1])
 		coords = []
 		if (len(xCoords) == len(yCoords) == len(zCoords)):
-			coords = zip(xCoords, yCoords, zCoords)
-			vertices = []
-			for coord in coords:
-				try:
-					vertices.append(topologic.Vertex.ByCoordinates(coord[0], coord[1], coord[2]))
-				except:
-					continue
-			self.outputs['Vertex'].sv_set([vertices])
+			inputs = zip(xCoords, yCoords, zCoords)
+			outputs = []
+			for anInput in inputs:
+				outputs.append(processItem(anInput))
+			self.outputs['Vertex'].sv_set(outputs)
 
 def register():
     bpy.utils.register_class(SvVertexByCoordinates)

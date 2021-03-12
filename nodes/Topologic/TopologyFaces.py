@@ -20,11 +20,11 @@ def recur(input):
 		return []
 	if isinstance(input, list):
 		for anItem in input:
-			output = recur(anItem)
+			output.append(recur(anItem))
 	else:
 		output = processItem(input)
 	return output
-		
+
 class SvTopologyFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -43,10 +43,9 @@ class SvTopologyFaces(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Faces'].sv_set([])
 			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
-		outputs = []
-		for anInput in inputs:
-			print(anInput)
-			outputs.append(recur(anInput))
+		outputs = recur(inputs)
+		if(len(outputs) == 1):
+			outputs = outputs[0]
 		self.outputs['Faces'].sv_set(outputs)
 
 def register():
