@@ -11,8 +11,7 @@ def processItem(item):
 	values = item.Values()
 	returnList = []
 	for aValue in values:
-		s = cppyy.bind_object(aValue.Value(), 'StringStruct')
-		returnList.append(str(s.getString))
+		returnList.append(str(cppyy.bind_object(aValue.Value(), "std::string")))
 	return returnList
 
 def recur(input):

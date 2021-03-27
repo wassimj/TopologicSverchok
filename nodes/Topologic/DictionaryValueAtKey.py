@@ -16,28 +16,13 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(dict, item):
-	stl_keys = dict.Keys()
-	keyList = []
+def processItem(dict, key):
 	returnValue = None
-	for aKey in stl_keys:
-		keyList.append(aKey.c_str())
-	if item in keyList:
-		value = dict.ValueAtKey(item)
-		s = cppyy.bind_object(value.Value(), 'StringStruct')
-		returnValue = str(s.getString)
+	try:
+		returnValue = (cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string"))
+	except:
+		returnValue = None
 	return returnValue
-
-def recur(dict, input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input, list):
-		for anItem in input:
-			output.append(recur(dict, anItem))
-	else:
-		output = processItem(dict, input)
-	return output
 
 class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -58,15 +43,11 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 			return
 		
 		DictionaryList = flatten(self.inputs['Dictionary'].sv_get(deepcopy=False))
-		inputs = self.inputs['Key'].sv_get(deepcopy=False)
+		key = flatten(self.inputs['Key'].sv_get(deepcopy=False))[0]
+		print("Key: "+key)
 		outputs = []
 		for aDict in DictionaryList:
-			outputList = []
-			for anInput in inputs:
-				outputList.append(recur(aDict, anInput))
-			outputs.append(outputList)
-		if len(outputs) == 1:
-			outputs = outputs[0]
+			outputs.append(processItem(aDict, key))
 		self.outputs['Value'].sv_set(outputs)
 
 def register():

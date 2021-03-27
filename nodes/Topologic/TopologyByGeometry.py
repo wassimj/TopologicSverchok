@@ -12,7 +12,6 @@ import sverchok.utils.meshes as me
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
 from itertools import cycle
-import time
 
 def classByType(argument):
   switcher = {
@@ -63,28 +62,20 @@ def vertexIndex(v, vertices, tolerance):
 
 
 def topologyByFaces(faces, tolerance):
-	print("topologyByFaces received: "+str(len(faces))+" faces")
 	output = None
 	if len(faces) == 1:
 		return fixTopologyClass(faces.front())
 	try:
 		output = Cell.ByFaces(faces)
-		print("Successfuly created a Cell!")
 	except:
-		print("Creating a Cell failed!")
 		try:
 			output = CellComplex.ByFaces(faces, tolerance)
-			print("Successfuly created a CellComplex!")
 		except:
-			print("Creating a CellComplex failed!")
 			try:
 				output = Shell.ByFaces(faces)
-				print("Successfuly created a Shell!")
 			except:
-				print("Creating a Shell failed!")
 				try:
 					output = Cluster.ByTopologies(faces)
-					print("Successfuly created a CLuster!")
 				except:
 					print("ERROR: Could not create any topology from the input faces!")
 					output = None
@@ -97,11 +88,10 @@ def topologyByEdges(edges):
 	try:
 		output = Wire.ByEdges(edges)
 	except:
-		print("Creating a Wire failed!")
 		try:
 			output = Cluster.ByTopologies(edges)
 		except:
-			print("Creating ANYTHING failed!")
+			print("ERROR: Could not create any topology from the input edges!")
 			output = None
 	return fixTopologyClass(output)
 
@@ -125,25 +115,20 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		vertices = self.inputs['Vertices'].sv_get(deepcopy=False, default=[])[0]
-		edges = self.inputs['Edges'].sv_get(deepcopy=False, default=[[]])[0]
-		faces = self.inputs['Faces'].sv_get(deepcopy=False, default=[[]])[0]
+		edges = self.inputs['Edges'].sv_get(deepcopy=False, default=[])[0]
+		faces = self.inputs['Faces'].sv_get(deepcopy=False, default=[])[0]
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0]
-		print("Monkey has: "+str(len(vertices))+" vertices")
 		if len(vertices) > 0:
 			topVerts = cppyy.gbl.std.vector[Vertex.Ptr]()
 			for aVertex in vertices:
 				v = Vertex.ByCoordinates(aVertex[0], aVertex[1], aVertex[2])
 				topVerts.push_back(v)
-			self.outputs['Vertices'].sv_set([list(topVerts)])
-			print("Topologic has: "+str(len(topVerts))+" vertices")
+			self.outputs['Vertices'].sv_set(list(topVerts))
 		else:
 			self.outputs['Topology'].sv_set([])
-			end = time.time()
-			print("Topology.ByGeometry Operation consumed "+str(round(end - start,2))+" seconds")
 			return
 
 		if len(faces) > 0:
@@ -153,12 +138,9 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 				faceWire = Wire.ByEdges(faceEdges)
 				topFace = Face.ByExternalBoundary(faceWire)
 				topFaces.push_back(topFace)
-			print("Topologic found: "+str(len(topFaces))+" faces")
 			output = topologyByFaces(topFaces, tol)
-			self.outputs['Faces'].sv_set([list(topFaces)])
+			self.outputs['Faces'].sv_set(list(topFaces))
 			self.outputs['Topology'].sv_set([output])
-			end = time.time()
-			print("Topology.ByGeometry Operation consumed "+str(round(end - start,2))+" seconds")
 			return
 
 		if len(edges) > 0:
@@ -167,18 +149,14 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 				topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
 				topEdges.push_back(topEdge)
 			output = topologyByEdges(topEdges)
-			self.outputs['Edges'].sv_set([list(topEdges)])
+			self.outputs['Edges'].sv_set(list(topEdges))
 			self.outputs['Topology'].sv_set([output])
-			end = time.time()
-			print("Topology.ByGeometry Operation consumed "+str(round(end - start,2))+" seconds")
 			return
 		topologies = cppyy.gbl.std.list[Topology.Ptr]()
 		for aVert in topVerts:
 			topologies.push_back(aVert)
 		output = Cluster.ByTopologies(topologies)
 		self.outputs['Topology'].sv_set([output])
-		end = time.time()
-		print("Topology.ByGeometry Operation consumed "+str(round(end - start,2))+" seconds")
 
 
 def register():

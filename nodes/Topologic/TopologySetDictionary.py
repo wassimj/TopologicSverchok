@@ -5,8 +5,17 @@ from sverchok.data_structure import updateNode
 
 from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
 import cppyy
-from cppyy.gbl.std import string, list
-		
+
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
 class SvTopologySetDictionary(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -26,10 +35,12 @@ class SvTopologySetDictionary(bpy.types.Node, SverchCustomTreeNode):
 			return
 		TopologyList = self.inputs['Topology'].sv_get(deepcopy=False)
 		DictionaryList = self.inputs['Dictionary'].sv_get(deepcopy=False)
+		TopologyList = flatten(TopologyList)
+		DictionaryList = flatten(DictionaryList)
 		if len(TopologyList) != len(DictionaryList):
 			return
 		for i in range(len(TopologyList)):
-			_ = TopologyList[i][0].SetDictionary(DictionaryList[i][0])
+			_ = TopologyList[i].SetDictionary(DictionaryList[i])
 		self.outputs['Topology'].sv_set(TopologyList)
 
 def register():

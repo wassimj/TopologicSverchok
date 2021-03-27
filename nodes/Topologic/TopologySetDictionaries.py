@@ -60,7 +60,7 @@ class SvTopologySetDictionaries(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topology = self.inputs['Topology'].sv_get(deepcopy=False)[0][0] #Consider only one Topology
+		topology = self.inputs['Topology'].sv_get(deepcopy=False)[0] #Consider only one Topology
 		selectorList = flatten(self.inputs['Selectors'].sv_get(deepcopy=False))
 		dictionaryList = flatten(self.inputs['Dictionaries'].sv_get(deepcopy=False))
 		typeFilter = self.inputs['Type Filter'].sv_get(deepcopy=False)[0][0] #Consider only one TypeFilter

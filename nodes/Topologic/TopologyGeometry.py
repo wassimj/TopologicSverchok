@@ -8,7 +8,6 @@ import uuid
 
 from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
-import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -87,7 +86,6 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Faces')
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
@@ -97,29 +95,47 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		vertices = []
 		edges = []
 		faces = []
-		for anInput in inputs:
-			vstart = time.time()
+		for anInput in inputs: # Collect all the vertices from all the inputs
 			topVerts = cppyy.gbl.std.list[Vertex.Ptr]()
-			_ = anInput.Vertices(topVerts)
+			if (anInput.GetType() == 1): #input is a vertex, just add it and process it
+				topVerts.push_back(anInput)
+			else:
+				_ = anInput.Vertices(topVerts)
 			for aVertex in topVerts:
-				vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
-			vend = time.time()
-			print("Topology.Geometry: Creating Vertices Operation consumed "+str(round(vend - vstart,2))+" seconds")
-			estart = time.time()
+				try:
+					vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
+				except:
+					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
+
+		for anInput in inputs:
 			topEdges = cppyy.gbl.std.list[Edge.Ptr]()
-			_ = anInput.Edges(topEdges)
+			if (anInput.GetType() == 2): #Input is an Edge, just add it and process it
+				topEdges.push_back(anInput)
+			elif (anInput.GetType() > 2):
+				_ = anInput.Edges(topEdges)
 			for anEdge in topEdges:
 				e = []
 				sv = anEdge.StartVertex()
 				ev = anEdge.EndVertex()
-				e.append(vertices.index([sv.X(), sv.Y(), sv.Z()]))
-				e.append(vertices.index([ev.X(), ev.Y(), ev.Z()]))
-				edges.append(e)
-			eend = time.time()
-			print("Topology.Geometry: Creating Edges Operation consumed "+str(round(eend - estart,2))+" seconds")
-			fstart = time.time()
+				try:
+					svIndex = vertices.index([sv.X(), sv.Y(), sv.Z()])
+				except:
+					vertices.append([sv.X(), sv.Y(), sv.Z()])
+					svIndex = len(vertices)-1
+				try:
+					evIndex = vertices.index([ev.X(), ev.Y(), ev.Z()])
+				except:
+					vertices.append([ev.X(), ev.Y(), ev.Z()])
+					evIndex = len(vertices)-1
+				e.append(svIndex)
+				e.append(evIndex)
+				if ([e[0], e[1]] not in edges) and ([e[1], e[0]] not in edges):
+					edges.append(e)
 			topFaces = cppyy.gbl.std.list[Face.Ptr]()
-			_ = anInput.Faces(topFaces)
+			if (anInput.GetType() == 8): # Input is a Face, just add it and process it
+				topFaces.push_back(anInput)
+			elif (anInput.GetType() > 8):
+				_ = anInput.Faces(topFaces)
 			for aFace in topFaces:
 				ib = cppyy.gbl.std.list[Wire.Ptr]()
 				_ = aFace.InternalBoundaries(ib)
@@ -131,22 +147,28 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 						faceVertices = getSubTopologies(wire, Vertex)
 						f = []
 						for aVertex in faceVertices:
-							f.append(vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]))
+							try:
+								fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+							except:
+								vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+								fVertexIndex = len(vertices)-1
+							f.append(fVertexIndex)
 						faces.append(f)
 				else:
 					wire =  aFace.ExternalBoundary()
 					faceVertices = getSubTopologies(wire, Vertex)
 					f = []
 					for aVertex in faceVertices:
-							f.append(vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]))
+						try:
+							fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+						except:
+							vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+							fVertexIndex = len(vertices)-1
+						f.append(fVertexIndex)
 					faces.append(f)
-			fend = time.time()
-			print("Topology.Geometry: Creating Faces Operation consumed "+str(round(fend - fstart,2))+" seconds")
 		self.outputs['Vertices'].sv_set([vertices])
 		self.outputs['Edges'].sv_set([edges])
 		self.outputs['Faces'].sv_set([faces])
-		end = time.time()
-		print("Topology.Geometry Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
 	bpy.utils.register_class(SvTopologyGeometry)

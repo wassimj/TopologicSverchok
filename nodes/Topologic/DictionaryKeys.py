@@ -10,9 +10,8 @@ import cppyy
 def processItem(item):
 	stl_keys = item.Keys()
 	returnList = []
-	for aKey in stl_keys:
-		returnList.append(aKey.c_str())
-	return returnList
+	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
+	return [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
 
 def recur(input):
 	output = []

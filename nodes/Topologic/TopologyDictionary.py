@@ -47,9 +47,10 @@ class SvTopologyDictionary(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
+		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
-			outputs.append(recur(anInput))
+			outputs.append(processItem(anInput))
 		self.outputs['Dictionary'].sv_set(outputs)
 
 def register():
