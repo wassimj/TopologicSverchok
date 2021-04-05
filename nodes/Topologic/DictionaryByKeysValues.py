@@ -33,23 +33,25 @@ class SvDictionaryByKeysValues(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		keyList = self.inputs['Keys'].sv_get(deepcopy=False)
-		valueList = self.inputs['Values'].sv_get(deepcopy=False)
-		keyList = flatten(keyList)
-		valueList = flatten(valueList)
-		if(len(keyList) == 0 or len(valueList) == 0):
+		keyLists = self.inputs['Keys'].sv_get(deepcopy=False)
+		valueLists = self.inputs['Values'].sv_get(deepcopy=False)
+		if isinstance(keyLists[0], list) == False:
+			keyLists = [keyLists]
+		if isinstance(valueLists[0], list) == False:
+			valueLists = [valueLists]
+		dictionaries = []
+		if len(keyLists) != len(valueLists):
 			return
-		if(len(keyList) > len(valueList)):
-			keyList = keyList[:len(valueList)]
-		elif(len(valueList) > len(keyList)):
-			valueList = valueList[:len(keyList)]
-		keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-		values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-		for i in range(len(keyList)):
-			keys.push_back(keyList[i])
-			values.push_back(topologic.StringAttribute(valueList[i]))
-		dictionary = topologic.Dictionary.ByKeysValues(keys, values)
-		self.outputs['Dictionary'].sv_set([dictionary])
+		for i in range(len(keyLists)):
+			if len(keyLists[i]) != len(valueLists[i]):
+				return
+			stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
+			stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+			for j in range(len(keyLists[i])):
+				stl_keys.push_back(keyLists[i][j])
+				stl_values.push_back(topologic.StringAttribute(valueLists[i][j]))
+			dictionaries.append(topologic.Dictionary.ByKeysValues(stl_keys, stl_values))
+		self.outputs['Dictionary'].sv_set(dictionaries)
 
 def register():
 	bpy.utils.register_class(SvDictionaryByKeysValues)

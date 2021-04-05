@@ -19,7 +19,7 @@ class SvEdgeStartVertex(bpy.types.Node, SverchCustomTreeNode):
 	Tooltip: Outputs the start Vertex of the input Edge
 	"""
 	bl_idname = 'SvEdgeStartVertex'
-	bl_label = 'Edge Start Vertex'
+	bl_label = 'Edge.StartVertex'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edge')
 		self.outputs.new('SvStringsSocket', 'StartVertex').prop_name = 'StartVertex'

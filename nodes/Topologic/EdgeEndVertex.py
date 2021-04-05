@@ -19,7 +19,7 @@ class SvEdgeEndVertex(bpy.types.Node, SverchCustomTreeNode):
 	Tooltip: Outputs the end Vertex of the input Edge
 	"""
 	bl_idname = 'SvEdgeEndVertex'
-	bl_label = 'Edge End Vertex'
+	bl_label = 'Edge.EndVertex'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edge')
 		self.outputs.new('SvStringsSocket', 'EndVertex')

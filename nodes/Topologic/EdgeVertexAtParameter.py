@@ -1,69 +1,46 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
+from sverchok.data_structure import updateNode
 
 import topologic
 
-def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
-	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
-	except:
-		vert = None
-	return vert
-
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeVertexAtParameter(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Creates a Vertex at the parameter value of the input Edge
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	lacing: EnumProperty(name='Lacing', items=list_match_modes, default='REPEAT', update=updateNode)
-
+	bl_idname = 'SvEdgeVertexAtParameter'
+	bl_label = 'Edge.VertexAtParameter'
+	Parameter: FloatProperty(name="Parameter", default=0.5, precision=4, min=0, max=1, update=updateNode)
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
+		self.inputs.new('SvStringsSocket', 'Edge')
+		self.inputs.new('SvStringsSocket', 'Parameter').prop_name='Parameter'
 		self.outputs.new('SvStringsSocket', 'Vertex')
-
-	def draw_buttons_ext(self, context, layout):
-		layout.separator()
-		layout.label(text="Lacing:")
-		layout.prop(self, 'lacing', expand=False)
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xCoords = self.inputs['X'].sv_get(deepcopy=False)[0]
-		yCoords = self.inputs['Y'].sv_get(deepcopy=False)[0]
-		zCoords = self.inputs['Z'].sv_get(deepcopy=False)[0]
-		print([xCoords, yCoords, zCoords])
-		maxLength = max([len(xCoords), len(yCoords), len(zCoords)])
-		for i in range(len(xCoords), maxLength):
-			xCoords.append(xCoords[-1])
-		for i in range(len(yCoords), maxLength):
-			yCoords.append(yCoords[-1])
-		for i in range(len(zCoords), maxLength):
-			zCoords.append(zCoords[-1])
-		coords = []
-		if (len(xCoords) == len(yCoords) == len(zCoords)):
-			inputs = zip(xCoords, yCoords, zCoords)
-			outputs = []
-			for anInput in inputs:
-				outputs.append(processItem(anInput))
-			self.outputs['Vertex'].sv_set(outputs)
+		edgesList = self.inputs['Edge'].sv_get(deepcopy=False)
+		parametersList = self.inputs['Parameter'].sv_get(deepcopy=False)
+		if isinstance(parametersList[0], list) == False:
+			parametersList = [parametersList]
+		if len(edgesList) != len(parametersList):
+			maxLength = max([len(edgesList), len(parametersList)])
+			for i in range(len(edgesList), maxLength):
+				edgesList.append(edgesList[-1])
+			for i in range(len(parametersList), maxLength):
+				parametersList.append(parametersList[-1])
+		outputs = []
+		for i in range(len(edgesList)):
+			vertexList = []
+			for j in range(len(parametersList[i])):
+				vertexList.append(topologic.EdgeUtility.PointAtParameter(edgesList[i], parametersList[i][j]))
+			outputs.append(vertexList)
+		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+	bpy.utils.register_class(SvEdgeVertexAtParameter)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+	bpy.utils.unregister_class(SvEdgeVertexAtParameter)

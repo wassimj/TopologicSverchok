@@ -29,7 +29,6 @@ def wireByVertices(vList):
 	for i in range(len(vList)-1):
 		edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
 	edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
-	print("wireByVertices")
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item, originLocation):
@@ -61,7 +60,6 @@ def processItem(item, originLocation):
 	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	wires.push_back(baseWire)
 	wires.push_back(topWire)
-	print("processItem")
 	return topologic.CellUtility.ByLoft(wires)
 
 def matchLengths(list):
@@ -71,8 +69,12 @@ def matchLengths(list):
 		if newLength > maxLength:
 			maxLength = newLength
 	for anItem in list:
+		if (len(anItem) > 0):
+			itemToAppend = anItem[-1]
+		else:
+			itemToAppend = None
 		for i in range(len(anItem), maxLength):
-			anItem.append(anItem[-1])
+			anItem.append(itemToAppend)
 	return list
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]

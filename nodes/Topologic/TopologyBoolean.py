@@ -71,8 +71,6 @@ def topologyContains(topology, vertex, tol):
 	return False
 
 def transferDictionaries(sources, sinks, tol):
-	print("Transfer Dictionaries: STEP 1")
-	print(str(len(sources))+" sources and "+str(len(sinks))+" sinks")
 	for sink in sinks:
 		sinkKeys = []
 		sinkValues = []
@@ -157,7 +155,7 @@ def processItem(item, operation):
 		elif operation == "SymDif":
 			topologyC = fixTopologyClass(topologyA.XOR(topologyB, False))
 		elif operation == "Merge":
-			topologyC = fixTopologyClass(topologyA.Merge(topologyB)) # DEBUGGING
+			topologyC = fixTopologyClass(topologyA.Merge(topologyB, False)) # DEBUGGING
 		elif operation == "Slice":
 			topologyC = fixTopologyClass(topologyA.Slice(topologyB, False))
 		elif operation == "Impose":
@@ -168,7 +166,6 @@ def processItem(item, operation):
 		print("ERROR: (Topologic>Topology.Boolean) operation failed.")
 		topologyC = None
 	if tranDict == True:
-		print("Transfer Dictionary is True")
 		sourceVertices = []
 		sourceEdges = []
 		sourceFaces = []
@@ -195,9 +192,7 @@ def processItem(item, operation):
 			sinkVertices.push_back(topologyC)
 		elif hidimC >= topologic.Vertex.Type():
 			_ = topologyC.Vertices(sinkVertices)
-		#_ = transferVertexDictionaries(sourceVertices, sinkVertices, tolerance)
 		_ = transferDictionaries(sourceVertices, sinkVertices, tolerance)
-		print("Boolean: Transfer Vertex Dictionaries Done")
 		if topologyA.Type() == topologic.Edge.Type():
 			sourceEdges.append(topologyA)
 		elif hidimA >= topologic.Edge.Type():
@@ -217,11 +212,7 @@ def processItem(item, operation):
 			sinkEdges.push_back(topologyC)
 		elif hidimC >= topologic.Edge.Type():
 			_ = topologyC.Edges(sinkEdges)
-		print(sinkEdges)
-		print("Boolean: Calling Transfer Edge Dictionaries")
-		#_ = transferEdgeDictionaries(sourceEdges, sinkEdges, tolerance)
 		_ = transferDictionaries(sourceEdges, sinkEdges, tolerance)
-		print("Boolean: Transfer Edge Dictionaries Done")
 
 		if topologyA.Type() == topologic.Face.Type():
 			sourceFaces.append(topologyA)
@@ -242,10 +233,7 @@ def processItem(item, operation):
 			sinkFaces.push_back(topologyC)
 		elif hidimC >= topologic.Face.Type():
 			_ = topologyC.Faces(sinkFaces)
-		print("Boolean: Calling Transfer Face Dictionaries")
-		#_ = transferFaceDictionaries(sourceFaces, sinkFaces, tolerance)
 		_ = transferDictionaries(sourceFaces, sinkFaces, tolerance)
-		print("Boolean: Transfer Face Dictionaries Done")
 		if topologyA.Type() == topologic.Cell.Type():
 			sourceCells.append(topologyA)
 		elif hidimA >= topologic.Cell.Type():
@@ -265,12 +253,7 @@ def processItem(item, operation):
 			sinkCells.push_back(topologyC)
 		elif hidimC >= topologic.Cell.Type():
 			_ = topologyC.Cells(sinkCells)
-		print("Boolean: Calling Transfer Cell Dictionaries")
-		#_ = transferCellDictionaries(sourceCells, sinkCells, tolerance)
 		_ = transferDictionaries(sourceCells, sinkCells, tolerance)
-		print("Boolean: Transfer Cell Dictionaries Done")
-	else:
-		print("Transfer Dictionary is False")
 	return topologyC
 
 booleanOps = [("Union", "Union", "", 1),("Difference", "Difference", "", 2),("Intersect", "Intersect", "", 3),("SymDif", "SymDif", "", 4),("Merge", "Merge", "", 5), ("Slice", "Slice", "", 6),("Impose", "Impose", "", 7), ("Imprint", "Imprint", "", 8)]
@@ -298,7 +281,6 @@ class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 		layout.prop(self, "booleanOp",text="")
 
 	def process(self):
-		print(self.booleanOp)
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return

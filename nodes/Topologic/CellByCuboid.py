@@ -71,8 +71,12 @@ def matchLengths(list):
 		if newLength > maxLength:
 			maxLength = newLength
 	for anItem in list:
+		if (len(anItem) > 0):
+			itemToAppend = anItem[-1]
+		else:
+			itemToAppend = None
 		for i in range(len(anItem), maxLength):
-			anItem.append(anItem[-1])
+			anItem.append(itemToAppend)
 	return list
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]

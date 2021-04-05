@@ -19,7 +19,7 @@ def flatten(element):
 def processItem(dict, key):
 	returnValue = None
 	try:
-		returnValue = (cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string"))
+		returnValue = (str(cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
 	except:
 		returnValue = None
 	return returnValue

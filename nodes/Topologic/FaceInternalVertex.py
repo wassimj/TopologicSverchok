@@ -5,6 +5,16 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
 def processItem(item):
 	vert = None
 	try:
@@ -28,6 +38,7 @@ class SvFaceInternalVertex(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		inputs = self.inputs['Face'].sv_get(deepcopy=False)
+		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))

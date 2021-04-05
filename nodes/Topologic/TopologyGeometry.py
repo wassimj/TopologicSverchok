@@ -5,6 +5,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 from bpy_extras.object_utils import AddObjectHelper, object_data_add
 import uuid
+from sverchok.utils.sv_mesh_utils import get_unique_faces
 
 from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
@@ -166,6 +167,8 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 							fVertexIndex = len(vertices)-1
 						f.append(fVertexIndex)
 					faces.append(f)
+		
+		faces = get_unique_faces(faces) #Make sure we do not accidentally have duplicate faces
 		self.outputs['Vertices'].sv_set([vertices])
 		self.outputs['Edges'].sv_set([edges])
 		self.outputs['Faces'].sv_set([faces])

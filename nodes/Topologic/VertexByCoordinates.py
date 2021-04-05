@@ -46,7 +46,6 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		xCoords = self.inputs['X'].sv_get(deepcopy=False)[0]
 		yCoords = self.inputs['Y'].sv_get(deepcopy=False)[0]
 		zCoords = self.inputs['Z'].sv_get(deepcopy=False)[0]
-		print([xCoords, yCoords, zCoords])
 		maxLength = max([len(xCoords), len(yCoords), len(zCoords)])
 		for i in range(len(xCoords), maxLength):
 			xCoords.append(xCoords[-1])

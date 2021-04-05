@@ -19,7 +19,7 @@ class SvFaceType(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		self.outputs['Type'].sv_set([[topologic.Face.Type()]])
+		self.outputs['Type'].sv_set([topologic.Face.Type()])
 
 def register():
 	bpy.utils.register_class(SvFaceType)

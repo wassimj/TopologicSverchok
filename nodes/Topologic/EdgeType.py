@@ -19,7 +19,7 @@ class SvEdgeType(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		self.outputs['Type'].sv_set([[topologic.Edge.Type()]])
+		self.outputs['Type'].sv_set([topologic.Edge.Type()])
 
 def register():
 	bpy.utils.register_class(SvEdgeType)
