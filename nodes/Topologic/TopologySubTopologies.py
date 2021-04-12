@@ -57,7 +57,7 @@ topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "W
 class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the Faces of the input Topology    
+	Tooltip: Outputs the subtopologies, based on the selected type, of the input Topology    
 	"""
 	bl_idname = 'SvTopologySubTopologies'
 	bl_label = 'Topology.Subtopologies'
@@ -74,7 +74,7 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Faces'].sv_set([])
+			self.outputs['Subtopologies'].sv_set([])
 			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
 		outputs = recur(inputs, self.subtopologyType)

@@ -18,11 +18,11 @@ class SvTopologicVersion(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Version')
 
 	def process(self):
-		topologicCore = "TopologicCore: "+str(topologic.TopologicCore.About.Version())
+		topologicCore = 'TopologicCore: '+str(topologic.TopologicCore.About.Version())
 		filename = (topologic.__file__)
 		result = re.search('topologic-(.*)-py', filename)
-		topologicPy = "TopologicPy: "+result.group(1)
-		topologicSverchok = "TopologicSverchok: 0.5.0.0"
+		topologicPy = 'TopologicPy: '+result.group(1)
+		topologicSverchok = 'TopologicSverchok: 0.5.0.1'
 		versions = [topologicCore, topologicPy, topologicSverchok]
 		self.outputs['Version'].sv_set(versions)
 

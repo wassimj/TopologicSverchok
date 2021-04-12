@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Topologic-Sverchok",
     "author": "Wassim Jabi",
-    "version": (0, 5, 0, 0),
+    "version": (0, 5, 0, 1),
     "blender": (2, 83, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -72,41 +72,34 @@ def nodes_index():
                 ("Topologic.Version", "SvTopologicVersion"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
-                ("Topologic.VertexType", "SvVertexType"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
                 ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
                 ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
                 ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
-                ("Topologic.EdgeType", "SvEdgeType"),
                 ("Topologic.WireByEdges", "SvWireByEdges"),
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
-                ("Topologic.WireType", "SvWireType"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
                 ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
-                ("Topologic.FaceType", "SvFaceType"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
-                ("Topologic.ShellType", "SvShellType"),
                 ("Topologic.CellByCuboid", "SvCellByCuboid"),
                 ("Topologic.CellByCylinder", "SvCellByCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellInternalVertex", "SvCellInternalVertex"),
                 ("Topologic.CellIsInside", "SvCellIsInside"),
-				("Topologic.CellAdjacentCells", "SvCellAdjacentCells"),
-                ("Topologic.CellType", "SvCellType"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
                 ("Topologic.CellComplexByCells", "SvCellComplexByCells"),
                 ("Topologic.CellComplexType", "SvCellComplexType"),
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
-                ("Topologic.ClusterType", "SvClusterType"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
                 ("Topologic.TopologyByString", "SvTopologyByString"),
                 ("Topologic.TopologyString", "SvTopologyString"),
                 ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
+				("Topologic.TopologyAdjacentTopologies", "SvTopologyAdjacentTopologies"),
                 ("Topologic.TopologySharedTopologies", "SvTopologySharedTopologies"),
                 ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
                 ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
@@ -117,6 +110,7 @@ def nodes_index():
                 ("Topologic.TopologyContents", "SvTopologyContents"),
                 ("Topologic.TopologyCentroid", "SvTopologyCentroid"),
                 ("Topologic.TopologyCopy", "SvTopologyCopy"),
+				("Topologic.TopologyTypeID", "SvTopologyTypeID"),
                 ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
                 ("Topologic.TopologyDictionary", "SvTopologyDictionary"),
                 ("Topologic.TopologySetDictionary", "SvTopologySetDictionary"),
@@ -155,19 +149,17 @@ if "bpy" in locals():
 
 import bpy
 
-def unregister_nodes():
-	global topologic_imported_modules
-	for module in reversed(topologic_imported_modules):
-		try:
-			module.unregister()
-		except:
-			continue
-
 def register_nodes():
 	node_modules = make_node_list()
 	for module in node_modules:
 		module.register()
 	info("Registered %s nodes", len(node_modules))
+
+def unregister_nodes():
+	global topologic_imported_modules
+	for module in reversed(topologic_imported_modules):
+		module.unregister()
+
 
 def make_menu():
     menu = []
@@ -242,7 +234,7 @@ def unregister():
             print("Can't unregister menu class %s" % clazz)
             print(e)
     unregister_extra_category_provider("TOPOLOGICSVERCHOK")
-    unregister_node_add_operators()
+    #unregister_node_add_operators()
     unregister_nodes()
 
     #icons.unregister()
