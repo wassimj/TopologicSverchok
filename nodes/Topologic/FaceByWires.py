@@ -7,13 +7,10 @@ import topologic
 import cppyy
 
 def processItem(item):
-	print(item)
 	externalBoundary = item[0]
 	internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	for ib in item[1]:
 		internalBoundaries.push_back(ib)
-	print(item[0])
-	print(item[1])
 	face = topologic.Face.ByExternalInternalBoundaries(externalBoundary, internalBoundaries)
 	return face
 
@@ -57,8 +54,6 @@ class SvFaceByWires(bpy.types.Node, SverchCustomTreeNode):
 			internalBoundaries = []
 		if (len(externalBoundaries) != len(internalBoundaries)) and len(internalBoundaries) > 0:
 			return
-		print(externalBoundaries)
-		print(internalBoundaries)
 		inputs = zip(externalBoundaries, internalBoundaries)
 		outputs = []
 		for anInput in inputs:

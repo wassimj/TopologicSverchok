@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Topologic-Sverchok",
     "author": "Wassim Jabi",
-    "version": (0, 4, 0, 0),
+    "version": (0, 5, 0, 0),
     "blender": (2, 83, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -15,31 +15,22 @@ bl_info = {
 import sys
 import os, re
 from os.path import expanduser
-home = expanduser("~")
 from sys import platform
+from os.path import expanduser
+home = expanduser("~")
 
-topologicEgg = "topologic-0.3-py3.7.egg"
-if platform == "linux" or platform == "linux2":
-  dir = home+"/opt/anaconda3/envs/Blender377/lib/site-packages"
-  for f in os.listdir(dir):
-    if re.match('topologic', f):
-      topologicEgg = f
-  sys.path.append(home+"/opt/anaconda3/envs/Blender377/lib/site-packages")
-  sys.path.append(home+"/opt/anaconda3/envs/Blender377/lib/site-packages/"+topologicEgg)
-elif platform == "darwin":
-  dir = home+"/opt/anaconda3/envs/Blender377/lib/site-packages"
-  for f in os.listdir(dir):
-    if re.match('topologic', f):
-      topologicEgg = f
-  sys.path.append(home+"/opt/anaconda3/envs/Blender377/lib/site-packages")
-  sys.path.append(home+"/opt/anaconda3/envs/Blender377/lib/site-packages/"+topologicEgg)
+if platform == "linux" or platform == "linux2" or platform == "darwin":
+  conda = "/opt/anaconda3/envs"
+  blenderName = [name for name in os.listdir(home+"/"+conda) if name.startswith('Blender')][0]
+  topologicEggName = [name for name in os.listdir(home+"/"+conda+"/"+blenderName+"/lib/site-packages") if name.startswith('topologic')][0]
+  sys.path.append(home+"/"+conda+"/"+blenderName+"/lib/site-packages")
+  sys.path.append(home+"/"+conda+"/"+blenderName+"/lib/site-packages/"+topologicEggName)
 elif platform == "win32":
-  dir = home+"\\.conda\\envs\\Blender377\\lib\\site-packages"
-  for f in os.listdir(dir):
-    if re.match('topologic', f):
-      topologicEgg = f
-  sys.path.append(home+"\\.conda\\envs\\Blender377\\lib\\site-packages")
-  sys.path.append(home+"\\.conda\\envs\\Blender377\\lib\\site-packages\\"+topologicEgg)
+  conda = "\\.conda\\envs"
+  blenderName = [name for name in os.listdir(home+"\\"+conda) if name.startswith('Blender')][0]
+  topologicEggName = [name for name in os.listdir(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages") if name.startswith('topologic')][0]
+  sys.path.append(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages")
+  sys.path.append(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages\\"+topologicEggName)
 
 import importlib
 
@@ -78,14 +69,14 @@ if __name__ != "topologicsverchok":
 
 def nodes_index():
 	return [("Topologic", [
-	            ("Topologic.Version", "SvTopologicVersion"),
+                ("Topologic.Version", "SvTopologicVersion"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
                 ("Topologic.VertexType", "SvVertexType"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
-				("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
+                ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
                 ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
                 ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
                 ("Topologic.EdgeType", "SvEdgeType"),
@@ -93,56 +84,52 @@ def nodes_index():
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
                 ("Topologic.WireType", "SvWireType"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
-				("Topologic.FaceByWire", "SvFaceByWire"),
+                ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
-				("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
+                ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
                 ("Topologic.FaceType", "SvFaceType"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
-				("Topologic.ShellType", "SvShellType"),
-				("Topologic.CellByCuboid", "SvCellByCuboid"),
-				("Topologic.CellByCylinder", "SvCellByCylinder"),
+                ("Topologic.ShellType", "SvShellType"),
+                ("Topologic.CellByCuboid", "SvCellByCuboid"),
+                ("Topologic.CellByCylinder", "SvCellByCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
-				("Topologic.CellInternalVertex", "SvCellInternalVertex"),
-				("Topologic.CellType", "SvCellType"),
+                ("Topologic.CellInternalVertex", "SvCellInternalVertex"),
+                ("Topologic.CellIsInside", "SvCellIsInside"),
+				("Topologic.CellAdjacentCells", "SvCellAdjacentCells"),
+                ("Topologic.CellType", "SvCellType"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
-				("Topologic.CellComplexByCells", "SvCellComplexByCells"),
+                ("Topologic.CellComplexByCells", "SvCellComplexByCells"),
                 ("Topologic.CellComplexType", "SvCellComplexType"),
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
                 ("Topologic.ClusterType", "SvClusterType"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
-				("Topologic.TopologyByString", "SvTopologyByString"),
-				("Topologic.TopologyString", "SvTopologyString"),
-				("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
-                ("Topologic.TopologyVertices", "SvTopologyVertices"),
-                ("Topologic.TopologyEdges", "SvTopologyEdges"),
-                ("Topologic.TopologyWires", "SvTopologyWires"),
-                ("Topologic.TopologyFaces", "SvTopologyFaces"),
-                ("Topologic.TopologyShells", "SvTopologyShells"),
-                ("Topologic.TopologyCells", "SvTopologyCells"),
-                ("Topologic.TopologyCellComplexes", "SvTopologyCellComplexes"),
+                ("Topologic.TopologyByString", "SvTopologyByString"),
+                ("Topologic.TopologyString", "SvTopologyString"),
+                ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
                 ("Topologic.TopologySharedTopologies", "SvTopologySharedTopologies"),
                 ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
-				("Topologic.TopologyTranslate", "SvTopologyTranslate"),
-				("Topologic.TopologyRotate", "SvTopologyRotate"),
-				("Topologic.TopologyScale", "SvTopologyScale"),
+                ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
+                ("Topologic.TopologyRotate", "SvTopologyRotate"),
+                ("Topologic.TopologyScale", "SvTopologyScale"),
+                ("Topologic.TopologyExplode", "SvTopologyExplode"),
                 ("Topologic.TopologyAddContents", "SvTopologyAddContents"),
                 ("Topologic.TopologyContents", "SvTopologyContents"),
-				("Topologic.TopologyCentroid", "SvTopologyCentroid"),
-				("Topologic.TopologyCopy", "SvTopologyCopy"),
+                ("Topologic.TopologyCentroid", "SvTopologyCentroid"),
+                ("Topologic.TopologyCopy", "SvTopologyCopy"),
                 ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
-				("Topologic.TopologyDictionary", "SvTopologyDictionary"),
+                ("Topologic.TopologyDictionary", "SvTopologyDictionary"),
                 ("Topologic.TopologySetDictionary", "SvTopologySetDictionary"),
-                ("Topologic.TopologySetDictionaries", "SvTopologySetDictionaries"),
-				("Topologic.TopologyDecodeInformation", "SvTopologyDecodeInformation"),
-				("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
+                ("Topologic.TopologyTransferDictionaries", "SvTopologyTransferDictionaries"),
+                ("Topologic.TopologyDecodeInformation", "SvTopologyDecodeInformation"),
+                ("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
                 ("Topologic.DictionaryKeys", "SvDictionaryKeys"),
                 ("Topologic.DictionaryValues", "SvDictionaryValues"),
-				("Topologic.GraphByTopology", "SvGraphByTopology"),
-				("Topologic.GraphShortestPath", "SvGraphShortestPath"),
-				("Topologic.GraphTopology", "SvGraphTopology")
+                ("Topologic.GraphByTopology", "SvGraphByTopology"),
+                ("Topologic.GraphShortestPath", "SvGraphShortestPath"),
+                ("Topologic.GraphTopology", "SvGraphTopology")
                 ]
                 )]
 
@@ -168,16 +155,19 @@ if "bpy" in locals():
 
 import bpy
 
-def register_nodes():
-    node_modules = make_node_list()
-    for module in node_modules:
-        module.register()
-    info("Registered %s nodes", len(node_modules))
-
 def unregister_nodes():
-    global topologic_imported_modules
-    for module in reversed(topologic_imported_modules):
-        module.unregister()
+	global topologic_imported_modules
+	for module in reversed(topologic_imported_modules):
+		try:
+			module.unregister()
+		except:
+			continue
+
+def register_nodes():
+	node_modules = make_node_list()
+	for module in node_modules:
+		module.register()
+	info("Registered %s nodes", len(node_modules))
 
 def make_menu():
     menu = []
@@ -231,7 +221,8 @@ def register():
     auto_gather_node_classes(extra_nodes)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGICSVERCHOK", menu)
-    register_extra_category_provider(menu_category_provider) #if 'TOPOLOGICSVERCHOK' in nodeitems_utils._node_categories:
+    register_extra_category_provider(menu_category_provider)
+    #if 'TOPOLOGICSVERCHOK' in nodeitems_utils._node_categories:
         #unregister_node_panels()
         #nodeitems_utils.unregister_node_categories("TOPOLOGICSVERCHOK")
     nodeitems_utils.register_node_categories("TOPOLOGICSVERCHOK", menu)
@@ -251,7 +242,7 @@ def unregister():
             print("Can't unregister menu class %s" % clazz)
             print(e)
     unregister_extra_category_provider("TOPOLOGICSVERCHOK")
-    #unregister_node_add_operators()
+    unregister_node_add_operators()
     unregister_nodes()
 
     #icons.unregister()

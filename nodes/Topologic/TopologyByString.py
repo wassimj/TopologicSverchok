@@ -3,6 +3,7 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
+import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
 
@@ -24,10 +25,7 @@ def fixTopologyClass(topology):
 
 def processItem(item):
 	topology = None
-	try:
-		vert = topology = fixTopologyClass(Topology.ByString(item))
-	except:
-		topology = None
+	topology = fixTopologyClass(topologic.Topology.DeepCopy(Topology.ByString(item)))
 	return topology
 		
 class SvTopologyByString(bpy.types.Node, SverchCustomTreeNode):

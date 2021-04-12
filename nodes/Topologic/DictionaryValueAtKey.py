@@ -44,7 +44,6 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 		
 		DictionaryList = flatten(self.inputs['Dictionary'].sv_get(deepcopy=False))
 		key = flatten(self.inputs['Key'].sv_get(deepcopy=False))[0]
-		print("Key: "+key)
 		outputs = []
 		for aDict in DictionaryList:
 			outputs.append(processItem(aDict, key))

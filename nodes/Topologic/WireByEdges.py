@@ -17,13 +17,11 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	print(item)
 	wire = None
 	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 	for anEdge in item:
 		edges.push_back(anEdge)
 	wire = topologic.Wire.ByEdges(edges)
-	print(wire)
 	return wire
 
 def recur(input):
@@ -53,7 +51,6 @@ class SvWireByEdges(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		inputs = self.inputs['Edges'].sv_get(deepcopy=False)
-		print(inputs)
 		wires = recur(inputs)
 		self.outputs['Wire'].sv_set(flatten(wires))
 

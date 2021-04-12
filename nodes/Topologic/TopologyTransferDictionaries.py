@@ -1,10 +1,12 @@
 import bpy
-from bpy.props import StringProperty, IntProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
+import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
 import cppyy
+import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -220,45 +222,51 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 			_ = transferDictionaries(sourceCells, sinkCells, tolerance)
 	return sink
 
-class SvTopologySetDictionaries(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyTransferDictionaries(bpy.types.Node, SverchCustomTreeNode):
+
 	"""
 	Triggers: Topologic
-	Tooltip: Sets the input dictionaries for the sub-topologies of the input Topology using the input selector Vertices
+	Tooltip: Transfers the Dictionaries of the Sources to the sink Topology based on specified options
 	"""
-	bl_idname = 'SvTopologySetDictionaries'
-	bl_label = 'Topology.SetDictionaries'
-	TypeFilter: IntProperty(name="Type Filter", default=255, update=updateNode)
+	bl_idname = 'SvTopologyTransferDictionaries'
+	bl_label = 'Topology.TransferDictionaries'
+	TransferVertexDicts: BoolProperty(name="Transfer Vertex Dicts", default=True, update=updateNode)
+	TransferEdgeDicts: BoolProperty(name="Transfer Edge Dicts", default=True, update=updateNode)
+	TransferFaceDicts: BoolProperty(name="Transfer Face Dicts", default=True, update=updateNode)
+	TransferCellDicts: BoolProperty(name="Transfer Cell Dicts", default=True, update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.001, precision=4, update=updateNode)
+
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Selectors')
-		self.inputs.new('SvStringsSocket', 'Dictionaries')
-		self.inputs.new('SvStringsSocket', 'Type Filter').prop_name = 'TypeFilter'
-		self.outputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Sources')
+		self.inputs.new('SvStringsSocket', 'Sink')
+		self.inputs.new('SvStringsSocket', 'Transfer Vertex Dicts').prop_name = 'TransferVertexDicts'
+		self.inputs.new('SvStringsSocket', 'Transfer Edge Dicts').prop_name = 'TransferEdgeDicts'
+		self.inputs.new('SvStringsSocket', 'Transfer Face Dicts').prop_name = 'TransferFaceDicts'
+		self.inputs.new('SvStringsSocket', 'Transfer Cell Dicts').prop_name = 'TransferCellDicts'
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
+		self.outputs.new('SvStringsSocket', 'Sink')
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topology = self.inputs['Topology'].sv_get(deepcopy=False)[0] #Consider only one Topology
-		selectorList = flatten(self.inputs['Selectors'].sv_get(deepcopy=False))
-		dictionaryList = flatten(self.inputs['Dictionaries'].sv_get(deepcopy=False))
-		typeFilter = self.inputs['Type Filter'].sv_get(deepcopy=False)[0][0] #Consider only one TypeFilter
-		if len(selectorList) != len(dictionaryList):
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Topology'].sv_set([])
 			return
-		selectors = convert_to_stl_list(selectorList, Vertex.Ptr)
-		dictionaries = convert_to_stl_list(dictionaryList, Dictionary)
-		for aDictionary in dictionaries:
-			values = aDictionary.Values()
-			returnList = []
-			for aValue in values:
-				s = cppyy.bind_object(aValue.Value(), 'StringStruct')
-				returnList.append(str(s.getString))
-			print(returnList)
-		result = topology.SetDictionaries(selectors, dictionaries, typeFilter)
-		result = fixTopologyClass(result)
-		self.outputs['Topology'].sv_set([result])
+		sources = self.inputs['Sources'].sv_get(deepcopy=False)
+		sink = self.inputs['Sink'].sv_get(deepcopy=False)[0]
+		tranVertexDicts = self.inputs['Transfer Vertex Dicts'].sv_get(deepcopy=False)[0][0]
+		tranEdgeDicts = self.inputs['Transfer Edge Dicts'].sv_get(deepcopy=False)[0][0]
+		tranFaceDicts = self.inputs['Transfer Face Dicts'].sv_get(deepcopy=False)[0][0]
+		tranCellDicts = self.inputs['Transfer Cell Dicts'].sv_get(deepcopy=False)[0][0]
+		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=False)[0][0]
+		output = processItem(sources, sink, tranVertexDicts, tranEdgeDicts, tranFaceDicts, tranCellDicts, tolerance)
+		self.outputs['Sink'].sv_set([output])
+		end = time.time()
+		print("Topology.TransferDictionaries Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-	bpy.utils.register_class(SvTopologySetDictionaries)
+    bpy.utils.register_class(SvTopologyTransferDictionaries)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologySetDictionaries)
+    bpy.utils.unregister_class(SvTopologyTransferDictionaries)

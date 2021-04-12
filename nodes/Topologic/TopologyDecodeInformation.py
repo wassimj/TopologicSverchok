@@ -15,30 +15,21 @@ def getValueAtKey(dict, key):
 	return returnValue
 
 def dictionaryString(sources):
-	returnList = ""
+	returnList = []
 	for source in sources:
+		type = ""
+		x = ""
+		y = ""
+		z = ""
+		sourceKeys = ""
+		sourceValues = ""
 		d = source.GetDictionary()
+		if d == None:
+			continue
 		stl_keys = d.Keys()
 		if len(stl_keys) > 0:
 			sourceType = source.GetType()
 			type = str(sourceType)
-			x = ""
-			y = ""
-			z = ""
-			sourceKeys = ""
-			sourceValues = ""
-			copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-			stl_keys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
-			for aSourceKey in stl_keys:
-				if sourceKeys == "":
-					sourceKeys = aSourceKey
-				else:
-					sourceKeys = sourceKeys+"|"+aSourceKey
-				aSourceValue = getValueAtKey(d, aSourceKey)
-				if sourceValues == "":
-					sourceValues = aSourceValue
-				else:
-					sourceValues = sourceValues+"|"+aSourceValue
 			if sourceType == topologic.Vertex.Type():
 				sourceSelector = source
 			elif sourceType == topologic.Edge.Type():
@@ -52,57 +43,73 @@ def dictionaryString(sources):
 			x = "{:.4f}".format(sourceSelector.X())
 			y = "{:.4f}".format(sourceSelector.Y())
 			z = "{:.4f}".format(sourceSelector.Z())
-		if returnList == "":
-			returnList = type+","+x+","+y+","+z+","+sourceKeys+","+sourceValues
-		else:
-			returnList = returnList+"\n"+type+","+x+","+y+","+z+","+sourceKeys+","+sourceValues
+			copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
+			stl_keys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+			for aSourceKey in stl_keys:
+				if sourceKeys == "":
+					sourceKeys = aSourceKey
+				else:
+					sourceKeys = sourceKeys+"|"+aSourceKey
+				aSourceValue = getValueAtKey(d, aSourceKey)
+				if sourceValues == "":
+					sourceValues = aSourceValue
+				else:
+					sourceValues = sourceValues+"|"+aSourceValue
+
+			returnList.append(type+","+x+","+y+","+z+","+sourceKeys+","+sourceValues)
 	return returnList
 
 def processItem(topology):
-	finalOutput = "topologyType,x,y,z,keys,values"
+	finalList = []
 	for anItem in topology:
 		itemType = anItem.GetType()
 		if itemType == topologic.CellComplex.Type():
-			finalOutput = finalOutput+"\n"+(dictionaryString([anItem]))
-			cells = cppyy.gbl.std.list[topologic.Cells.Ptr]()
+			finalList = finalList + (dictionaryString([anItem]))
+			cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
 			_ = anItem.Cells(cells)
-			finalOutput = finalOutput+"\n"+(dictionaryString(cells))
+			finalList = finalList + (dictionaryString(cells))
 			faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 			_ = anItem.Faces(faces)
-			finalOutput = finalOutput+"\n"+(dictionaryString(faces))
+			finalList = finalList + (dictionaryString(faces))
 			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 			_ = anItem.Edges(edges)
-			finalOutput = finalOutput+"\n"+(dictionaryString(edges))
+			finalList = finalList + (dictionaryString(edges))
 			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			_ = anItem.Vertices(vertices)
-			finalOutput = finalOutput+"\n"+(dictionaryString(vertices))
+			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Cell.Type():
-			finalOutput = finalOutput+"\n"+(dictionaryString([anItem]))
+			finalList = finalList + (dictionaryString([anItem]))
 			faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 			_ = anItem.Faces(faces)
-			finalOutput = finalOutput+"\n"+(dictionaryString(faces))
+			finalList = finalList + (dictionaryString(faces))
 			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 			_ = anItem.Edges(edges)
-			finalOutput = finalOutput+"\n"+(dictionaryString(edges))
+			finalList = finalList + (dictionaryString(edges))
 			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			_ = anItem.Vertices(vertices)
-			finalOutput = finalOutput+"\n"+(dictionaryString(vertices))
+			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Face.Type():
-			finalOutput = finalOutput+"\n"+(dictionaryString([anItem]))
+			finalList = finalList + (dictionaryString([anItem]))
 			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 			_ = anItem.Edges(edges)
-			finalOutput = finalOutput+"\n"+(dictionaryString(edges))
+			finalList = finalList + (dictionaryString(edges))
 			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			_ = anItem.Vertices(vertices)
-			finalOutput = finalOutput+"\n"+(dictionaryString(vertices))
+			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Edge.Type():
-			finalOutput = finalOutput+"\n"+(dictionaryString([anItem]))
+			finalList = finalList + (dictionaryString([anItem]))
 			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			_ = anItem.Vertices(vertices)
-			finalOutput = finalOutput+"\n"+(dictionaryString(vertices))
+			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Vertex.Type():
-			finalOutput = finalOutput+"\n"+(dictionaryString([anItem]))
-	return finalOutput
+			finalList = finalList + (dictionaryString([anItem]))
+	finalString = ""
+	for i in range(len(finalList)):
+		if i == len(finalList) - 1:
+			finalString = finalString+finalList[i]
+		else:
+			finalString = finalString+finalList[i]+'\n'
+	return finalString
 
 class SvTopologyDecodeInformation(bpy.types.Node, SverchCustomTreeNode):
 	"""

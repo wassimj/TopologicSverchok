@@ -104,7 +104,10 @@ class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		originList = self.inputs['Origin'].sv_get(deepcopy=False)
+		if not (self.inputs['Origin'].is_linked):
+			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
+		else:
+			originList = self.inputs['Origin'].sv_get(deepcopy=False)
 		radiusList = self.inputs['Radius'].sv_get(deepcopy=False)[0]
 		heightList = self.inputs['Height'].sv_get(deepcopy=False)[0]
 		sidesList = self.inputs['Sides'].sv_get(deepcopy=False)[0]

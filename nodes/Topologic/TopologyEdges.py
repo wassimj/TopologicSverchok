@@ -45,7 +45,6 @@ class SvTopologyEdges(bpy.types.Node, SverchCustomTreeNode):
 		inputs = self.inputs[0].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:
-			print(anInput)
 			outputs.append(recur(anInput))
 		if len(outputs) == 1:
 			outputs = outputs[0]
