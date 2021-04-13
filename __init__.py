@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Topologic-Sverchok",
     "author": "Wassim Jabi",
-    "version": (0, 5, 0, 3),
+    "version": (0, 5, 0, 4),
     "blender": (2, 83, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -18,19 +18,20 @@ from os.path import expanduser
 from sys import platform
 from os.path import expanduser
 home = expanduser("~")
-sitePackages = "/lib/site-packages"
-if platform == "linux" or platform == "linux2" or platform == "darwin":
-  conda = "/opt/anaconda3/envs"
-  blenderName = "/"+[name for name in os.listdir(home+conda) if name.startswith('Blender')][0]
-  topologicEggName = "/"+[name for name in os.listdir(home+conda+blenderName+"/lib/site-packages") if name.startswith('topologic')][0]
+if platform == 'linux' or platform == 'linux2' or platform == 'darwin':
+  conda = '/opt/anaconda3/envs'
+  sitePackages = '/lib/site-packages'
+  blenderName = '/'+[name for name in os.listdir(home+conda) if name.startswith('Blender')][0]
+  topologicEggName = '/'+[name for name in os.listdir(home+conda+blenderName+sitePackages) if name.startswith('topologic')][0]
   sys.path.append(home+conda+blenderName+sitePackages)
   sys.path.append(home+conda+blenderName+sitePackages+topologicEggName)
-elif platform == "win32":
-  conda = "\\.conda\\envs"
-  blenderName = [name for name in os.listdir(home+"\\"+conda) if name.startswith('Blender')][0]
-  topologicEggName = [name for name in os.listdir(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages") if name.startswith('topologic')][0]
-  sys.path.append(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages")
-  sys.path.append(home+"\\"+conda+"\\"+blenderName+"\\lib\\site-packages\\"+topologicEggName)
+elif platform == 'win32':
+  conda = '\\.conda\\envs'
+  sitePackages = '\\lib\\site-packages'
+  blenderName = '\\'+[name for name in os.listdir(home+conda) if name.startswith('Blender')][0]
+  topologicEggName = '\\'+[name for name in os.listdir(home+conda+blenderName+sitePackages) if name.startswith('topologic')][0]
+  sys.path.append(home+conda+blenderName+sitePackages)
+  sys.path.append(home+conda+blenderName+sitePackages+topologicEggName)
 
 import importlib
 
