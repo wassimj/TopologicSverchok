@@ -117,10 +117,17 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		vertices = self.inputs['Vertices'].sv_get(deepcopy=False, default=[])[0]
-		edges = self.inputs['Edges'].sv_get(deepcopy=False, default=[])[0]
-		faces = self.inputs['Faces'].sv_get(deepcopy=False, default=[])[0]
+		vertices = []
+		edges = []
+		faces = []
+		if (self.inputs['Vertices'].is_linked):
+			vertices = self.inputs['Vertices'].sv_get(deepcopy=False, default=[])[0]
+		if (self.inputs['Edges'].is_linked):
+			edges = self.inputs['Edges'].sv_get(deepcopy=False, default=[])[0]
+		if (self.inputs['Faces'].is_linked):
+			faces = self.inputs['Faces'].sv_get(deepcopy=False, default=[])[0]
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0]
+
 		if len(vertices) > 0:
 			topVerts = cppyy.gbl.std.vector[Vertex.Ptr]()
 			for aVertex in vertices:
