@@ -2,7 +2,7 @@
 bl_info = {
     "name": "Topologic-Sverchok",
     "author": "Wassim Jabi",
-    "version": (0, 5, 0, 4),
+    "version": (0, 5, 0, 5),
     "blender": (2, 83, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -73,6 +73,8 @@ def nodes_index():
                 ("Topologic.Version", "SvTopologicVersion"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
+				("Topologic.VertexEnclosingCell", "SvVertexEnclosingCell"),
+				("Topologic.VertexNearestVertex", "SvVertexNearestVertex"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),

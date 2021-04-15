@@ -97,6 +97,9 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		edges = []
 		faces = []
 		for anInput in inputs: # Collect all the vertices from all the inputs
+			if anInput == None:
+				vertices.append([])
+				continue
 			topVerts = cppyy.gbl.std.list[Vertex.Ptr]()
 			if (anInput.GetType() == 1): #input is a vertex, just add it and process it
 				topVerts.push_back(anInput)
@@ -109,6 +112,10 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
 
 		for anInput in inputs:
+			if anInput == None:
+				edges.append([])
+				faces.append([])
+				continue
 			topEdges = cppyy.gbl.std.list[Edge.Ptr]()
 			if (anInput.GetType() == 2): #Input is an Edge, just add it and process it
 				topEdges.push_back(anInput)
