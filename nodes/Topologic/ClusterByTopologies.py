@@ -18,7 +18,6 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	print(item)
 	cluster = None
 	topologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
 	for aTopology in item:

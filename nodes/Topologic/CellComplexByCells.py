@@ -23,8 +23,11 @@ def processItem(item):
 	cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
 	for aCell in item:
 		cells.push_back(aCell)
-	cellComplex = topologic.CellComplex.ByCells(cells)
-	return cellComplex
+	try:
+		cellComplex = topologic.CellComplex.ByCells(cells)
+		return cellComplex
+	except:
+		return None
 
 def recur(input):
 	output = []

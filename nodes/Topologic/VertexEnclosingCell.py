@@ -23,15 +23,15 @@ def matchLengths(list):
 	return list
 
 def boundingBox(cell):
-	vertices = cppyy.gbl.std.list[Vertex.Ptr]()
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 	_ = cell.Vertices(vertices)
 	x = []
 	y = []
 	z = []
 	for aVertex in vertices:
-		x.append(vertices.X())
-		y.append(vertices.Y())
-		z.append(vertices.Z())
+		x.append(aVertex.X())
+		y.append(aVertex.Y())
+		z.append(aVertex.Z())
 	return ([min(x), min(y), min(z), max(x), max(y), max(z)])
 
 def processItem(input):
@@ -53,7 +53,7 @@ def processItem(input):
 class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Finds the nearest vertex to the input Vertex within the list of input vertices
+	Tooltip: Outputs the Cell that contains the input Vertex from the list of input Cells
 	"""
 	bl_idname = 'SvVertexEnclosingCell'
 	bl_label = 'Vertex.EnclosingCell'

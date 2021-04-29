@@ -3,7 +3,7 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
+import topologic
 import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -17,44 +17,34 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return item.GetDictionary()
+	return item.ExternalBoundary()
 
-def recur(input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input, list):
-		for anItem in input:
-			output.append(recur(anItem))
-	else:
-		output = processItem(input)
-	return output
-
-class SvTopologyDictionary(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the Dictionary of the input Topology   
+	Tooltip: Outputs the external boundary (Cell) of the input CellComplex    
 	"""
-	bl_idname = 'SvTopologyDictionary'
-	bl_label = 'Topology.Dictionary'
+	bl_idname = 'SvCellComplexExternalBoundary'
+	bl_label = 'CellComplex.ExternalBoundary'
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Topology')
-		self.outputs.new('SvStringsSocket', 'Dictionary')
+		self.inputs.new('SvStringsSocket', 'CellComplex')
+		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Cell'].sv_set([])
 			return
-		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
+		inputs = self.inputs['Cell'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Dictionary'].sv_set(outputs)
+		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyDictionary)
+	bpy.utils.register_class(SvCellComplexExternalBoundary)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyDictionary)
+	bpy.utils.unregister_class(SvCellComplexExternalBoundary)

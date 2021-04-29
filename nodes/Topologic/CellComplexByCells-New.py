@@ -1,12 +1,22 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, FloatProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
 import time
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
 def matchLengths(list):
 	maxLength = len(list[0])
 	for aSubList in list:
@@ -21,6 +31,22 @@ def matchLengths(list):
 		for i in range(len(anItem), maxLength):
 			anItem.append(itemToAppend)
 	return list
+
+def classByType(argument):
+	switcher = {
+		1: Vertex,
+		2: Edge,
+		4: Wire,
+		8: Face,
+		16: Shell,
+		32: Cell,
+		64: CellComplex,
+		128: Cluster }
+	return switcher.get(argument, Topology)
+
+def fixTopologyClass(topology):
+  topology.__class__ = classByType(topology.GetType())
+  return topology
 
 # Adapted From https://johnlekberg.com/blog/2020-04-17-kd-tree.html
 import collections
@@ -61,7 +87,7 @@ def sortList(vertices, index):
 	return vertices
 
 def kdtree(vertices):
-	"""Construct a k-d tree from an iterable of faces.
+	"""Construct a k-d tree from an iterable of vertices.
 
     This algorithm is taken from Wikipedia. For more details,
 
@@ -111,10 +137,10 @@ def find_nearest_neighbor(*, tree, vertex):
 
 		if tree is None:
 			return
-		distance = SED(tree.value, vertex)
-		if best is None or distance < best.distance:
-			best = NNRecord(vertex=tree.value, distance=distance)
-
+		if topologic.Topology.IsSame(tree.value, vertex) == False:
+			distance = SED(tree.value, vertex)
+			if best is None or distance < best.distance:
+				best = NNRecord(vertex=tree.value, distance=distance)
 		axis = depth % k
 		diff = itemAtIndex(vertex,axis) - itemAtIndex(tree.value,axis)
 		if diff <= 0:
@@ -129,68 +155,68 @@ def find_nearest_neighbor(*, tree, vertex):
 	search(tree=tree, depth=0)
 	return best.vertex
 
-def processItem(input):
-	vertex = input[0]
-	vertices = input[1]
-	minDistance = SED(vertex, vertices[0])
-	nearestVertex = vertices[0]
-	for v in vertices:
-		d = SED(vertex, v)
-		if d < minDistance:
-			minDistance = d
-			nearestVertex = v
-	return nearestVertex
+def processItem(cells):
+	print(cells)
+	cellComplex = None
+	# get all the internal vertices
+	ivList = []
+	for aCell in cells:
+		ivList.append(topologic.CellUtility.InternalVertex(aCell, 0.0001))
+	print(ivList)
+	# Build a k-d tree
+	tree = kdtree(ivList)
+	result = fixTopologyClass(topologic.Topology.DeepCopy(cells[0]))
+	interimResult = None
+	for i in range(len(cells)):
+		c1 = cells[i]
+		nearestVertex = find_nearest_neighbor(tree=tree, vertex=ivList[i])
+		print([nearestVertex.X(), nearestVertex.Y(), nearestVertex.Z()])
+		nearestIndex = ivList.index(nearestVertex)
+		nearestCell = cells[nearestIndex]
+		try:
+			result = fixTopologyClass(result.Merge(nearestCell, False))
+			if result.Type() == topologic.CellComplex.Type():
+				interimResult = topologic.Topology.DeepCopy(result)
+			print(interimResult)
+		except:
+			print("Merge operation failed")
+	print ("final Result: "+ str(result)+" Type:"+ str(result.GetTypeAsString()))
+	if result.Type() != topologic.CellComplex.Type():
+		print("Overall operation failed. Trying SelfMerge")
+		result = result.SelfMerge()
+		cellComplexes = cppyy.gbl.std.list[topologic.CellComplex.Ptr]()
+		_ = result.CellComplexes(cellComplexes)
+		return list(cellComplexes)
+	return result
 
-def processItemKDTree(input):
-	return find_nearest_neighbor(tree=input[1], vertex=input[0])
-
-class SvVertexNearestVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexByCellsNew(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the nearest Vertex to the input Vertex from the list of input Vertices
+	Tooltip: Creates a CellComplex from the list of input Cells  
 	"""
-	bl_idname = 'SvVertexNearestVertex'
-	bl_label = 'Vertex.NearestVertex'
-	UseKDTree: BoolProperty(name="UseKDTree", default=False, update=updateNode)
+	bl_idname = 'SvCellComplexByCellsNew'
+	bl_label = 'CellComplex.ByCellsNew'
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Vertices')
-		self.inputs.new('SvStringsSocket', 'Use k-d Tree').prop_name = 'UseKDTree'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Cells')
+		self.outputs.new('SvStringsSocket', 'CellComplex')
 
 	def process(self):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		verticesList = self.inputs['Vertices'].sv_get(deepcopy=False)
-		useKDTreeList = self.inputs['Use k-d Tree'].sv_get(deepcopy=False)[0]
-		if isinstance(verticesList[0], list) == False:
-			verticesList = [verticesList]
-		
+		cellsList = self.inputs['Cells'].sv_get(deepcopy=False)
 		outputs = []
-		trees = []
-		for i in range(len(verticesList)):
-			if useKDTreeList[i] == True:
-				trees.append(kdtree(verticesList[i]))
-			else:
-				trees.append(verticesList[i])
-		matchLengths([vertexList, trees, useKDTreeList])
-		inputs = zip(vertexList, trees, useKDTreeList)
-		for anInput in inputs:
-			useKDTree = anInput[2]
-			if useKDTree == True:
-				outputs.append(processItemKDTree(anInput))
-			else:
-				outputs.append(processItem(anInput))
+		if isinstance(cellsList[0], list) == False:
+			cellsList = [cellsList]
+		for cells in cellsList:
+			outputs.append(processItem(cells))
+		self.outputs['CellComplex'].sv_set(outputs)
 		end = time.time()
-		print("Use k-d tree: "+str(useKDTree)+". Nearest Vertex Operation consumed "+str(round(end - start,4))+" seconds")
-		self.outputs['Vertex'].sv_set(outputs)
+		print("CellComplex.ByCells-New Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-	bpy.utils.register_class(SvVertexNearestVertex)
+    bpy.utils.register_class(SvCellComplexByCellsNew)
 
 def unregister():
-	bpy.utils.unregister_class(SvVertexNearestVertex)
+    bpy.utils.unregister_class(SvCellComplexByCellsNew)

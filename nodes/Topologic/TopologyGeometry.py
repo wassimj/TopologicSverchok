@@ -7,6 +7,7 @@ from bpy_extras.object_utils import AddObjectHelper, object_data_add
 import uuid
 from sverchok.utils.sv_mesh_utils import get_unique_faces
 
+import topologic
 from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
 
@@ -164,6 +165,7 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 						faces.append(f)
 				else:
 					wire =  aFace.ExternalBoundary()
+					#wire = topologic.WireUtility.RemoveCollinearEdges(wire, 0.1) #This is an angle Tolerance
 					faceVertices = getSubTopologies(wire, Vertex)
 					f = []
 					for aVertex in faceVertices:

@@ -53,7 +53,7 @@ def matchLengths(list):
 class SvGraphShortestPath(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Returns a Wire representing the shortest path in the input Graph between the two input Vertices
+	Tooltip: Creates a Wire the represents the shortest path between the two input Graph Vertices
 	"""
 	bl_idname = 'SvGraphShortestPath'
 	bl_label = 'Graph.ShortestPath'

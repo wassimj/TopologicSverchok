@@ -37,7 +37,7 @@ def processItem(item):
 class SvGraphTopology(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Returns the Topology of the input Graph
+	Tooltip: Outputs the Topology of the input Graph
 	"""
 	bl_idname = 'SvGraphTopology'
 	bl_label = 'Graph.Topology'

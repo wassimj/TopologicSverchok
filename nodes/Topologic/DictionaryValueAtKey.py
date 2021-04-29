@@ -27,7 +27,7 @@ def processItem(dict, key):
 class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Return the value from the input Dictionary associated with the input key   
+	Tooltip: outputs the value from the input Dictionary associated with the input key   
 	"""
 	bl_idname = 'SvDictionaryValueAtKey'
 	bl_label = 'Dictionary.ValueAtKey'

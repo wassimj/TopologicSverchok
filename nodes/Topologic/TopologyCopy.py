@@ -51,7 +51,7 @@ def recur(input):
 class SvTopologyCopy(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Copy of the input Topology  
+	Tooltip: Creates a Topology that represents a copy of the input Topology  
 	"""
 	bl_idname = 'SvTopologyCopy'
 	bl_label = 'Topology.Copy'

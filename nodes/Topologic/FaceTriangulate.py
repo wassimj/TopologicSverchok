@@ -16,21 +16,23 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(cell):
-	returnList = []
-	if face.Type() == topologic.Face.Type():
-		faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-		_ = face.AdjacentFaces(faces)
-		returnList = list(faces)
-	return returnList
+def processItem(face):
+	faceTriangles = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	for i in range(0,5,1):
+		try:
+			_ = topologic.FaceUtility.Triangulate(face, float(i)*0.1, faceTriangles)
+			return list(faceTriangles)
+		except:
+			continue
+	return [face]
 
-class SvFaceAdjacentFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceTriangulate(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs a list of Faces that are adjacent to the input Face
+	Tooltip: Creates a list of Faces that represent the triangulation of the input Face
 	"""
-	bl_idname = 'SvCellAdjacentFaces'
-	bl_label = 'Face.AdjacentFaces'
+	bl_idname = 'SvFaceTriangulate'
+	bl_label = 'Face.Triangulate'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.outputs.new('SvStringsSocket', 'Faces')
@@ -46,7 +48,7 @@ class SvFaceAdjacentFaces(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Faces'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellAdjacentCells)
+	bpy.utils.register_class(SvFaceTriangulate)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellAdjacentCells)
+	bpy.utils.unregister_class(SvFaceTriangulate)

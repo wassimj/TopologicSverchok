@@ -26,7 +26,7 @@ def processItem(item):
 class SvCellInternalVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs a Vertex guaranteed to be inside the input Cell
+	Tooltip: Creates a Vertex guaranteed to be inside the input Cell
 	"""
 	bl_idname = 'SvCellInternalVertex'
 	bl_label = 'Cell.InternalVertex'

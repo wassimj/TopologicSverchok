@@ -53,7 +53,7 @@ def relevantSelector(topology):
 	elif topology.GetType() == topologic.Cell.Type():
 		return topologic.CellUtility.InternalVertex(topology)
 	else:
-		return topology.Centroid()
+		return topology.CenterofMass()
 
 def topologyContains(topology, vertex, tol):
 	contains = False
@@ -226,7 +226,7 @@ class SvTopologyTransferDictionaries(bpy.types.Node, SverchCustomTreeNode):
 
 	"""
 	Triggers: Topologic
-	Tooltip: Transfers the Dictionaries of the Sources to the sink Topology based on specified options
+	Tooltip: Transfers the Dictionaries of the source Topologies to the sink Topology based on specified options
 	"""
 	bl_idname = 'SvTopologyTransferDictionaries'
 	bl_label = 'Topology.TransferDictionaries'

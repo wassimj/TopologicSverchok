@@ -43,7 +43,7 @@ def recur(input):
 class SvTopologyContents(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the content topologies of the input Topology    
+	Tooltip: Outputs the content Topologies of the input Topology    
 	"""
 	bl_idname = 'SvTopologyContents'
 	bl_label = 'Topology.Contents'

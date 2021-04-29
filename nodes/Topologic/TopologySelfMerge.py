@@ -6,23 +6,19 @@ from sverchok.data_structure import updateNode
 import topologic
 
 def processItem(item):
-	vert = None
-	try:
-		vert = item.Centroid()
-	except:
-		vert = None
-	return vert
+	topology = item.SelfMerge()
+	return topology
 
-class SvTopologyCentroid(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySelfMerge(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Create a Vertex that represents the centroid of the Vertices of the input Topology
+	Tooltip: Self-merges the input Topology
 	"""
-	bl_idname = 'SvTopologyCentroid'
-	bl_label = 'Topology.Centroid'
+	bl_idname = 'SvTopologySelfMerge'
+	bl_label = 'Topology.SelfMerge'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.outputs.new('SvStringsSocket', 'Centroid')
+		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -31,10 +27,10 @@ class SvTopologyCentroid(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Centroid'].sv_set(outputs)
+		self.outputs['Topology'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyCentroid)
+	bpy.utils.register_class(SvTopologySelfMerge)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyCentroid)
+	bpy.utils.unregister_class(SvTopologySelfMerge)

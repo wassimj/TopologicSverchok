@@ -37,6 +37,10 @@ def processItem(item, topologyType):
 			cellcomplexes = cppyy.gbl.std.list[topologic.CellComplex.Ptr]()
 			_ = item.CellComplexes(cellcomplexes)
 			subtopologies = list(cellcomplexes)
+		elif topologyType == "Aperture":
+			apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+			_ = item.Apertures(apertures)
+			subtopologies = list(apertures)
 	except:
 		subtopologies = []
 	return subtopologies
@@ -52,7 +56,7 @@ def recur(input, topologyType):
 		output = processItem(input, topologyType)
 	return output
 
-topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7)]
+topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Aperture", "Aperture", "", 8)]
 
 class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -60,12 +64,12 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	Tooltip: Outputs the subtopologies, based on the selected type, of the input Topology    
 	"""
 	bl_idname = 'SvTopologySubTopologies'
-	bl_label = 'Topology.Subtopologies'
+	bl_label = 'Topology.SubTopologies'
 	subtopologyType: EnumProperty(name="Subtopology Type", description="Specify subtopology type", default="Vertex", items=topologyTypes, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.outputs.new('SvStringsSocket', 'Subtopologies')
+		self.outputs.new('SvStringsSocket', 'SubTopologies')
 	
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "subtopologyType",text="")
@@ -74,13 +78,13 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Subtopologies'].sv_set([])
+			self.outputs['SubTopologies'].sv_set([])
 			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
 		outputs = recur(inputs, self.subtopologyType)
 		if(len(outputs) == 1):
 			outputs = outputs[0]
-		self.outputs['Subtopologies'].sv_set(outputs)
+		self.outputs['SubTopologies'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvTopologySubTopologies)

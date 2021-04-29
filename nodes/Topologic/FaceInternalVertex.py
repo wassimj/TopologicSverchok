@@ -26,7 +26,7 @@ def processItem(item):
 class SvFaceInternalVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs a Vertex guaranteed to be inside the input Face
+	Tooltip: Creates a Vertex guaranteed to be inside the input Face
 	"""
 	bl_idname = 'SvFaceInternalVertex'
 	bl_label = 'Face.InternalVertex'
