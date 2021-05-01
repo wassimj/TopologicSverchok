@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, EnumProperty
+from bpy.props import StringProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -90,10 +90,14 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(item):
+def processItem(item, tol):
 	sv = item[0]
 	ev = item[1]
 	edge = None
+	if topologic.Topology.IsSame(sv, ev):
+		return None
+	if topologic.VertexUtility.Distance(sv, ev) < tol:
+		return None
 	try:
 		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
 	except:
@@ -111,11 +115,13 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Edge.ByStartVertexEndVertex'
 	startVertex: StringProperty(name="StartVertex", update=updateNode)
 	endVertex: StringProperty(name="EndVertex", update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
 	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'StartVertex')
 		self.inputs.new('SvStringsSocket', 'EndVertex')
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Edge')
 
 	def draw_buttons(self, context, layout):
@@ -129,6 +135,7 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 			return
 		svList = self.inputs['StartVertex'].sv_get(deepcopy=True)
 		evList = self.inputs['EndVertex'].sv_get(deepcopy=True)
+		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=False)[0][0]
 		inputs = []
 		if ((self.Lacing) == "Trim"):
 			inputs = trim([svList, evList])
@@ -143,7 +150,9 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(lace([svList, evList]))
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
+			anOutput = processItem(anInput, tolerance)
+			if anOutput:
+				outputs.append(anOutput)
 		self.outputs['Edge'].sv_set(outputs)
 
 def register():
