@@ -63,12 +63,13 @@ def internalVertex(topology, tolerance):
 def processCellComplex(item):
 	topology = item[0]
 	direct = item[1]
-	viaSharedTopologies = item[2]
-	viaSharedApertures = item[3]
-	toExteriorTopologies = item[4]
-	toExteriorApertures = item[5]
-	useInternalVertex = item[6]
-	tolerance = item[7]
+	directApertures = item[2]
+	viaSharedTopologies = item[3]
+	viaSharedApertures = item[4]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
 	graph = None
 	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
@@ -100,6 +101,41 @@ def processCellComplex(item):
 							v2 = cells[j].CenterOfMass()
 						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
 						edges.push_back(e)
+	if directApertures == True:
+		cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+		_ = topology.Cells(cells)
+		cells = list(cells)
+		# Create a matrix of zeroes
+		for i in range(len(cells)):
+			cellRow = []
+			for j in range(len(cells)):
+				cellRow.append(0)
+			cellmat.append(cellRow)
+		for i in range(len(cells)):
+			for j in range(len(cells)):
+				if (i != j) and cellmat[i][j] == 0:
+					cellmat[i][j] = 1
+					cellmat[j][i] = 1
+					sharedt = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					cells[i].SharedTopologies(cells[j], 8, sharedt)
+					sharedt = list(sharedt)
+					if len(sharedt) > 0:
+						apertureExists = False
+						for x in sharedt:
+							ap = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+							_ = x.Apertures(ap)
+							if len(ap) > 0:
+								apertureExists = True
+								break
+						if apertureExists:
+							if useInternalVertex == True:
+								v1 = topologic.CellUtility.InternalVertex(cells[i], tolerance)
+								v2 = topologic.CellUtility.InternalVertex(cells[j], tolerance)
+							else:
+								v1 = cells[i].CenterOfMass()
+								v2 = cells[j].CenterOfMass()
+							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+							edges.push_back(e)
 
 	cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
 	_ = topology.Cells(cells)
@@ -165,17 +201,20 @@ def processCellComplex(item):
 						vst = exteriorAperture.Topology().CenterOfMass()
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
-	else:
-		for aCell in cells:
-				if useInternalVertex == True:
-					vCell = internalVertex(aCell, tolerance)
-				else:
-					vCell = aCell.CenterOfMass()
-				vertices.push_back(vCell)
+
+	for aCell in cells:
+		if useInternalVertex == True:
+			vCell = internalVertex(aCell, tolerance)
+		else:
+			vCell = aCell.CenterOfMass()
+		vertices.push_back(vCell)
 	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
 	if len(list(edges)) > 0:
 		for e in edges:
 			finalTopologies.push_back(e)
+	if len(list(vertices)) > 0:
+		for v in vertices:
+			finalTopologies.push_back(v)
 		cluster = topologic.Cluster.ByTopologies(finalTopologies)
 		cluster = cluster.SelfMerge()
 		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
@@ -190,10 +229,10 @@ def processCellComplex(item):
 
 def processCell(item):
 	cell = item[0]
-	toExteriorTopologies = item[4]
-	toExteriorApertures = item[5]
-	useInternalVertex = item[6]
-	tolerance = item[7]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
 	graph = None
 	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
@@ -266,16 +305,18 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvGraphByTopology'
 	bl_label = 'Graph.ByTopology'
 	DirectProp: BoolProperty(name="Direct", default=True, update=updateNode)
-	ViaSharedTopologiesProp: BoolProperty(name="ViaSharedTopologies", default=False, update=updateNode)
-	ViaSharedAperturesProp: BoolProperty(name="ViaSharedApertures", default=False, update=updateNode)
-	ToExteriorTopologiesProp: BoolProperty(name="ToExteriorTopoloogies", default=False, update=updateNode)
-	ToExteriorAperturesProp: BoolProperty(name="ToExteriorApertures", default=False, update=updateNode)
-	UseInternalVertexProp: BoolProperty(name="UseInternalVertex", default=False, update=updateNode)
+	DirectIfSharedAperturesProp: BoolProperty(name="Direct If Shared Apertures", default=False, update=updateNode)
+	ViaSharedTopologiesProp: BoolProperty(name="Via Shared Topologies", default=False, update=updateNode)
+	ViaSharedAperturesProp: BoolProperty(name="Via Shared Apertures", default=False, update=updateNode)
+	ToExteriorTopologiesProp: BoolProperty(name="To Exterior Topoloogies", default=False, update=updateNode)
+	ToExteriorAperturesProp: BoolProperty(name="To Exterior Apertures", default=False, update=updateNode)
+	UseInternalVertexProp: BoolProperty(name="Use Internal Vertex", default=False, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Direct').prop_name = 'DirectProp'
+		self.inputs.new('SvStringsSocket', 'DirectIfSharedApertures').prop_name = 'DirectIfSharedAperturesProp'
 		self.inputs.new('SvStringsSocket', 'ViaSharedTopologies').prop_name = 'ViaSharedTopologiesProp'
 		self.inputs.new('SvStringsSocket', 'ViaSharedApertures').prop_name = 'ViaSharedAperturesProp'
 		self.inputs.new('SvStringsSocket', 'ToExteriorTopologies').prop_name = 'ToExteriorTopologiesProp'
@@ -293,6 +334,7 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 			return
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
 		directList = self.inputs['Direct'].sv_get(deepcopy=False)[0]
+		directAperturesList = self.inputs['DirectIfSharedApertures'].sv_get(deepcopy=False)[0]
 		viaSharedTopologiesList = self.inputs['ViaSharedTopologies'].sv_get(deepcopy=False)[0]
 		viaSharedAperturesList = self.inputs['ViaSharedApertures'].sv_get(deepcopy=False)[0]
 		toExteriorTopologiesList = self.inputs['ToExteriorTopologies'].sv_get(deepcopy=False)[0]
@@ -300,12 +342,15 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 		useInternalVertexList = self.inputs['UseInternalVertex'].sv_get(deepcopy=False)[0]
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
 
-		maxLength = max([len(topologyList), len(directList), len(viaSharedTopologiesList), len(viaSharedAperturesList), len(toExteriorTopologiesList), len(toExteriorAperturesList), len(useInternalVertexList), len(toleranceList)])
+		maxLength = max([len(topologyList), len(directList), len(directAperturesList), len(viaSharedTopologiesList), len(viaSharedAperturesList), len(toExteriorTopologiesList), len(toExteriorAperturesList), len(useInternalVertexList), len(toleranceList)])
 		for i in range(len(topologyList), maxLength):
 			topologyList.append(topologyList[-1])
 
 		for i in range(len(directList), maxLength):
 			directList.append(directList[-1])
+
+		for i in range(len(directAperturesList), maxLength):
+			directAperturesList.append(directAperturesList[-1])
 
 		for i in range(len(viaSharedTopologiesList), maxLength):
 			viaSharedTopologiesList.append(viaSharedTopologiesList[-1])
@@ -327,8 +372,8 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 
 		inputs = []
 		outputs = []
-		if (len(topologyList) == len(directList) == len(viaSharedTopologiesList) == len(viaSharedAperturesList) == len(toExteriorTopologiesList) == len(toExteriorAperturesList) == len(useInternalVertexList) == len(toleranceList)):
-			inputs = zip(topologyList, directList, viaSharedTopologiesList, viaSharedAperturesList, toExteriorTopologiesList, toExteriorAperturesList, useInternalVertexList, toleranceList)
+		if (len(topologyList) == len(directList) == len(directAperturesList) == len(viaSharedTopologiesList) == len(viaSharedAperturesList) == len(toExteriorTopologiesList) == len(toExteriorAperturesList) == len(useInternalVertexList) == len(toleranceList)):
+			inputs = zip(topologyList, directList, directAperturesList, viaSharedTopologiesList, viaSharedAperturesList, toExteriorTopologiesList, toExteriorAperturesList, useInternalVertexList, toleranceList)
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Graph'].sv_set(outputs)

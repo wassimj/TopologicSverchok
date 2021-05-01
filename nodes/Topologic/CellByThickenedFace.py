@@ -7,6 +7,16 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
 def classByType(argument):
 	switcher = {
 		1: Vertex,
@@ -99,10 +109,15 @@ class SvCellByThickenedFace(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		thicknessList = self.inputs['Thickness'].sv_get(deepcopy=False)[0]
-		bothSidesList = self.inputs['Both Sides'].sv_get(deepcopy=False)[0]
-		reverseList = self.inputs['Reverse'].sv_get(deepcopy=False)[0]
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
+		faceList = flatten(faceList)
+		thicknessList = self.inputs['Thickness'].sv_get(deepcopy=False)
+		thicknessList = flatten(thicknessList)
+		bothSidesList = self.inputs['Both Sides'].sv_get(deepcopy=False)
+		bothSidesList = flatten(bothSidesList)
+		reverseList = self.inputs['Reverse'].sv_get(deepcopy=False)
+		reverseList = flatten(reverseList)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)
+		toleranceList = flatten(toleranceList)
 		matchLengths([faceList, thicknessList, bothSidesList, reverseList, toleranceList])
 		inputs = zip(faceList, thicknessList, bothSidesList, reverseList, toleranceList)
 		outputs = []

@@ -17,16 +17,17 @@ def flatten(element):
 
 def processItem(item):
 	return item.IsClosed()
-class SvWireIsClosed(bpy.types.Node, SverchCustomTreeNode):
+
+class SvShellIsClosed(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Wire is closed. Outputs False otherwise   
 	"""
-	bl_idname = 'SvWireIsClosed'
-	bl_label = 'Wire.IsClosed'
+	bl_idname = 'SvShellIsClosed'
+	bl_label = 'Shell.IsClosed'
 	Bool: BoolProperty(name="Bool", default=False, update=updateNode)
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Wire')
+		self.inputs.new('SvStringsSocket', 'Shell')
 		self.outputs.new('SvStringsSocket', 'Is Closed').prop_name = 'Bool'
 
 	def process(self):
@@ -40,7 +41,7 @@ class SvWireIsClosed(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Is Closed'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvWireIsClosed)
+	bpy.utils.register_class(SvShellIsClosed)
 
 def unregister():
-	bpy.utils.unregister_class(SvWireIsClosed)
+	bpy.utils.unregister_class(SvShellIsClosed)

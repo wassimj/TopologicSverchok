@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 1, 0),
+    "version": (0, 5, 2, 0),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -93,6 +93,7 @@ def nodes_index():
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
+                ("Topologic.EdgeLength", "SvEdgeLength"),
                 ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
                 ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
                 ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
@@ -103,12 +104,19 @@ def nodes_index():
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
+                ("Topologic.FaceByVertices", "SvFaceByVertices"),
                 ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
+                ("Topologic.FaceIsInside", "SvFaceIsInside"),
+                ("Topologic.FaceExternalBoundary", "SvFaceExternalBoundary"),
                 ("Topologic.FaceInternalBoundaries", "SvFaceInternalBoundaries"),
 				("Topologic.FaceNormalAtParameters", "SvFaceNormalAtParameters"),
+				("Topologic.FaceParametersAtVertex", "SvFaceParametersAtVertex"),
 				("Topologic.FaceAddAperture", "SvFaceAddAperture"),
 				("Topologic.FaceTriangulate", "SvFaceTriangulate"),
+				("Topologic.FaceTrimByWire", "SvFaceTrimByWire"),
+				("Topologic.FaceVertexAtParameters", "SvFaceVertexAtParameters"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
+				("Topologic.ShellIsClosed", "SvShellIsClosed"),
                 ("Topologic.CellByCuboid", "SvCellByCuboid"),
                 ("Topologic.CellByCylinder", "SvCellByCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
@@ -253,6 +261,7 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvVertexByCoordinates'],
             ['SvVertexCoordinates'],
+            ['SvVertexDistance'],
             ['SvVertexEnclosingCell'],
             ['SvVertexNearestVertex'],
         ])
@@ -266,12 +275,13 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvEdgeByStartVertexEndVertex'],
-            ['SvEdgeStartVertex'],
-            ['SvEdgeEndVertex'],
-            ['SvEdgeVertexAtParameter'],
             ['SvEdgeAdjacentEdges'],
+            ['SvEdgeByStartVertexEndVertex'],
+            ['SvEdgeEndVertex'],
+            ['SvEdgeLength'],
             ['SvEdgeSharedVertices'],
+            ['SvEdgeStartVertex'],
+            ['SvEdgeVertexAtParameter'],
         ])
 
 make_class('TPSubcategoryEdge', 'Topologic @ Edge')
@@ -302,10 +312,16 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceByEdges'],
             ['SvFaceByWire'],
             ['SvFaceByWires'],
+            ['SvFaceByVertices'],
+            ['SvFaceExternalBoundary'],
             ['SvFaceInternalBoundaries'],
             ['SvFaceInternalVertex'],
+            ['SvFaceIsInside'],
             ['SvFaceNormalAtParameters'],
+            ['SvFaceParametersAtVertex'],
             ['SvFaceTriangulate'],
+            ['SvFaceTrimByWire'],
+            ['SvFaceVertexAtParameters'],
         ])
 
 make_class('TPSubcategoryFace', 'Topologic @ Face')
@@ -318,6 +334,7 @@ class NODEVIEW_MT_AddTPSubcategoryShell(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvShellByFaces'],
+            ['SvShellIsClosed'],
         ])
 
 make_class('TPSubcategoryShell', 'Topologic @ Shell')

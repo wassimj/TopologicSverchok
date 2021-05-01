@@ -8,6 +8,30 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 import cppyy
 import time
 
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
+def matchLengths(list):
+	maxLength = len(list[0])
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength > maxLength:
+			maxLength = newLength
+	for anItem in list:
+		if (len(anItem) > 0):
+			itemToAppend = anItem[-1]
+		else:
+			itemToAppend = None
+		for i in range(len(anItem), maxLength):
+			anItem.append(itemToAppend)
+	return list
+
 def classByType(argument):
 	switcher = {
 		1: Vertex,

@@ -34,7 +34,7 @@ class SvCellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Cell'].sv_set([])
+			self.outputs['Shell'].sv_set([])
 			return
 		inputs = self.inputs['Cell'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)

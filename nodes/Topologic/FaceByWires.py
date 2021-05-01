@@ -9,14 +9,9 @@ import cppyy
 def processItem(externalBoundary, internalBoundaries):
 	stl_ib = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	for ib in iinternalBoundaries:
-		print(ib)
 		if ib:
-			print("Pushing back Internal Boundary")
 			stl_ib.push_back(ib)
-	print(internalBoundaries)
-	print(externalBoundary)
 	face = topologic.Face.ByExternalInternalBoundaries(externalBoundary, stl_ib)
-	print(face)
 	return face
 
 def recur(input):
@@ -62,7 +57,6 @@ class SvFaceByWires(bpy.types.Node, SverchCustomTreeNode):
 				raise Exception("Error: Internal Boundaries must be list of lists and match the number of external boundaries [exBoundary1, exBoundary2] should be matched with [[intBoundary1-1, inBoundary1-2], [intBoundary2-1, intBoundary2-2, intBoundary2-3]]")
 		outputs = []
 		for i in range(len(externalBoundaries)):
-			print("Calling recur")
 			outputs.append(processItem(externalBoundaries[i], internalBoundaries[i]))
 		self.outputs['Face'].sv_set(outputs)
 

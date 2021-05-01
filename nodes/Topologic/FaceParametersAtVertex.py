@@ -1,10 +1,14 @@
 import bpy
-from bpy.props import StringProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary, Aperture
 import cppyy
+import time
+import ctypes
+
 def flatten(element):
 	returnList = []
 	if isinstance(element, list) == True:
@@ -46,48 +50,49 @@ def fixTopologyClass(topology):
   return topology
 
 def processItem(item):
-	v = item[0]
-	t = item[1]
-	dist = None
-	try:
-		dist = topologic.VertexUtility.Distance(v, t)
-	except:
-		dist = None
-	return dist
+	face = item[0]
+	vertex = item[1]
+	u = ctypes.c_double() 
+	v = ctypes.c_double() 
+	print(face)
+	print(vertex)
+	_ = topologic.FaceUtility.ParametersAtVertex(face, vertex, u, v)
+	print([u.value, v.value])
+	return [u.value, v.value]
 
-class SvVertexDistance(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceParametersAtVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the distance between the input Vertex and the input Topology
+	Tooltip: Outputs the UV parameters of the input Vertex within the input Face    
 	"""
-	bl_idname = 'SvVertexDistance'
-	bl_label = 'Vertex.Distance'
+	bl_idname = 'SvFaceParametersAtVertex'
+	bl_label = 'Face.ParametersAtVertex'
 
 	def sv_init(self, context):
+		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Topology')
-		self.outputs.new('SvStringsSocket', 'Distance')
+		self.outputs.new('SvStringsSocket', 'UV').prop_name = 'U'
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Edge'].sv_set([])
+			self.outputs['UV'].sv_set([])
 			return
+		faceList = self.inputs['Face'].sv_get(deepcopy=False)
 		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
 
+		faceList = flatten(faceList)
 		vertexList = flatten(vertexList)
-		topologyList = flatten(topologyList)
-		matchLengths([vertexList, topologyList])
-		inputs = zip(vertexList, topologyList)
+		matchLengths([faceList, vertexList])
+		inputs = zip(faceList, vertexList)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Distance'].sv_set(outputs)
+		self.outputs['UV'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexDistance)
+	bpy.utils.register_class(SvFaceParametersAtVertex)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexDistance)
+	bpy.utils.unregister_class(SvFaceParametersAtVertex)

@@ -16,34 +16,34 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return topologic.FaceUtility.Area(item)
+	return topologic.EdgeUtility.Length(item)
 		
-class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeLength(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the area of the input Face    
+	Tooltip: Outputs the length of the input Edge    
 	"""
-	bl_idname = 'SvFaceArea'
-	bl_label = 'Face.Area'
+	bl_idname = 'SvEdgeLength'
+	bl_label = 'Edge.Length'
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Face')
-		self.outputs.new('SvStringsSocket', 'Area')
+		self.inputs.new('SvStringsSocket', 'Edge')
+		self.outputs.new('SvStringsSocket', 'Length')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Face'].sv_set([])
+			self.outputs['Edge'].sv_set([])
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=False)
+		faceList = self.inputs['Edge'].sv_get(deepcopy=False)
 		faceList = flatten(faceList)
 		outputs = []
 		for face in faceList:
 			outputs.append(processItem(face))
-		self.outputs['Area'].sv_set(outputs)
+		self.outputs['Length'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvFaceArea)
+	bpy.utils.register_class(SvEdgeLength)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceArea)
+	bpy.utils.unregister_class(SvEdgeLength)

@@ -6,6 +6,7 @@ from sverchok.data_structure import updateNode
 import topologic
 import cppyy
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
 	if isinstance(element, list) == True:
@@ -16,34 +17,34 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return topologic.FaceUtility.Area(item)
-		
-class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
+	return item.ExternalBoundary()
+
+class SvFaceExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the area of the input Face    
+	Tooltip: Outputs the external boundary (Wire) of the input Face    
 	"""
-	bl_idname = 'SvFaceArea'
-	bl_label = 'Face.Area'
+	bl_idname = 'SvFaceExternalBoundary'
+	bl_label = 'Face.ExternalBoundary'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
-		self.outputs.new('SvStringsSocket', 'Area')
+		self.outputs.new('SvStringsSocket', 'Wire')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Face'].sv_set([])
+			self.outputs['Wire'].sv_set([])
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		faceList = flatten(faceList)
+		inputs = self.inputs['Face'].sv_get(deepcopy=False)
+		inputs = flatten(inputs)
 		outputs = []
-		for face in faceList:
-			outputs.append(processItem(face))
-		self.outputs['Area'].sv_set(outputs)
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
+		self.outputs['Wire'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvFaceArea)
+	bpy.utils.register_class(SvFaceExternalBoundary)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceArea)
+	bpy.utils.unregister_class(SvFaceExternalBoundary)

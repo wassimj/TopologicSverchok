@@ -20,20 +20,20 @@ def processItem(item):
 	vertex = item[1]
 	tolerance = item[2]
 	status = False
-	if topology.Type() == topologic.Cell.Type():
-		status = (topologic.CellUtility.Contains(topology, vertex, tolerance) == 0)
+	if topology.Type() == topologic.Face.Type():
+		status = (topologic.FaceUtility.IsInside(topology, vertex, tolerance))
 	return status
 
-class SvCellIsInside(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceIsInside(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Returns True if the input Vertex is inside the input Cell. Returns False otherwise
+	Tooltip: Outputs True if the input Vertex is inside the input Face. Returns False otherwise
 	"""
-	bl_idname = 'SvCellIsInside'
-	bl_label = 'Cell.IsInside'
+	bl_idname = 'SvFaceIsInside'
+	bl_label = 'Face.IsInside'
 	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Cell')
+		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Vertex')
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Is Inside')
@@ -41,7 +41,7 @@ class SvCellIsInside(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		cells = self.inputs['Cell'].sv_get(deepcopy=False)
+		cells = self.inputs['Face'].sv_get(deepcopy=False)
 		cells = flatten(cells)
 		vertices = self.inputs['Vertex'].sv_get(deepcopy=False)
 		vertices = flatten(vertices)
@@ -60,7 +60,7 @@ class SvCellIsInside(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Is Inside'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellIsInside)
+	bpy.utils.register_class(SvFaceIsInside)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellIsInside)
+	bpy.utils.unregister_class(SvFaceIsInside)

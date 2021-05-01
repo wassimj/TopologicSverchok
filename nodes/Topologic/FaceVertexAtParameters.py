@@ -1,7 +1,7 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
+from sverchok.data_structure import updateNode
 
 import topologic
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -90,69 +90,66 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
-	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
-	except:
-		vert = None
-	return vert
+	face = item[0]
+	u = item[1]
+	v = item[2]
+	vertex = None
+	vertex = topologic.FaceUtility.VertexAtParameters(face, u, v)
+	return vertex
 
 lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
 
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceVertexAtParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Outputs the vertex of the input Face at the input UV parameters    
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	bl_idname = 'SvFaceVertexAtParameters'
+	bl_label = 'Face.VertexAtParameters'
+	U: FloatProperty(name="U", default=0.5, precision=4, update=updateNode)
+	V: FloatProperty(name="V",  default=0.5, precision=4, update=updateNode)
 	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
+		self.inputs.new('SvStringsSocket', 'Face')
+		self.inputs.new('SvStringsSocket', 'U').prop_name = 'U'
+		self.inputs.new('SvStringsSocket', 'V').prop_name = 'V'
 		self.outputs.new('SvStringsSocket', 'Vertex')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Lacing",text="")
-		layout.separator()
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Vertex'].sv_set([])
+			return
+		faceList = self.inputs['Face'].sv_get(deepcopy=True)
+		faceList = flatten(faceList)
+		uList = self.inputs['U'].sv_get(deepcopy=True)
+		uList = flatten(uList)
+		vList = self.inputs['V'].sv_get(deepcopy=True)
+		vList = flatten(vList)
 		inputs = []
 		if ((self.Lacing) == "Trim"):
-			inputs = trim([xList, yList, zList])
+			inputs = trim([faceList, uList, vList])
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Iterate"):
-			inputs = iterate([xList, yList, zList])
+		if ((self.Lacing) == "Iterate"):
+			inputs = iterate([faceList, uList, vList])
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Repeat"):
-			inputs = repeat([xList, yList, zList])
+		if ((self.Lacing) == "Repeat"):
+			inputs = repeat([faceList, uList, vList])
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Lace"):
-			inputs = list(lace([xList, yList, zList]))
+		if ((self.Lacing) == "Lace"):
+			inputs = list(lace([faceList, uList, vList]))
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+	bpy.utils.register_class(SvFaceVertexAtParameters)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+	bpy.utils.unregister_class(SvFaceVertexAtParameters)

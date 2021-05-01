@@ -38,7 +38,7 @@ class SvCellComplexInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Cell'].sv_set([])
+			self.outputs['CellComplex'].sv_set([])
 			return
 		inputs = self.inputs['CellComplex'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)
