@@ -47,29 +47,32 @@ def wireByVertices(vList):
 	edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
-def processItem(item, originLocation):
-	origin = item[0]
+def processItem(item):
+	edge = item[0]
 	radius = item[1]
-	height = item[2]
-	sides = item[3]
+	sides = item[2]
+
+	origin = edge.StartVertex()
+	x1 = origin.X()
+	y1 = origin.Y()
+	z1 = origin.Z()
+	x2 = edge.EndVertex().X()
+	y2 = edge.EndVertex().Y()
+	z2 = edge.EndVertex().Z()
+	dx = x2 - x1
+	dy = y2 - y1
+	dz = z2 - z1    
+	dist = math.sqrt(dx**2 + dy**2 + dz**2)
+
 	baseV = []
 	topV = []
-	xOffset = 0
-	yOffset = 0
-	zOffset = 0
-	if originLocation == "Center":
-		zOffset = -height*0.5
-	elif originLocation == "LowerLeft":
-		xOffset = radius
-		yOffset = radius
-
 	for i in range(sides):
 		angle = math.radians(360/sides)*i
-		x = math.sin(angle)*radius + origin.X() + xOffset
-		y = math.cos(angle)*radius + origin.Y() + yOffset
-		z = origin.Z() + zOffset
+		x = math.sin(angle)*radius + origin.X()
+		y = math.cos(angle)*radius + origin.Y()
+		z = origin.Z()
 		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
-		topV.append(topologic.Vertex.ByCoordinates(x,y,z+height))
+		topV.append(topologic.Vertex.ByCoordinates(x,y,z+dist))
 
 	baseWire = wireByVertices(baseV)
 	topWire = wireByVertices(topV)
@@ -77,16 +80,6 @@ def processItem(item, originLocation):
 	wires.push_back(baseWire)
 	wires.push_back(topWire)
 	cyl = topologic.CellUtility.ByLoft(wires)
-	x1 = origin.X()
-	y1 = origin.Y()
-	z1 = origin.Z()
-	x2 = origin.X() + dirX
-	y2 = origin.Y() + dirY
-	z2 = origin.Z() + dirZ
-	dx = x2 - x1
-	dy = y2 - y1
-	dz = z2 - z1    
-	dist = math.sqrt(dx**2 + dy**2 + dz**2)
 	phi = math.degrees(math.atan2(dy, dx)) # Rotation around Y-Axis
 	if dist < 0.0001:
 		theta = 0
@@ -94,7 +87,7 @@ def processItem(item, originLocation):
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta))
 	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi))
-	return topologic.CellUtility.ByLoft(wires)
+	return cyl
 
 def matchLengths(list):
 	maxLength = len(list[0])
@@ -111,24 +104,19 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
-
-class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
+class SvCellPipe(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Cell from the input cylinder parameters    
+	Tooltip: Creates a Pipe (Cell) along the input Edge    
 	"""
-	bl_idname = 'SvCellByCylinder'
-	bl_label = 'Cell.ByCylinder'
+	bl_idname = 'SvCellPipe'
+	bl_label = 'Cell.Pipe'
 	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
-	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
 	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
-	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Bottom", items=originLocations, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Origin')
+		self.inputs.new('SvStringsSocket', 'Edge')
 		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
-		self.inputs.new('SvStringsSocket', 'Height').prop_name = 'Height'
 		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
@@ -138,22 +126,18 @@ class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=False)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=False)[0]
-		heightList = self.inputs['Height'].sv_get(deepcopy=False)[0]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=False)[0]
-		matchLengths([originList, radiusList, heightList, sidesList])
-		newInputs = zip(originList, radiusList, heightList, sidesList)
+		edgeList = self.inputs['Edge'].sv_get(deepcopy=True)
+		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)[0]
+		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)[0]
+		matchLengths([edgeList, radiusList, sidesList])
+		newInputs = zip(edgeList, radiusList, sidesList)
 		outputs = []
 		for anInput in newInputs:
-			outputs.append(processItem(anInput, self.originLocation))
+			outputs.append(processItem(anInput))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellByCylinder)
+	bpy.utils.register_class(SvCellPipe)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellByCylinder)
+	bpy.utils.unregister_class(SvCellPipe)

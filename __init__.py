@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 0),
+    "version": (0, 5, 4, 1),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -117,8 +117,7 @@ def nodes_index():
 				("Topologic.FaceVertexAtParameters", "SvFaceVertexAtParameters"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
 				("Topologic.ShellIsClosed", "SvShellIsClosed"),
-                ("Topologic.CellByCuboid", "SvCellByCuboid"),
-                ("Topologic.CellByCylinder", "SvCellByCylinder"),
+                ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellByLoft", "SvCellByLoft"),
                 ("Topologic.CellByShell", "SvCellByShell"),
@@ -127,6 +126,8 @@ def nodes_index():
                 ("Topologic.CellInternalBoundaries", "SvCellInternalBoundaries"),
                 ("Topologic.CellInternalVertex", "SvCellInternalVertex"),
                 ("Topologic.CellIsInside", "SvCellIsInside"),
+                ("Topologic.CellPipe", "SvCellPipe"),
+                ("Topologic.CellPrism", "SvCellPrism"),
                 ("Topologic.CellRemoveCoplanarFaces", "SvCellRemoveCoplanarFaces"),
                 ("Topologic.CellVolume", "SvCellVolume"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
@@ -136,6 +137,7 @@ def nodes_index():
 				("Topologic.CellComplexInternalBoundaries", "SvCellComplexInternalBoundaries"),
 				("Topologic.CellComplexNonManifoldFaces", "SvCellComplexNonManifoldFaces"),
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
+                ("Topologic.ContextByTopologyParameters", "SvContextByTopologyParameters"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByGeometryNew", "SvTopologyByGeometryNew"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
@@ -347,8 +349,7 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvCellByFaces'],
-            ['SvCellByCuboid'],
-            ['SvCellByCylinder'],
+            ['SvCellCylinder'],
             ['SvCellByLoft'],
             ['SvCellByShell'],
             ['SvCellByThickenedFace'],
@@ -356,6 +357,8 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellInternalBoundaries'],
             ['SvCellInternalVertex'],
             ['SvCellIsInside'],
+            ['SvCellPipe'],
+            ['SvCellPrism'],
             ['SvCellRemoveCoplanarFaces'],
             ['SvCellVolume'],
         ])
@@ -420,6 +423,18 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
 
 make_class('TPSubcategoryDictionary', 'Topologic @ Dictionary')
 
+class NODEVIEW_MT_AddTPSubcategoryContext(bpy.types.Menu):
+    bl_label = "TPSubcategoryContext"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryContext'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvContextByTopologyParameters'],
+        ])
+
+make_class('TPSubcategoryContext', 'Topologic @ Context')
+
 class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
     bl_label = "TPSubcategoryTopology"
     bl_idname = 'NODEVIEW_MT_AddTPSubcategoryTopology'
@@ -434,7 +449,6 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyBoolean'],
             ['SvTopologyBoundingBox'],
             ['SvTopologyByGeometry'],
-            ['SvTopologyByGeometryNew'],
             ['SvTopologyByImportedBRep'],
 			['SvTopologyByString'],
             ['SvTopologyCenterOfMass'],
@@ -477,8 +491,9 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Cell'],
             ['@ CellComplex'],
             ['@ Cluster'],
+            ['@ Context'],
+			['@ Dictionary'],
             ['@ Graph'],
-            ['@ Dictionary'],
             ['@ Topology'],
             ['@ About'],
         ])
@@ -503,8 +518,9 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCluster)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
@@ -533,8 +549,9 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCluster)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()

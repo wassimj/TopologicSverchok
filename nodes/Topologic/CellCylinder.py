@@ -113,16 +113,19 @@ def matchLengths(list):
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
 
-class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
+class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Cell from the input cylinder parameters    
+	Tooltip: Creates a Cylinder (Cell) from the input parameters    
 	"""
-	bl_idname = 'SvCellByCylinder'
-	bl_label = 'Cell.ByCylinder'
+	bl_idname = 'SvCellCylinder'
+	bl_label = 'Cell.Cylinder'
 	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
 	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
+	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
+	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
+	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Bottom", items=originLocations, update=updateNode)
 
 	def sv_init(self, context):
@@ -130,6 +133,9 @@ class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
 		self.inputs.new('SvStringsSocket', 'Height').prop_name = 'Height'
 		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
+		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
+		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
+		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def draw_buttons(self, context, layout):
@@ -141,19 +147,22 @@ class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
 		if not (self.inputs['Origin'].is_linked):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=False)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=False)[0]
-		heightList = self.inputs['Height'].sv_get(deepcopy=False)[0]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=False)[0]
-		matchLengths([originList, radiusList, heightList, sidesList])
-		newInputs = zip(originList, radiusList, heightList, sidesList)
+			originList = self.inputs['Origin'].sv_get(deepcopy=True)
+		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)[0]
+		heightList = self.inputs['Height'].sv_get(deepcopy=True)[0]
+		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)[0]
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
+		matchLengths([originList, radiusList, heightList, sidesList, dirXList, dirYList, dirZList])
+		newInputs = zip(originList, radiusList, heightList, sidesList, dirXList, dirYList, dirZList)
 		outputs = []
 		for anInput in newInputs:
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellByCylinder)
+	bpy.utils.register_class(SvCellCylinder)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellByCylinder)
+	bpy.utils.unregister_class(SvCellCylinder)

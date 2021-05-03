@@ -49,9 +49,12 @@ def wireByVertices(vList):
 
 def processItem(item, originLocation):
 	origin = item[0]
-	radius = item[1]
-	height = item[2]
-	sides = item[3]
+	width = item[1]
+	length = item[2]
+	height = item[3]
+	dirX = item[4]
+	dirY = item[5]
+	dirZ = item[6]
 	baseV = []
 	topV = []
 	xOffset = 0
@@ -60,23 +63,24 @@ def processItem(item, originLocation):
 	if originLocation == "Center":
 		zOffset = -height*0.5
 	elif originLocation == "LowerLeft":
-		xOffset = radius
-		yOffset = radius
+		xOffset = width*0.5
+		yOffset = length*0.5
 
-	for i in range(sides):
-		angle = math.radians(360/sides)*i
-		x = math.sin(angle)*radius + origin.X() + xOffset
-		y = math.cos(angle)*radius + origin.Y() + yOffset
-		z = origin.Z() + zOffset
-		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
-		topV.append(topologic.Vertex.ByCoordinates(x,y,z+height))
+	vb1 = topologic.Vertex.ByCoordinates(origin.X()-width*0.5+xOffset,origin.Y()-length*0.5+yOffset,origin.Z()+zOffset)
+	vb2 = topologic.Vertex.ByCoordinates(origin.X()+width*0.5+xOffset,origin.Y()-length*0.5+yOffset,origin.Z()+zOffset)
+	vb3 = topologic.Vertex.ByCoordinates(origin.X()+width*0.5+xOffset,origin.Y()+length*0.5+yOffset,origin.Z()+zOffset)
+	vb4 = topologic.Vertex.ByCoordinates(origin.X()-width*0.5+xOffset,origin.Y()+length*0.5+yOffset,origin.Z()+zOffset)
 
-	baseWire = wireByVertices(baseV)
-	topWire = wireByVertices(topV)
+	vt1 = topologic.Vertex.ByCoordinates(origin.X()-width*0.5+xOffset,origin.Y()-length*0.5+yOffset,origin.Z()+height+zOffset)
+	vt2 = topologic.Vertex.ByCoordinates(origin.X()+width*0.5+xOffset,origin.Y()-length*0.5+yOffset,origin.Z()+height+zOffset)
+	vt3 = topologic.Vertex.ByCoordinates(origin.X()+width*0.5+xOffset,origin.Y()+length*0.5+yOffset,origin.Z()+height+zOffset)
+	vt4 = topologic.Vertex.ByCoordinates(origin.X()-width*0.5+xOffset,origin.Y()+length*0.5+yOffset,origin.Z()+height+zOffset)
+	baseWire = wireByVertices([vb1, vb2, vb3, vb4])
+	topWire = wireByVertices([vt1, vt2, vt3, vt4])
 	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	wires.push_back(baseWire)
 	wires.push_back(topWire)
-	cyl = topologic.CellUtility.ByLoft(wires)
+	prism =  topologic.CellUtility.ByLoft(wires)
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -92,9 +96,10 @@ def processItem(item, originLocation):
 		theta = 0
 	else:
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
-	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta))
-	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi))
-	return topologic.CellUtility.ByLoft(wires)
+	prism = fixTopologyClass(topologic.TopologyUtility.Rotate(prism, origin, 0, 1, 0, theta))
+	prism = fixTopologyClass(topologic.TopologyUtility.Rotate(prism, origin, 0, 0, 1, phi))
+	return prism
+
 
 def matchLengths(list):
 	maxLength = len(list[0])
@@ -113,23 +118,30 @@ def matchLengths(list):
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
 
-class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
+class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Cell from the input cylinder parameters    
+	Tooltip: Creates a Prism (Cell) from the input cuboid parameters    
 	"""
-	bl_idname = 'SvCellByCylinder'
-	bl_label = 'Cell.ByCylinder'
-	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
+	bl_idname = 'SvCellPrism'
+	bl_label = 'Cell.Prism'
+	Width: FloatProperty(name="Width", default=1, min=0.0001, precision=4, update=updateNode)
+	Length: FloatProperty(name="Length", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
-	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
+	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
+	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
+	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
+
 	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Bottom", items=originLocations, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
+		self.inputs.new('SvStringsSocket', 'Width').prop_name = 'Width'
+		self.inputs.new('SvStringsSocket', 'Length').prop_name = 'Length'
 		self.inputs.new('SvStringsSocket', 'Height').prop_name = 'Height'
-		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
+		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
+		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
+		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def draw_buttons(self, context, layout):
@@ -141,19 +153,22 @@ class SvCellByCylinder(bpy.types.Node, SverchCustomTreeNode):
 		if not (self.inputs['Origin'].is_linked):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=False)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=False)[0]
-		heightList = self.inputs['Height'].sv_get(deepcopy=False)[0]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=False)[0]
-		matchLengths([originList, radiusList, heightList, sidesList])
-		newInputs = zip(originList, radiusList, heightList, sidesList)
+			originList = self.inputs['Origin'].sv_get(deepcopy=True)
+		widthList = self.inputs['Width'].sv_get(deepcopy=True)[0]
+		lengthList = self.inputs['Length'].sv_get(deepcopy=True)[0]
+		heightList = self.inputs['Height'].sv_get(deepcopy=True)[0]
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
+		matchLengths([originList, widthList, lengthList, heightList, dirXList, dirYList, dirZList])
+		newInputs = zip(originList, widthList, lengthList, heightList, dirXList, dirYList, dirZList)
 		outputs = []
 		for anInput in newInputs:
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellByCylinder)
+	bpy.utils.register_class(SvCellPrism)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellByCylinder)
+	bpy.utils.unregister_class(SvCellPrism)
