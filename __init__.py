@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 1),
+    "version": (0, 5, 4, 2),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -34,19 +34,19 @@ from sys import platform
 from os.path import expanduser
 home = expanduser("~")
 if platform == 'linux' or platform == 'linux2' or platform == 'darwin':
-  conda = '/opt/anaconda3/envs'
+  conda = home+'/opt/anaconda3/envs' # Change this to match your anaconda installation folder
   sitePackages = '/lib/site-packages'
-  blenderName = '/'+[name for name in os.listdir(home+conda) if name.startswith('Blender')][0]
-  topologicEggName = '/'+[name for name in os.listdir(home+conda+blenderName+sitePackages) if name.startswith('topologic')][0]
-  sys.path.append(home+conda+blenderName+sitePackages)
-  sys.path.append(home+conda+blenderName+sitePackages+topologicEggName)
+  blenderName = '/'+[name for name in os.listdir(conda) if name.startswith('Blender')][0]
+  topologicEggName = '/'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
+  sys.path.append(blenderName+sitePackages)
+  sys.path.append(blenderName+sitePackages+topologicEggName)
 elif platform == 'win32':
-  conda = '\\.conda\\envs'
+  conda = 'C:\\ProgramData\\anaconda3\\envs' # Change this to match your anaconda installation folder
   sitePackages = '\\lib\\site-packages'
-  blenderName = '\\'+[name for name in os.listdir(home+conda) if name.startswith('Blender')][0]
-  topologicEggName = '\\'+[name for name in os.listdir(home+conda+blenderName+sitePackages) if name.startswith('topologic')][0]
-  sys.path.append(home+conda+blenderName+sitePackages)
-  sys.path.append(home+conda+blenderName+sitePackages+topologicEggName)
+  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith('Blender')][0]
+  topologicEggName = '\\'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
+  sys.path.append(conda+blenderName+sitePackages)
+  sys.path.append(conda+blenderName+sitePackages+topologicEggName)
 
 import importlib
 
@@ -90,6 +90,9 @@ def nodes_index():
 				("Topologic.VertexDistance", "SvVertexDistance"),
 				("Topologic.VertexEnclosingCell", "SvVertexEnclosingCell"),
 				("Topologic.VertexNearestVertex", "SvVertexNearestVertex"),
+				("Topologic.VertexAdjacentEdges", "SvVertexAdjacentEdges"),
+                ("Topologic.EdgeAdjacentFaces", "SvEdgeAdjacentFaces"),
+                ("Topologic.EdgeAdjacentWires", "SvEdgeAdjacentWires"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
@@ -97,9 +100,16 @@ def nodes_index():
                 ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
                 ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
                 ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
+                ("Topologic.WireAdjacentCells", "SvWireAdjacentCells"),
+                ("Topologic.WireAdjacentShells", "SvWireAdjacentShells"),
                 ("Topologic.WireByEdges", "SvWireByEdges"),
+				("Topologic.WireCircle", "SvWireCircle"),
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
+                ("Topologic.WireRectangle", "SvWireRectangle"),
+                ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.WireRemoveCollinearEdges", "SvWireRemoveCollinearEdges"),
+                ("Topologic.FaceAdjacentCells", "SvFaceAdjacentCells"),
+                ("Topologic.FaceAdjacentShells", "SvFaceAdjacentShells"),
                 ("Topologic.FaceArea", "SvFaceArea"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
@@ -120,6 +130,7 @@ def nodes_index():
                 ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellByLoft", "SvCellByLoft"),
+                ("Topologic.CellByLoft-Old", "SvCellByLoftOld"),
                 ("Topologic.CellByShell", "SvCellByShell"),
 				("Topologic.CellByThickenedFace", "SvCellByThickenedFace"),
                 ("Topologic.CellExternalBoundary", "SvCellExternalBoundary"),
@@ -138,6 +149,7 @@ def nodes_index():
 				("Topologic.CellComplexNonManifoldFaces", "SvCellComplexNonManifoldFaces"),
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
                 ("Topologic.ContextByTopologyParameters", "SvContextByTopologyParameters"),
+                ("Topologic.ContextTopology", "SvContextTopology"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByGeometryNew", "SvTopologyByGeometryNew"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
@@ -153,6 +165,7 @@ def nodes_index():
                 ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
                 ("Topologic.TopologyRotate", "SvTopologyRotate"),
                 ("Topologic.TopologyScale", "SvTopologyScale"),
+                ("Topologic.TopologyPlace", "SvTopologyPlace"),
                 ("Topologic.TopologyExplode", "SvTopologyExplode"),
                 ("Topologic.TopologyAddContents", "SvTopologyAddContents"),
                 ("Topologic.TopologyContents", "SvTopologyContents"),
@@ -261,6 +274,7 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvVertexAdjacentEdges'],
             ['SvVertexByCoordinates'],
             ['SvVertexCoordinates'],
             ['SvVertexDistance'],
@@ -295,8 +309,13 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvWireAdjacentCells'],
+            ['SvWireAdjacentShells'],
             ['SvWireByEdges'],
+            ['SvWireCircle'],
             ['SvWireIsClosed'],
+            ['SvWireRectangle'],
+            ['SvWireStar'],
             ['SvWireRemoveCollinearEdges'],
         ])
 
@@ -309,6 +328,8 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvFaceAdjacentCells'],
+            ['SvFaceAdjacentShells'],
             ['SvFaceAddAperture'],
             ['SvFaceArea'],
             ['SvFaceByEdges'],
@@ -351,6 +372,7 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellByFaces'],
             ['SvCellCylinder'],
             ['SvCellByLoft'],
+            ['SvCellByLoftOld'],
             ['SvCellByShell'],
             ['SvCellByThickenedFace'],
             ['SvCellExternalBoundary'],
@@ -431,6 +453,7 @@ class NODEVIEW_MT_AddTPSubcategoryContext(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvContextByTopologyParameters'],
+            ['SvContextTopology'],
         ])
 
 make_class('TPSubcategoryContext', 'Topologic @ Context')
@@ -463,6 +486,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyExportToBRep'],
             ['SvTopologyGeometry'],
             ['SvTopologyIsSame'],
+            ['SvTopologyPlace'],
             ['SvTopologyRotate'],
             ['SvTopologyScale'],
             ['SvTopologySelfMerge'],

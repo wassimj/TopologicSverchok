@@ -51,6 +51,10 @@ def processItem(item):
 	edge = item[0]
 	radius = item[1]
 	sides = item[2]
+	startOffset = item[3]
+	endOffset = item[4]
+	endcapA = item[5]
+	endcapB = item[6]
 
 	origin = edge.StartVertex()
 	x1 = origin.X()
@@ -71,8 +75,8 @@ def processItem(item):
 		x = math.sin(angle)*radius + origin.X()
 		y = math.cos(angle)*radius + origin.Y()
 		z = origin.Z()
-		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
-		topV.append(topologic.Vertex.ByCoordinates(x,y,z+dist))
+		baseV.append(topologic.Vertex.ByCoordinates(x,y,z+startOffset))
+		topV.append(topologic.Vertex.ByCoordinates(x,y,z+dist-endOffset))
 
 	baseWire = wireByVertices(baseV)
 	topWire = wireByVertices(topV)
@@ -87,7 +91,37 @@ def processItem(item):
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta))
 	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi))
-	return cyl
+	zzz = topologic.Vertex.ByCoordinates(0,0,0)
+	returnList = [cyl]
+	if endcapA:
+		endcapA = topologic.Topology.DeepCopy(endcapA)
+		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 1, 0, theta)
+		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 0, 1, phi)
+		endcapA = fixTopologyClass(topologic.TopologyUtility.Translate(endcapA, origin.X(), origin.Y(), origin.Z()))
+		returnList.append(endcapA)
+	if endcapB:
+		origin = edge.EndVertex()
+		x1 = origin.X()
+		y1 = origin.Y()
+		z1 = origin.Z()
+		x2 = edge.StartVertex().X()
+		y2 = edge.StartVertex().Y()
+		z2 = edge.StartVertex().Z()
+		dx = x2 - x1
+		dy = y2 - y1
+		dz = z2 - z1    
+		dist = math.sqrt(dx**2 + dy**2 + dz**2)
+		phi = math.degrees(math.atan2(dy, dx)) # Rotation around Y-Axis
+		if dist < 0.0001:
+			theta = 0
+		else:
+			theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
+		endcapB = topologic.Topology.DeepCopy(endcapB)
+		endcapB = topologic.TopologyUtility.Rotate(endcapB, zzz, 0, 1, 0, theta)
+		endcapB = topologic.TopologyUtility.Rotate(endcapB, zzz, 0, 0, 1, phi)
+		endcapB = fixTopologyClass(topologic.TopologyUtility.Translate(endcapB, origin.X(), origin.Y(), origin.Z()))
+		returnList.append(endcapB)
+	return returnList
 
 def matchLengths(list):
 	maxLength = len(list[0])
@@ -112,16 +146,21 @@ class SvCellPipe(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvCellPipe'
 	bl_label = 'Cell.Pipe'
 	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
+	StartOffset: FloatProperty(name="StartOffset", default=0, min=0, precision=4, update=updateNode)
+	EndOffset: FloatProperty(name="EndOffset", default=0, min=0, precision=4, update=updateNode)
+
 	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edge')
 		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
 		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
-		self.outputs.new('SvStringsSocket', 'Cell')
+		self.inputs.new('SvStringsSocket', 'Start Offset').prop_name = 'StartOffset'
+		self.inputs.new('SvStringsSocket', 'End Offset').prop_name = 'EndOffset'
+		self.inputs.new('SvStringsSocket', 'Endcap A')
+		self.inputs.new('SvStringsSocket', 'Endcap B')
 
-	def draw_buttons(self, context, layout):
-		layout.prop(self, "originLocation",text="")
+		self.outputs.new('SvStringsSocket', 'Pipe')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -129,12 +168,23 @@ class SvCellPipe(bpy.types.Node, SverchCustomTreeNode):
 		edgeList = self.inputs['Edge'].sv_get(deepcopy=True)
 		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)[0]
 		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)[0]
-		matchLengths([edgeList, radiusList, sidesList])
-		newInputs = zip(edgeList, radiusList, sidesList)
+		startOffsetList = self.inputs['Start Offset'].sv_get(deepcopy=True)[0]
+		endOffsetList = self.inputs['End Offset'].sv_get(deepcopy=True)[0]
+		if self.inputs['Endcap A'].is_linked:
+			endcapAList = self.inputs['Endcap A'].sv_get(deepcopy=True)
+		else:
+			endcapAList = [None]
+		if self.inputs['Endcap B'].is_linked:
+			endcapBList = self.inputs['Endcap B'].sv_get(deepcopy=True)
+		else:
+			endcapBList = [None]
+
+		matchLengths([edgeList, radiusList, sidesList, startOffsetList, endOffsetList, endcapAList, endcapBList])
+		newInputs = zip(edgeList, radiusList, sidesList, startOffsetList, endOffsetList, endcapAList, endcapBList)
 		outputs = []
 		for anInput in newInputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Cell'].sv_set(outputs)
+		self.outputs['Pipe'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvCellPipe)

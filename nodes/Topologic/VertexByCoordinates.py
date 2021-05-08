@@ -71,12 +71,12 @@ def trim(list):
 	return returnList
 
 # Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def lace(ar_list):
+def interlace(ar_list):
     if not ar_list:
         yield []
     else:
         for a in ar_list[0]:
-            for prod in lace(ar_list[1:]):
+            for prod in interlace(ar_list[1:]):
                 yield [a,]+prod
 
 def transposeList(l):
@@ -100,7 +100,7 @@ def processItem(item):
 		vert = None
 	return vert
 
-lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -112,7 +112,7 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
@@ -122,7 +122,7 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Vertex')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Lacing",text="")
+		layout.prop(self, "Replication",text="")
 		layout.separator()
 
 	def process(self):
@@ -134,18 +134,18 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		xList = flatten(xList)
 		yList = flatten(yList)
 		zList = flatten(zList)
-		inputs = []
-		if ((self.Lacing) == "Trim"):
-			inputs = trim([xList, yList, zList])
+		inputs = [xList, yList, zList]
+		if ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Iterate"):
-			inputs = iterate([xList, yList, zList])
+		elif ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Repeat"):
-			inputs = repeat([xList, yList, zList])
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Lace"):
-			inputs = list(lace([xList, yList, zList]))
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace([xList, yList, zList]))
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))

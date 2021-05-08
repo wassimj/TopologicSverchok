@@ -1,11 +1,12 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
+import time
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -91,79 +92,40 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
-	topology = item[0]
-	origin = item[1]
-	x = item[2]
-	y = item[3]
-	z = item[4]
-	newTopology = None
-	try:
-		newTopology = fixTopologyClass(topologic.TopologyUtility.Scale(topology, origin, x, y, z))
-	except:
-		print("ERROR: (Topologic>TopologyUtility.Rotate) operation failed.")
-		newTopology = None
-	return newTopology
+	edge = item[0]
+	parent = item[1]
+	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	_ = topologic.EdgeUtility.AdjacentWires(edge, parent, wires)
+	return list(wires)
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeAdjacentWires(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Scales the input Topology based on the input origin, and X, Y, Z scale factors    
+	Tooltip: Outputs the adjacent Wires of the input Edge
 	"""
-	bl_idname = 'SvTopologyScale'
-	bl_label = 'Topology.Scale'
-	XFactor: FloatProperty(name="XFactor", default=1, precision=4, update=updateNode)
-	YFactor: FloatProperty(name="YFactor",  default=1, precision=4, update=updateNode)
-	ZFactor: FloatProperty(name="ZFactor",  default=1, precision=4, update=updateNode)
+	bl_idname = 'SvEdgeAdjacentWires'
+	bl_label = 'Edge.AdjacentWires'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'XFactor').prop_name = 'XFactor'
-		self.inputs.new('SvStringsSocket', 'YFactor').prop_name = 'YFactor'
-		self.inputs.new('SvStringsSocket', 'ZFactor').prop_name = 'ZFactor'
-		self.outputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Edge')
+		self.inputs.new('SvStringsSocket', 'Parent Topology')
+		self.outputs.new('SvStringsSocket', 'Wires')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
-		layout.separator()
 
 	def process(self):
-		originList = []
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		if (self.inputs['Origin'].is_linked):
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		else:
-			for aTopology in topologyList:
-				originList.append(aTopology.CenterOfMass())
-		xList = self.inputs['XFactor'].sv_get(deepcopy=True)
-		yList = self.inputs['YFactor'].sv_get(deepcopy=True)
-		zList = self.inputs['ZFactor'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [topologyList, originList, xList, yList, zList]
+		vertexList = self.inputs['Edge'].sv_get(deepcopy=False)
+		vertexList = flatten(vertexList)
+		parentList = self.inputs['Parent Topology'].sv_get(deepcopy=False)
+		parentList = flatten(parentList)
+		inputs = [vertexList, parentList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -178,10 +140,10 @@ class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Topology'].sv_set(outputs)
+		self.outputs['Wires'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyScale)
+	bpy.utils.register_class(SvEdgeAdjacentWires)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyScale)
+	bpy.utils.unregister_class(SvEdgeAdjacentWires)

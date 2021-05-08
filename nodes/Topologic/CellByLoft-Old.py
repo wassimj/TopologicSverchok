@@ -17,44 +17,19 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
-	finalCell = None
-	for i in range(len(item)-1):
-		wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-		w1 = item[i]
-		w2 = item[i+1]
-		wires.push_back(w1)
-		wires.push_back(w2)
-		cell = topologic.CellUtility.ByLoft(wires)
-		if finalCell == None:
-			finalCell = cell
-		else:
-			finalCell = finalCell.Union(cell, False)
-	return fixTopologyClass(finalCell)
+	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	for aWire in item:
+		wires.push_back(aWire)
+	return topologic.CellUtility.ByLoft(wires)
 
-class SvCellByLoft(bpy.types.Node, SverchCustomTreeNode):
+class SvCellByLoftOld(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell by lofting through the input Wires. The Wires must be closed and ordered
 	"""
-	bl_idname = 'SvCellByLoft'
-	bl_label = 'Cell.ByLoft'
+	bl_idname = 'SvCellByLoftOld'
+	bl_label = 'Cell.ByLoftOld'
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wires')
@@ -72,7 +47,7 @@ class SvCellByLoft(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellByLoft)
+	bpy.utils.register_class(SvCellByLoftOld)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellByLoft)
+	bpy.utils.unregister_class(SvCellByLoftOld)

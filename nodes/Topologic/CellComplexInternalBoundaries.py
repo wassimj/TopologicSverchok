@@ -45,7 +45,7 @@ class SvCellComplexInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Faces'].sv_set(outputs)
+		self.outputs['Faces'].sv_set(flatten(outputs))
 
 def register():
 	bpy.utils.register_class(SvCellComplexInternalBoundaries)

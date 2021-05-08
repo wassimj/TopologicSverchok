@@ -6,6 +6,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -109,61 +110,52 @@ def fixTopologyClass(topology):
 
 def processItem(item):
 	topology = item[0]
-	origin = item[1]
-	x = item[2]
-	y = item[3]
-	z = item[4]
+	oldLoc = item[1]
+	newLoc = item[2]
+	x = newLoc.X() - oldLoc.X()
+	y = newLoc.Y() - oldLoc.Y()
+	z = newLoc.Z() - oldLoc.Z()
 	newTopology = None
 	try:
-		newTopology = fixTopologyClass(topologic.TopologyUtility.Scale(topology, origin, x, y, z))
+		newTopology = fixTopologyClass(topologic.TopologyUtility.Translate(topology, x, y, z))
 	except:
-		print("ERROR: (Topologic>TopologyUtility.Rotate) operation failed.")
+		print("ERROR: (Topologic>TopologyUtility.Place) operation failed.")
 		newTopology = None
 	return newTopology
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
-
-class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
+		
+class SvTopologyPlace(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Scales the input Topology based on the input origin, and X, Y, Z scale factors    
+	Tooltip: Places the input Topology at the new input location    
 	"""
-	bl_idname = 'SvTopologyScale'
-	bl_label = 'Topology.Scale'
-	XFactor: FloatProperty(name="XFactor", default=1, precision=4, update=updateNode)
-	YFactor: FloatProperty(name="YFactor",  default=1, precision=4, update=updateNode)
-	ZFactor: FloatProperty(name="ZFactor",  default=1, precision=4, update=updateNode)
+	bl_idname = 'SvTopologyPlace'
+	bl_label = 'Topology.Place'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'XFactor').prop_name = 'XFactor'
-		self.inputs.new('SvStringsSocket', 'YFactor').prop_name = 'YFactor'
-		self.inputs.new('SvStringsSocket', 'ZFactor').prop_name = 'ZFactor'
+		self.inputs.new('SvStringsSocket', 'Old Location')
+		self.inputs.new('SvStringsSocket', 'New Location')
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
-		layout.separator()
 
 	def process(self):
-		originList = []
 		if not any(socket.is_linked for socket in self.outputs):
 			return
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Topology'].sv_set([])
+			return
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		if (self.inputs['Origin'].is_linked):
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		else:
-			for aTopology in topologyList:
-				originList.append(aTopology.CenterOfMass())
-		xList = self.inputs['XFactor'].sv_get(deepcopy=True)
-		yList = self.inputs['YFactor'].sv_get(deepcopy=True)
-		zList = self.inputs['ZFactor'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [topologyList, originList, xList, yList, zList]
+		oldList = self.inputs['Old Location'].sv_get(deepcopy=True)
+		newList = self.inputs['New Location'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
+		oldList = flatten(oldList)
+		newList = flatten(newList)
+		inputs = [topologyList, oldList, newList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -181,7 +173,7 @@ class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Topology'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyScale)
+	bpy.utils.register_class(SvTopologyPlace)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyScale)
+	bpy.utils.unregister_class(SvTopologyPlace)

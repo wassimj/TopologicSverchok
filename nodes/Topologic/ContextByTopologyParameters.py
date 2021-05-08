@@ -71,12 +71,12 @@ def trim(list):
 	return returnList
 
 # Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def lace(ar_list):
+def interlace(ar_list):
     if not ar_list:
         yield []
     else:
         for a in ar_list[0]:
-            for prod in lace(ar_list[1:]):
+            for prod in interlace(ar_list[1:]):
                 yield [a,]+prod
 
 def transposeList(l):
@@ -101,7 +101,7 @@ def processItem(item):
 		context = None
 	return context
 
-lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvContextByTopologyParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -113,7 +113,7 @@ class SvContextByTopologyParameters(bpy.types.Node, SverchCustomTreeNode):
 	U: FloatProperty(name="U", default=0, precision=4, update=updateNode)
 	V: FloatProperty(name="V",  default=0, precision=4, update=updateNode)
 	W: FloatProperty(name="W",  default=0, precision=4, update=updateNode)
-	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
@@ -124,7 +124,7 @@ class SvContextByTopologyParameters(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Context')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Lacing",text="")
+		layout.prop(self, "Replication",text="")
 		layout.separator()
 
 	def process(self):
@@ -138,22 +138,22 @@ class SvContextByTopologyParameters(bpy.types.Node, SverchCustomTreeNode):
 		uList = flatten(uList)
 		vList = flatten(vList)
 		wList = flatten(wList)
-		inputs = []
-		if ((self.Lacing) == "Trim"):
-			inputs = trim([topologyList, uList, vList, wList])
+		inputs = [topologyList, uList, vList, wList]
+		if ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Iterate"):
-			inputs = iterate([topologyList, uList, vList, wList])
+		elif ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Repeat"):
-			inputs = repeat([topologyList, uList, vList, wList])
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Lace"):
-			inputs = list(lace([topologyList, uList, vList, wList]))
+		elif ((self.Replication) == "Interlacing"):
+			inputs = list(interlace(inputs))
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+		self.outputs['Context'].sv_set(outputs)
 
 def register():
     bpy.utils.register_class(SvContextByTopologyParameters)

@@ -49,28 +49,28 @@ def wireByVertices(vList):
 
 def processItem(item, originLocation):
 	origin = item[0]
-	radius = item[1]
-	height = item[2]
-	sides = item[3]
-	dirX = item[4]
-	dirY = item[5]
-	dirZ = item[6]
+	radiusA = item[1]
+	radiusB = item[2]
+	height = item[3]
+	sides = item[4]
+	dirX = item[5]
+	dirY = item[6]
+	dirZ = item[7]
 	baseV = []
 	topV = []
 	xOffset = 0
 	yOffset = 0
 	zOffset = 0
-	if originLocation == "Center":
-		zOffset = -height*0.5
-	elif originLocation == "LowerLeft":
-		xOffset = radius
-		yOffset = radius
 
-	for i in range(sides):
-		angle = math.radians(360/sides)*i
-		x = math.sin(angle)*radius + origin.X() + xOffset
-		y = math.cos(angle)*radius + origin.Y() + yOffset
-		z = origin.Z() + zOffset
+	if (radiusA == radiusB) and radiusA < 0.0001:
+		return None
+	if radiusA < 0.0001:
+		
+		for i in range(sides-1):
+			angle = math.radians(360/sides)*i
+			xb = math.sin(angle)*radius + origin.X()
+			yb = math.cos(angle)*radius + origin.Y()
+			zb = origin.Z() + zOffset
 		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
 		topV.append(topologic.Vertex.ByCoordinates(x,y,z+height))
 
