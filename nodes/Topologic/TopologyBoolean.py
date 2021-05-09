@@ -8,6 +8,7 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 import cppyy
 import time
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
 	if isinstance(element, list) == True:
@@ -17,7 +18,7 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def matchLengths(list):
+def repeat(list):
 	maxLength = len(list[0])
 	for aSubList in list:
 		newLength = len(aSubList)
@@ -31,6 +32,66 @@ def matchLengths(list):
 		for i in range(len(anItem), maxLength):
 			anItem.append(itemToAppend)
 	return list
+
+# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
+def onestep(cur,y,base):
+    # one step of the iteration
+    if cur is not None:
+        y.append(cur)
+        base.append(cur)
+    else:
+        y.append(base[0])  # append is simplest, for now
+        base = base[1:]+[base[0]]  # rotate
+    return base
+
+def iterate(list):
+	maxLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength > maxLength:
+			maxLength = newLength
+	for anItem in list:
+		for i in range(len(anItem), maxLength):
+			anItem.append(None)
+		y=[]
+		base=[]
+		for cur in anItem:
+			base = onestep(cur,y,base)
+			# print(base,y)
+		returnList.append(y)
+	return returnList
+
+def trim(list):
+	minLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength < minLength:
+			minLength = newLength
+	for anItem in list:
+		anItem = anItem[:minLength]
+		returnList.append(anItem)
+	return returnList
+
+# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
+def interlace(ar_list):
+    if not ar_list:
+        yield []
+    else:
+        for a in ar_list[0]:
+            for prod in interlace(ar_list[1:]):
+                yield [a,]+prod
+
+def transposeList(l):
+	length = len(l[0])
+	returnList = []
+	for i in range(length):
+		tempRow = []
+		for j in range(len(l)):
+			tempRow.append(l[j][i])
+		returnList.append(tempRow)
+	return returnList
 
 def classByType(argument):
 	switcher = {
@@ -163,31 +224,39 @@ def highestDimension(topology):
 	else:
 		return(topology.GetType())
 
-def processItem(item, operation):
+def processItem(item):
 	topologyA = item[0]
 	topologyB = item[1]
-	tranDict = item[2]
-	tolerance = item[3]
+	operation = item[2]
+	tranDict = item[3]
+	tolerance = item[4]
 	topologyC = None
+	print(operation)
 	try:
 		if operation == "Union":
-			topologyC = fixTopologyClass(topologyA.Union(topologyB, False))
+			topologyC = topologyA.Union(topologyB, False)
 		elif operation == "Difference":
-			topologyC = fixTopologyClass(topologyA.Difference(topologyB, False))
+			topologyC = topologyA.Difference(topologyB, False)
 		elif operation == "Intersect":
-			topologyC = fixTopologyClass(topologyA.Intersect(topologyB, False))
+			topologyC = topologyA.Intersect(topologyB, False)
 		elif operation == "SymDif":
-			topologyC = fixTopologyClass(topologyA.XOR(topologyB, False))
+			topologyC = topologyA.XOR(topologyB, False)
 		elif operation == "Merge":
-			topologyC = fixTopologyClass(topologyA.Merge(topologyB, False)) # DEBUGGING
+			topologyC = topologyA.Merge(topologyB, False)
 		elif operation == "Slice":
-			topologyC = fixTopologyClass(topologyA.Slice(topologyB, False))
+			topologyC = topologyA.Slice(topologyB, False)
 		elif operation == "Impose":
-			topologyC = fixTopologyClass(topologyA.Impose(topologyB, False))
+			topologyC = topologyA.Impose(topologyB, False)
 		elif operation == "Imprint":
-			topologyC = fixTopologyClass(topologyA.Imprint(topologyB, False))
+			topologyC = topologyA.Imprint(topologyB, False)
+		else:
+			raise Exception("ERROR: (Topologic>Topology.Boolean) invalid boolean operation name: "+operation)
+		if topologyC:
+			topologyC = fixTopologyClass(topologyC)
+		else:
+			return None
 	except:
-		print("ERROR: (Topologic>Topology.Boolean) operation failed.")
+		raise Exception("ERROR: (Topologic>Topology.Boolean) operation failed.")
 		topologyC = None
 	if tranDict == True:
 		sourceVertices = []
@@ -281,6 +350,7 @@ def processItem(item, operation):
 	return topologyC
 
 booleanOps = [("Union", "Union", "", 1),("Difference", "Difference", "", 2),("Intersect", "Intersect", "", 3),("SymDif", "SymDif", "", 4),("Merge", "Merge", "", 5), ("Slice", "Slice", "", 6),("Impose", "Impose", "", 7), ("Imprint", "Imprint", "", 8)]
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 
@@ -291,18 +361,20 @@ class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvTopologyBoolean'
 	bl_label = 'Topology.Boolean'
 	TransferDictionary: BoolProperty(name="Transfer Dictionary", default=False, update=updateNode)
-	booleanOp: EnumProperty(name="Boolean Operation", description="Specify Boolean operation", default="Merge", items=booleanOps, update=updateNode)
+	BooleanOp: EnumProperty(name="Boolean Operation", description="Specify Boolean operation", default="Merge", items=booleanOps, update=updateNode)
 	Tolerance: FloatProperty(name="Tolerance",  default=0.001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology A')
 		self.inputs.new('SvStringsSocket', 'Topology B')
+		self.inputs.new('SvStringsSocket', 'Boolean Operation').prop_name = 'BooleanOp'
 		self.inputs.new('SvStringsSocket', 'Transfer Dictionary').prop_name = 'TransferDictionary'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "booleanOp",text="")
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
 		start = time.time()
@@ -311,28 +383,34 @@ class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			self.outputs['Topology'].sv_set([])
 			return
-		topologyAList = self.inputs['Topology A'].sv_get(deepcopy=False)
-		topologyBList = self.inputs['Topology B'].sv_get(deepcopy=False)
-		tranDictList = self.inputs['Transfer Dictionary'].sv_get(deepcopy=False)[0]
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
-		maxLength = max([len(topologyAList), len(topologyBList), len(tranDictList), len(toleranceList)])
-		for i in range(len(topologyAList), maxLength):
-			topologyAList.append(topologyAList[-1])
-		for i in range(len(topologyBList), maxLength):
-			topologyBList.append(topologyBList[-1])
-		for i in range(len(tranDictList), maxLength):
-			tranDictList.append(tranDictList[-1])
-		for i in range(len(toleranceList), maxLength):
-			toleranceList.append(toleranceList[-1])
-		inputs = []
+		topologyAList = self.inputs['Topology A'].sv_get(deepcopy=True)
+		topologyBList = self.inputs['Topology B'].sv_get(deepcopy=True)
+		booleanOpList = self.inputs['Boolean Operation'].sv_get(deepcopy=True)
+		tranDictList = self.inputs['Transfer Dictionary'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
+		topologyAList = flatten(topologyAList)
+		topologyBList = flatten(topologyBList)
+		booleanOpList = flatten(booleanOpList)
+		tranDictList = flatten(tranDictList)
+		toleranceList = flatten(toleranceList)
+		inputs = [topologyAList, topologyBList, booleanOpList, tranDictList, toleranceList]
+		if ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace([xList, yList, zList]))
 		outputs = []
-		if (len(topologyAList) == len(topologyBList) == len(tranDictList) == len(toleranceList)):
-			inputs = zip(topologyAList, topologyBList, tranDictList, toleranceList)
 		for anInput in inputs:
-			outputs.append(processItem(anInput, self.booleanOp))
+			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
 		end = time.time()
-		print(self.booleanOp+" Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Topology.Boolean Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
     bpy.utils.register_class(SvTopologyBoolean)
