@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 3),
+    "version": (0, 5, 4, 5),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -87,9 +87,11 @@ def nodes_index():
                 ("Topologic.EdgeAdjacentFaces", "SvEdgeAdjacentFaces"),
                 ("Topologic.EdgeAdjacentWires", "SvEdgeAdjacentWires"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
+                ("Topologic.EdgeByVertices", "SvEdgeByVertices"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
                 ("Topologic.EdgeLength", "SvEdgeLength"),
+                ("Topologic.EdgeParameterAtVertex", "SvEdgeParameterAtVertex"),
                 ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
                 ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
                 ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
@@ -118,6 +120,8 @@ def nodes_index():
                 ("Topologic.FaceTriangulate", "SvFaceTriangulate"),
                 ("Topologic.FaceTrimByWire", "SvFaceTrimByWire"),
                 ("Topologic.FaceVertexAtParameters", "SvFaceVertexAtParameters"),
+                ("Topologic.ApertureByTopologyContext", "SvApertureByTopologyContext"),
+                ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
@@ -286,8 +290,10 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvEdgeAdjacentEdges'],
             ['SvEdgeByStartVertexEndVertex'],
+            ['SvEdgeByVertices'],
             ['SvEdgeEndVertex'],
             ['SvEdgeLength'],
+            ['SvEdgeParameterAtVertex'],
             ['SvEdgeSharedVertices'],
             ['SvEdgeStartVertex'],
             ['SvEdgeVertexAtParameter'],
@@ -409,6 +415,19 @@ class NODEVIEW_MT_AddTPSubcategoryCluster(bpy.types.Menu):
 
 make_class('TPSubcategoryCluster', 'Topologic @ Cluster')
 
+class NODEVIEW_MT_AddTPSubcategoryAperture(bpy.types.Menu):
+    bl_label = "TPSubcategoryAperture"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAperture'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvApertureByTopologyContext'],
+            ['SvApertureTopology'],
+        ])
+
+make_class('TPSubcategoryAperture', 'Topologic @ Aperture')
+
 class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
     bl_label = "TPSubcategoryGraph"
     bl_idname = 'NODEVIEW_MT_AddTPSubcategoryGraph'
@@ -508,6 +527,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Cell'],
             ['@ CellComplex'],
             ['@ Cluster'],
+			['@ Aperture'],
             ['@ Context'],
 			['@ Dictionary'],
             ['@ Graph'],
@@ -535,6 +555,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAperture)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
@@ -566,6 +587,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAperture)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)

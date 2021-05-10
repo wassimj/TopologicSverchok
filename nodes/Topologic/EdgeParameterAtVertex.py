@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import FloatProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
+from sverchok.data_structure import updateNode
 
 import topologic
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -90,36 +91,30 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
+	edge = item[0]
+	vertex = item[1]
+	parameter = None
 	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
+		parameter = topologic.EdgeUtility.ParameterAtPoint(edge, vertex)
 	except:
-		vert = None
-	return vert
+		parameter = None
+	return parameter
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeParameterAtVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Outputs the parameter value at the location of the Vertex on the input Edge
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	bl_idname = 'SvEdgeParameterAtVertex'
+	bl_label = 'Edge.ParameterAtVertex'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Edge')
+		self.inputs.new('SvStringsSocket', 'Vertex')
+		self.outputs.new('SvStringsSocket', 'Parameter')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -127,13 +122,11 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [xList, yList, zList]
+		edgeList = self.inputs['Edge'].sv_get(deepcopy=False)
+		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
+		edgeList = flatten(edgeList)
+		vertexList = flatten(vertexList)
+		inputs = [edgeList, vertexList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -148,10 +141,10 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+		self.outputs['Parameter'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+	bpy.utils.register_class(SvEdgeParameterAtVertex)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+	bpy.utils.unregister_class(SvEdgeParameterAtVertex)

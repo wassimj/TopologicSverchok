@@ -90,50 +90,43 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
+	topology = item[0]
+	context = item[1]
+	aperture = None
 	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
+		aperture = topologic.Aperture.ByTopologyContext(topology, context)
 	except:
-		vert = None
-	return vert
+		aperture = None
+	return aperture
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvApertureByTopologyContext(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Creates an Aperture from the input Topology and Context   
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	bl_idname = 'SvApertureByTopologyContext'
+	bl_label = 'Aperture.ByTopologyContext'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Context')
+		self.outputs.new('SvStringsSocket', 'Aperture')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
+		layout.separator()
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [xList, yList, zList]
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		contextList = self.inputs['Context'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
+		contextList = flatten(contextList)
+		inputs = [topologyList, contextList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -143,15 +136,15 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Repeat"):
 			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
+		elif ((self.Replication) == "Interlacing"):
 			inputs = list(interlace(inputs))
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+		self.outputs['Aperture'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+    bpy.utils.register_class(SvApertureByTopologyContext)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+    bpy.utils.unregister_class(SvApertureByTopologyContext)

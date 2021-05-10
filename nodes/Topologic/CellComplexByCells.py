@@ -6,6 +6,7 @@ from sverchok.data_structure import updateNode
 import topologic
 import cppyy
 import time
+import warnings
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,6 +18,19 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
+def processItem(cells):
+	cellComplex = cells[0]
+	for i in range(1,len(cells)):
+		try:
+			cellComplex = cellComplex.Merge(cells[i], False)
+		except:
+			raise Exception("Error: CellComplex.ByCells operation failed during processing the input Cells")
+	if cellComplex.GetType() == 64: #64 is the type of a CellComplex
+		return cellComplex
+	else:
+		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
+	return cellComplex
+'''
 def processItem(item):
 	print(item)
 	cellComplex = None
@@ -28,6 +42,7 @@ def processItem(item):
 		return cellComplex
 	except:
 		return None
+'''
 
 def recur(input):
 	output = []
