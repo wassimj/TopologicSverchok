@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 5),
+    "version": (0, 5, 4, 6),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -34,18 +34,27 @@ from sys import platform
 from os.path import expanduser
 home = expanduser("~")
 if platform == 'win32':
-  conda = 'C:\\ProgramData\\anaconda3\\envs' # Change this to match your anaconda installation folder
+  if os.path.exists(home+'\\anaconda3\\envs'):
+    conda = home+'\\anaconda3\\envs'
+  elif os.path.exists('C:\\ProgramData\\anaconda3\\envs'):
+    conda = 'C:\\ProgramData\\anaconda3\\envs'
+  else:
+    raise Exception("Error: Could not find: "+home+'\\anaconda3\\envs nor '+'C:\\ProgramData\\anaconda3\\envs')
   sitePackages = '\\lib\\site-packages'
   blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith('Blender')][0]
   topologicEggName = '\\'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
-  sys.path.append(conda+blenderName+sitePackages)
-  sys.path.append(conda+blenderName+sitePackages+topologicEggName)
+  if os.path.exists(conda+blenderName+sitePackages):
+    sys.path.append(conda+blenderName+sitePackages)
+  else:
+    raise Exception("Error: Could not find "+conda+blenderName+sitePackages)
+  if os.path.exists(conda+blenderName+sitePackages+topologicEggName):
+    sys.path.append(conda+blenderName+sitePackages+topologicEggName)
+  else:
+    raise Exception("Error: Could not find "+conda+blenderName+sitePackages+topologicEggName)
 
 import importlib
-
 import nodeitems_utils
 import bl_operators
-
 import sverchok
 from sverchok.core import sv_registration_utils, make_node_list
 from sverchok.utils import auto_gather_node_classes, get_node_class_reference
@@ -147,40 +156,40 @@ def nodes_index():
                 ("Topologic.ClusterByTopologies", "SvClusterByTopologies"),
                 ("Topologic.ContextByTopologyParameters", "SvContextByTopologyParameters"),
                 ("Topologic.ContextTopology", "SvContextTopology"),
-                ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
-                ("Topologic.TopologyByGeometryNew", "SvTopologyByGeometryNew"),
-                ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
-                ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
-                ("Topologic.TopologyExportToBRep", "SvTopologyExportToBRep"),
-                ("Topologic.TopologyByString", "SvTopologyByString"),
-                ("Topologic.TopologyString", "SvTopologyString"),
-                ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
-                ("Topologic.TopologyAdjacentTopologies", "SvTopologyAdjacentTopologies"),
-                ("Topologic.TopologySharedTopologies", "SvTopologySharedTopologies"),
-                ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
-                ("Topologic.TopologySelfMerge", "SvTopologySelfMerge"),
-                ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
-                ("Topologic.TopologyRotate", "SvTopologyRotate"),
-                ("Topologic.TopologyScale", "SvTopologyScale"),
-                ("Topologic.TopologyPlace", "SvTopologyPlace"),
-                ("Topologic.TopologyExplode", "SvTopologyExplode"),
+                ("Topologic.TopologyAddApertures", "SvTopologyAddApertures"),
                 ("Topologic.TopologyAddContents", "SvTopologyAddContents"),
-                ("Topologic.TopologyContents", "SvTopologyContents"),
+                ("Topologic.TopologyAdjacentTopologies", "SvTopologyAdjacentTopologies"),
+                ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
+                ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
+                ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
+                ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
+                ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
+                ("Topologic.TopologyByString", "SvTopologyByString"),
                 ("Topologic.TopologyCenterOfMass", "SvTopologyCenterOfMass"),
                 ("Topologic.TopologyCentroid", "SvTopologyCentroid"),
-                ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
+                ("Topologic.TopologyContents", "SvTopologyContents"),
+                ("Topologic.TopologyContexts", "SvTopologyContexts"),
                 ("Topologic.TopologyCopy", "SvTopologyCopy"),
-                ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
-                ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
-                ("Topologic.TopologyTypeAsString", "SvTopologyTypeAsString"),
-                ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
-                ("Topologic.TopologyDictionary", "SvTopologyDictionary"),
-                ("Topologic.TopologySetDictionary", "SvTopologySetDictionary"),
-                ("Topologic.TopologyTransferDictionaries", "SvTopologyTransferDictionaries"),
                 ("Topologic.TopologyDecodeInformation", "SvTopologyDecodeInformation"),
-                ("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
-                ("Topologic.TopologyAddApertures", "SvTopologyAddApertures"),
+                ("Topologic.TopologyDictionary", "SvTopologyDictionary"),
                 ("Topologic.TopologyDimensionality", "SvTopologyDimensionality"),
+                ("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
+                ("Topologic.TopologyExplode", "SvTopologyExplode"),
+                ("Topologic.TopologyExportToBRep", "SvTopologyExportToBRep"),
+                ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
+                ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
+                ("Topologic.TopologyPlace", "SvTopologyPlace"),
+                ("Topologic.TopologyRotate", "SvTopologyRotate"),
+                ("Topologic.TopologyScale", "SvTopologyScale"),
+                ("Topologic.TopologySelfMerge", "SvTopologySelfMerge"),
+                ("Topologic.TopologySetDictionary", "SvTopologySetDictionary"),
+                ("Topologic.TopologySharedTopologies", "SvTopologySharedTopologies"),
+                ("Topologic.TopologyString", "SvTopologyString"),
+                ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
+                ("Topologic.TopologyTransferDictionaries", "SvTopologyTransferDictionaries"),
+                ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
+                ("Topologic.TopologyTypeAsString", "SvTopologyTypeAsString"),
+                ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
                 ("Topologic.DictionaryKeys", "SvDictionaryKeys"),
@@ -489,6 +498,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyCenterOfMass'],
             ['SvTopologyCentroid'],
             ['SvTopologyContents'],
+            ['SvTopologyContexts'],
             ['SvTopologyCopy'],
             ['SvTopologyDecodeInformation'],
             ['SvTopologyDictionary'],

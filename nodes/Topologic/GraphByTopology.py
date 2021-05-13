@@ -102,6 +102,7 @@ def processCellComplex(item):
 						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
 						edges.push_back(e)
 	if directApertures == True:
+		cellmat = []
 		cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
 		_ = topology.Cells(cells)
 		cells = list(cells)
@@ -227,6 +228,337 @@ def processCellComplex(item):
 		return graph
 	return None
 
+def processShell(item):
+	topology = item[0]
+	direct = item[1]
+	directApertures = item[2]
+	viaSharedTopologies = item[3]
+	viaSharedApertures = item[4]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
+	graph = None
+	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	facemat = []
+	if direct == True:
+		topFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+		_ = topology.Faces(topFaces)
+		topFaces = list(topFaces)
+		# Create a matrix of zeroes
+		for i in range(len(topFaces)):
+			faceRow = []
+			for j in range(len(topFaces)):
+				faceRow.append(0)
+			facemat.append(faceRow)
+		for i in range(len(topFaces)):
+			for j in range(len(topFaces)):
+				if (i != j) and facemat[i][j] == 0:
+					facemat[i][j] = 1
+					facemat[j][i] = 1
+					sharedt = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					topFaces[i].SharedTopologies(topFaces[j], 2, sharedt)
+					sharedt = list(sharedt)
+					if len(sharedt) > 0:
+						if useInternalVertex == True:
+							v1 = topologic.FaceUtility.InternalVertex(topFaces[i], tolerance)
+							v2 = topologic.FaceUtility.InternalVertex(topFaces[j], tolerance)
+						else:
+							v1 = topFaces[i].CenterOfMass()
+							v2 = topFaces[j].CenterOfMass()
+						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+						edges.push_back(e)
+	if directApertures == True:
+		facemat = []
+		topFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+		_ = topology.Faces(topFaces)
+		topFaces = list(topFaces)
+		# Create a matrix of zeroes
+		for i in range(len(topFaces)):
+			faceRow = []
+			for j in range(len(topFaces)):
+				faceRow.append(0)
+			facemat.append(faceRow)
+		for i in range(len(topFaces)):
+			for j in range(len(topFaces)):
+				if (i != j) and facemat[i][j] == 0:
+					facemat[i][j] = 1
+					facemat[j][i] = 1
+					sharedt = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					topFaces[i].SharedTopologies(topFaces[j], 2, sharedt)
+					sharedt = list(sharedt)
+					if len(sharedt) > 0:
+						apertureExists = False
+						for x in sharedt:
+							ap = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+							_ = x.Apertures(ap)
+							if len(ap) > 0:
+								apertureExists = True
+								break
+						if apertureExists:
+							if useInternalVertex == True:
+								v1 = topologic.FaceUtility.InternalVertex(topFaces[i], tolerance)
+								v2 = topologic.FaceUtility.InternalVertex(topFaces[j], tolerance)
+							else:
+								v1 = topFaces[i].CenterOfMass()
+								v2 = topFaces[j].CenterOfMass()
+							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+							edges.push_back(e)
+
+	topFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	_ = topology.Faces(topFaces)
+	if (viaSharedTopologies == True) or (viaSharedApertures == True) or (toExteriorTopologies == True) or (toExteriorApertures == True):
+		for aFace in topFaces:
+			if useInternalVertex == True:
+				vFace = topologic.FaceUtility.InternalVertex(aFace, tolerance)
+			else:
+				vFace = aFace.CenterOfMass()
+			vertices.push_back(vFace)
+			fEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			_ = aFace.Edges(fEdges)
+			sharedTopologies = []
+			exteriorTopologies = []
+			sharedApertures = []
+			exteriorApertures = []
+			for anEdge in fEdges:
+				faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+				_ = anEdge.Faces(faces)
+				faces = list(faces)
+				if len(faces) > 1:
+					sharedTopologies.append(anEdge)
+					apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+					_ = anEdge.Apertures(apertures)
+					for anAperture in apertures:
+						sharedApertures.append(anAperture)
+				else:
+					exteriorTopologies.append(anEdge)
+					apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+					_ = aFace.Apertures(apertures)
+					for anAperture in apertures:
+						exteriorApertures.append(anAperture)
+			if viaSharedTopologies:
+				for sharedTopology in sharedTopologies:
+					if useInternalVertex == True:
+						vst = internalVertex(sharedTopology, tolerance)
+					else:
+						vst = sharedTopology.CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+			if viaSharedApertures:
+				for sharedAperture in sharedApertures:
+					if useInternalVertex == True:
+						vst = internalVertex(sharedAperture.Topology(), tolerance)
+					else:
+						vst = sharedAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+			if toExteriorTopologies:
+				for exteriorTopology in exteriorTopologies:
+					if useInternalVertex == True:
+						vst = internalVertex(exteriorTopology, tolerance)
+					else:
+						vst = exteriorTopology.CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+			if toExteriorApertures:
+				for exteriorAperture in exteriorApertures:
+					extTop = exteriorAperture.Topology()
+					if useInternalVertex == True:
+						vst = internalVertex(extTop, tolerance)
+					else:
+						vst = exteriorAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+
+	for aFace in topFaces:
+		if useInternalVertex == True:
+			vFace = internalVertex(aFace, tolerance)
+		else:
+			vFace = aFace.CenterOfMass()
+		vertices.push_back(vFace)
+	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	if len(list(edges)) > 0:
+		for e in edges:
+			finalTopologies.push_back(e)
+	if len(list(vertices)) > 0:
+		for v in vertices:
+			finalTopologies.push_back(v)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		cluster = cluster.SelfMerge()
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	elif len(list(vertices)) > 0:
+		for v in vertices:
+			finalTopologies.push_back(v)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	return None
+def processWire(item):
+	topology = item[0]
+	direct = item[1]
+	directApertures = item[2]
+	viaSharedTopologies = item[3]
+	viaSharedApertures = item[4]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
+	graph = None
+	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	edgemat = []
+	if direct == True:
+		topEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		_ = topology.Edges(topEdges)
+		topEdges = list(topEdges)
+		# Create a matrix of zeroes
+		for i in range(len(topEdges)):
+			edgeRow = []
+			for j in range(len(topEdges)):
+				edgeRow.append(0)
+			edgemat.append(edgeRow)
+		for i in range(len(topEdges)):
+			for j in range(len(topEdges)):
+				if (i != j) and edgemat[i][j] == 0:
+					edgemat[i][j] = 1
+					edgemat[j][i] = 1
+					sharedt = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					topEdges[i].SharedTopologies(topEdges[j], 1, sharedt)
+					sharedt = list(sharedt)
+					if len(sharedt) > 0:
+						try:
+							v1 = topologic.EdgeUtility.PointAtParameter(topEdges[i], 0.5)
+						except:
+							v1 = topEdges[j].CenterOfMass()
+						try:
+							v2 = topologic.EdgeUtility.PointAtParameter(topEdges[j], 0.5)
+						except:
+							v2 = topEdges[j].CenterOfMass()
+						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+						edges.push_back(e)
+	if directApertures == True:
+		edgemat = []
+		topEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		_ = topology.Edges(topEdges)
+		topEdges = list(topEdges)
+		# Create a matrix of zeroes
+		for i in range(len(topEdges)):
+			edgeRow = []
+			for j in range(len(topEdges)):
+				edgeRow.append(0)
+			edgemat.append(edgeRow)
+		for i in range(len(topEdges)):
+			for j in range(len(topEdges)):
+				if (i != j) and edgemat[i][j] == 0:
+					edgemat[i][j] = 1
+					edgemat[j][i] = 1
+					sharedt = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					topEdges[i].SharedTopologies(topEdges[j], 1, sharedt)
+					sharedt = list(sharedt)
+					if len(sharedt) > 0:
+						apertureExists = False
+						for x in sharedt:
+							ap = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+							_ = x.Apertures(ap)
+							if len(ap) > 0:
+								apertureExists = True
+								break
+						if apertureExists:
+							try:
+								v1 = topologic.EdgeUtility.PointAtParameter(topEdges[i], 0.5)
+							except:
+								v1 = topEdges[j].CenterOfMass()
+							try:
+								v2 = topologic.EdgeUtility.PointAtParameter(topEdges[j], 0.5)
+							except:
+								v2 = topEdges[j].CenterOfMass()
+							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+							edges.push_back(e)
+
+	topEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	_ = topology.Edges(topEdges)
+	if (viaSharedTopologies == True) or (viaSharedApertures == True) or (toExteriorTopologies == True) or (toExteriorApertures == True):
+		for anEdge in topEdges:
+			try:
+				vEdge = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
+			except:
+				vEdge = anEdge.CenterOfMass()
+			vertices.push_back(vEdge)
+			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			_ = anEdge.Vertices(vertices)
+			sharedTopologies = []
+			exteriorTopologies = []
+			sharedApertures = []
+			exteriorApertures = []
+			for aVertex in vertices:
+				edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+				_ = aVertex.Edges(edges)
+				edges = list(edges)
+				if len(edges) > 1:
+					sharedTopologies.append(aVertex)
+					apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+					_ = aVertex.Apertures(apertures)
+					for anAperture in apertures:
+						sharedApertures.append(anAperture)
+				else:
+					exteriorTopologies.append(aVertex)
+					apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+					_ = aVertex.Apertures(apertures)
+					for anAperture in apertures:
+						exteriorApertures.append(anAperture)
+			if viaSharedTopologies:
+				for sharedTopology in sharedTopologies:
+					vertices.push_back(sharedTopology)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, sharedTopology))
+			if viaSharedApertures:
+				for sharedAperture in sharedApertures:
+					if useInternalVertex == True:
+						vst = internalVertex(sharedAperture.Topology(), tolerance)
+					else:
+						vst = sharedAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+			if toExteriorTopologies:
+				for exteriorTopology in exteriorTopologies:
+					vertices.push_back(exteriorTopology)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, exteriorTopology))
+			if toExteriorApertures:
+				for exteriorAperture in exteriorApertures:
+					extTop = exteriorAperture.Topology()
+					if useInternalVertex == True:
+						vst = internalVertex(extTop, tolerance)
+					else:
+						vst = exteriorAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+
+	for anEdge in topEdges:
+		try:
+			vEdge = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
+		except:
+			vEdge = anEdge.CenterOfMass()
+		vertices.push_back(vEdge)
+	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	if len(list(edges)) > 0:
+		for e in edges:
+			finalTopologies.push_back(e)
+	if len(list(vertices)) > 0:
+		for v in vertices:
+			finalTopologies.push_back(v)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		cluster = cluster.SelfMerge()
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	elif len(list(vertices)) > 0:
+		for v in vertices:
+			finalTopologies.push_back(v)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	return None
+
 def processCell(item):
 	cell = item[0]
 	toExteriorTopologies = item[5]
@@ -287,6 +619,134 @@ def processCell(item):
 		return graph
 	return None
 
+def processFace(item):
+	face = item[0]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
+	graph = None
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+
+	if useInternalVertex == True:
+		vFace = topologic.FaceUtility.InternalVertex(face, tolerance)
+	else:
+		vFace = face.CenterOfMass()
+
+	if (toExteriorTopologies == True) or (toExteriorApertures == True):
+		vertices.push_back(vFace)
+		fEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		_ = face.Edges(fEdges)
+		exteriorTopologies = []
+		exteriorApertures = []
+		for anEdge in fEdges:
+			exteriorTopologies.append(anEdge)
+			apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+			_ = anEdge.Apertures(apertures)
+			for anAperture in apertures:
+				exteriorApertures.append(anAperture)
+			if toExteriorTopologies:
+				for exteriorTopology in exteriorTopologies:
+					if useInternalVertex == True:
+						vst = internalVertex(exteriorTopology, tolerance)
+					else:
+						vst = exteriorTopology.CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+			if toExteriorApertures:
+				for exteriorAperture in exteriorApertures:
+					extTop = exteriorAperture.Topology()
+					if useInternalVertex == True:
+						vst = internalVertex(extTop, tolerance)
+					else:
+						vst = exteriorAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+	else:
+		vertices.push_back(vFace)
+
+	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	if len(list(edges)) > 0:
+		for e in edges:
+			finalTopologies.push_back(e)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		cluster = cluster.SelfMerge()
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	else:
+		graph = topologic.Graph.ByTopology(vFace, True, False, False, False, False, False, tolerance)
+		return graph
+	return None
+
+def processEdge(item):
+	edge = item[0]
+	toExteriorTopologies = item[5]
+	toExteriorApertures = item[6]
+	useInternalVertex = item[7]
+	tolerance = item[8]
+	graph = None
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+
+	if useInternalVertex == True:
+		try:
+			vEdge = topologic.EdgeUtility.PointAtParameter(edge, 0.5)
+		except:
+			vEdge = edge.CenterOfMass()
+	else:
+		vEdge = edge.CenterOfMass()
+
+	if (toExteriorTopologies == True) or (toExteriorApertures == True):
+		vertices.push_back(vFace)
+		eVertices = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		_ = edge.Vertices(eVertices)
+		exteriorTopologies = []
+		exteriorApertures = []
+		for aVertex in eVertices:
+			exteriorTopologies.append(aVertex)
+			apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+			_ = aVertex.Apertures(apertures)
+			for anAperture in apertures:
+				exteriorApertures.append(anAperture)
+			if toExteriorTopologies:
+				for exteriorTopology in exteriorTopologies:
+					if useInternalVertex == True:
+						vst = internalVertex(exteriorTopology, tolerance)
+					else:
+						vst = exteriorTopology.CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+			if toExteriorApertures:
+				for exteriorAperture in exteriorApertures:
+					extTop = exteriorAperture.Topology()
+					if useInternalVertex == True:
+						vst = internalVertex(extTop, tolerance)
+					else:
+						vst = exteriorAperture.Topology().CenterOfMass()
+					vertices.push_back(vst)
+					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+	else:
+		vertices.push_back(vEdge)
+
+	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	if len(list(edges)) > 0:
+		for e in edges:
+			finalTopologies.push_back(e)
+		cluster = topologic.Cluster.ByTopologies(finalTopologies)
+		cluster = cluster.SelfMerge()
+		graph = topologic.Graph.ByTopology(cluster, True, False, False, False, False, False, tolerance)
+		return graph
+	else:
+		graph = topologic.Graph.ByTopology(vFace, True, False, False, False, False, False, tolerance)
+		return graph
+	return None
+
+def processVertex(item):
+	vertex = item[0]
+	tolerance = item[8]
+	return topologic.Graph.ByTopology(vertex, True, False, False, False, False, False, tolerance)
+
 def processItem(item):
 	topology = item[0]
 	classType = topology.GetType()
@@ -295,6 +755,18 @@ def processItem(item):
 		graph = processCellComplex(item)
 	elif classType == 32: #Cell
 		graph = processCell(item)
+	elif classType == 16: #Shell
+		graph = processShell(item)
+	elif classType == 8: #Face
+		graph = processFace(item)
+	elif classType == 4: #Wire
+		graph = processWire(item)
+	elif classType == 2: #Edge
+		graph = processEdge(item)
+	elif classType == 1: #Vertex
+		graph = processVertex(item)
+	elif classType == 128: #Cluster
+		raise Exception("ERROR: Graph.ByTopology: Cluster is not supported. Decompose into its sub-topologies first.")
 	return graph
 
 class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):

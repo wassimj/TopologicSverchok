@@ -146,17 +146,18 @@ class SvTopologyRotate(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
 		if (self.inputs['Origin'].is_linked):
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
+			originList = flatten(originList)
 		else:
-			for anInput in inputs:
-				originList.append(anInput.CenterOfMass())
+			originList = []
+			for aTopology in topologyList:
+				originList.append(aTopology.CenterOfMass())
 		xList = self.inputs['X'].sv_get(deepcopy=True)
 		yList = self.inputs['Y'].sv_get(deepcopy=True)
 		zList = self.inputs['Z'].sv_get(deepcopy=True)
 		degreeList = self.inputs['Degree'].sv_get(deepcopy=True)
-		topologyList = flatten(topologyList)
-		originList = flatten(originList)
 		xList = flatten(xList)
 		yList = flatten(yList)
 		zList = flatten(zList)
@@ -174,8 +175,7 @@ class SvTopologyRotate(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
 		outputs = []
-
-		for anInput in newInputs:
+		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
 

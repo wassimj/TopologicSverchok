@@ -45,7 +45,6 @@ class SvTopologyAddContents(bpy.types.Node, SverchCustomTreeNode):
 		contentListOfLists = self.inputs['Contents'].sv_get(deepcopy=False)
 		if nest_level(contentListOfLists) == 2:
 			contentListOfLists = [contentListOfLists]
-		print(nest_level(contentListOfLists))
 		if len(topologyList) != len(contentListOfLists):
 			return
 		output = []

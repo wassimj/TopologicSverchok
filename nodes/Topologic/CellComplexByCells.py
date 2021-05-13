@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
 import cppyy
 import time
 import warnings
@@ -18,6 +19,22 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
+def classByType(argument):
+	switcher = {
+		1: Vertex,
+		2: Edge,
+		4: Wire,
+		8: Face,
+		16: Shell,
+		32: Cell,
+		64: CellComplex,
+		128: Cluster }
+	return switcher.get(argument, Topology)
+
+def fixTopologyClass(topology):
+  topology.__class__ = classByType(topology.GetType())
+  return topology
+
 def processItem(cells):
 	cellComplex = cells[0]
 	for i in range(1,len(cells)):
@@ -25,35 +42,9 @@ def processItem(cells):
 			cellComplex = cellComplex.Merge(cells[i], False)
 		except:
 			raise Exception("Error: CellComplex.ByCells operation failed during processing the input Cells")
-	if cellComplex.GetType() == 64: #64 is the type of a CellComplex
-		return cellComplex
-	else:
+	if cellComplex.GetType() != 64: #64 is the type of a CellComplex
 		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
-	return cellComplex
-'''
-def processItem(item):
-	print(item)
-	cellComplex = None
-	cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
-	for aCell in item:
-		cells.push_back(aCell)
-	try:
-		cellComplex = topologic.CellComplex.ByCells(cells)
-		return cellComplex
-	except:
-		return None
-'''
-
-def recur(input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input[0], list):
-		for anItem in input:
-			output.append(recur(anItem))
-	else:
-		output = processItem(input)
-	return output
+	return fixTopologyClass(cellComplex)
 
 class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -71,10 +62,13 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Cells'].sv_get(deepcopy=False)
-		inputs = flatten(inputs)
-		cellComplex = processItem(inputs)
-		self.outputs['CellComplex'].sv_set([cellComplex])
+		cellsList = self.inputs['Cells'].sv_get(deepcopy=False)
+		if isinstance(cellsList[0], list) == False:
+			cellsList = [cellsList]
+		outputs = []
+		for cells in cellsList:
+			outputs.append(processItem(cells))
+		self.outputs['CellComplex'].sv_set(outputs)
 		end = time.time()
 		print("CellComplex.ByCells Operation consumed "+str(round(end - start,2))+" seconds")
 

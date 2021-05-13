@@ -53,7 +53,7 @@ def relevantSelector(topology):
 	elif topology.GetType() == topologic.Cell.Type():
 		return topologic.CellUtility.InternalVertex(topology)
 	else:
-		return topology.CenterofMass()
+		return topology.CenterOfMass()
 
 def topologyContains(topology, vertex, tol):
 	contains = False

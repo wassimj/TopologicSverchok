@@ -31,9 +31,10 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvDictionaryValueAtKey'
 	bl_label = 'Dictionary.ValueAtKey'
+	Keys: StringProperty(name="Keys", update=updateNode)
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Dictionary')
-		self.inputs.new('SvStringsSocket', 'Key')
+		self.inputs.new('SvStringsSocket', 'Key').prop_name='Keys'
 		self.outputs.new('SvStringsSocket', 'Value')
 
 	def process(self):
