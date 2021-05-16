@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 6),
+    "version": (0, 5, 4, 7),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -133,6 +133,7 @@ def nodes_index():
                 ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
+                ("Topologic.CellAdjacentCells", "SvCellAdjacentCells"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellByLoft", "SvCellByLoft"),
@@ -377,6 +378,7 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvCellAdjacentCells'],
             ['SvCellByFaces'],
             ['SvCellCylinder'],
             ['SvCellByLoft'],
@@ -403,7 +405,6 @@ class NODEVIEW_MT_AddTPSubcategoryCellComplex(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvCellComplexByCells'],
-            ['SvCellComplexByCellsNew'],
             ['SvCellComplexByFaces'],
             ['SvCellComplexExternalBoundary'],
             ['SvCellComplexInternalBoundaries'],
