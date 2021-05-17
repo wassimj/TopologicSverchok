@@ -1,0 +1,958 @@
+{
+  "export_version": "0.10",
+  "framed_nodes": {
+    "Cell.Cylinder": "Frame.005",
+    "Cell.Prism": "Frame.004",
+    "CellComplex.ByCells": "Frame.008",
+    "Dictionary.ByKeysValues": "Frame.004",
+    "Dictionary.ByKeysValues.001": "Frame.005",
+    "Dictionary.ByKeysValues.002": "Frame.006",
+    "Dictionary.ValueAtKey": "Frame.007",
+    "List Item": "Frame",
+    "List Join": "Frame.008",
+    "Matrix Euler": "Frame.001",
+    "Matrix Math": "Frame.001",
+    "Matrix normal": "Frame.001",
+    "Note": "Frame.001",
+    "Sphere": "Frame.006",
+    "Stethoscope MK2": "Frame.007",
+    "Strings Tools": "Frame.001",
+    "Strings Tools.001": "Frame.001",
+    "Temporal Viewer.001": "Frame.003",
+    "Temporal Viewer.002": "Frame.002",
+    "Topology.ByGeometry": "Frame.006",
+    "Topology.Dictionary": "Frame.007",
+    "Topology.Geometry": "Frame.002",
+    "Topology.Geometry.001": "Frame.003",
+    "Topology.SetDictionary": "Frame.004",
+    "Topology.SetDictionary.001": "Frame.005",
+    "Topology.SetDictionary.002": "Frame.006",
+    "Topology.SubTopologies": "Frame",
+    "Topology.SubTopologies.001": "Frame.003",
+    "Topology.TransferDictionaries": "Frame.009",
+    "Topology.Translate": "Frame.005",
+    "Topology.Translate.001": "Frame.006",
+    "Typography Viewer": "Frame.001"
+  },
+  "groups": {},
+  "nodes": {
+    "Cell.Cylinder": {
+      "bl_idname": "SvCellCylinder",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -1025.2431640625,
+        378.88720703125
+      ],
+      "params": {
+        "Height": 1.399999976158142,
+        "Radius": 0.6499999761581421
+      },
+      "width": 140.0
+    },
+    "Cell.Prism": {
+      "bl_idname": "SvCellPrism",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -991.6940307617188,
+        852.7045288085938
+      ],
+      "params": {
+        "Height": 1.2000000476837158,
+        "Length": 1.2000000476837158,
+        "Width": 1.2000000476837158,
+        "originLocation": "LowerLeft"
+      },
+      "width": 140.0
+    },
+    "CellComplex.ByCells": {
+      "bl_idname": "SvCellComplexByCells",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        100.0,
+        200.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Dictionary.ByKeysValues": {
+      "bl_idname": "SvDictionaryByKeysValues",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -1018.7232055664062,
+        572.972900390625
+      ],
+      "params": {
+        "Keys": "id",
+        "Values": "Prism"
+      },
+      "width": 140.0
+    },
+    "Dictionary.ByKeysValues.001": {
+      "bl_idname": "SvDictionaryByKeysValues",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -816.6734008789062,
+        151.69884490966797
+      ],
+      "params": {
+        "Keys": "id",
+        "Values": "Cylinder"
+      },
+      "width": 140.0
+    },
+    "Dictionary.ByKeysValues.002": {
+      "bl_idname": "SvDictionaryByKeysValues",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -645.0618286132812,
+        -307.46923828125
+      ],
+      "params": {
+        "Keys": "id",
+        "Values": "Sphere"
+      },
+      "width": 140.0
+    },
+    "Dictionary.ValueAtKey": {
+      "bl_idname": "SvDictionaryValueAtKey",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1350.0,
+        270.0
+      ],
+      "params": {
+        "Keys": "id"
+      },
+      "width": 140.0
+    },
+    "Frame": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 207.33334350585938,
+      "hide": false,
+      "label": "Get a Cell",
+      "location": [
+        -30.0,
+        10.0
+      ],
+      "params": {},
+      "width": 380.0
+    },
+    "Frame.001": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 627.6649780273438,
+      "hide": false,
+      "label": "Display Text",
+      "location": [
+        -30.0,
+        10.0
+      ],
+      "params": {},
+      "width": 755.7957763671875
+    },
+    "Frame.002": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 317.3721618652344,
+      "hide": false,
+      "label": "Display Cell",
+      "location": [
+        -20.0,
+        20.0
+      ],
+      "params": {},
+      "width": 384.1142578125
+    },
+    "Frame.003": {
+      "bl_idname": "NodeFrame",
+      "color": [
+        0.47613316774368286,
+        0.6079999804496765,
+        0.0
+      ],
+      "custom_socket_props": {},
+      "height": 333.48907470703125,
+      "hide": false,
+      "label": "Display CellComplex",
+      "location": [
+        0.0,
+        -960.0
+      ],
+      "params": {},
+      "use_custom_color": true,
+      "width": 597.6199951171875
+    },
+    "Frame.004": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 436.0378723144531,
+      "hide": false,
+      "label": "Prism",
+      "location": [
+        -140.0,
+        40.0
+      ],
+      "params": {},
+      "width": 477.5020751953125
+    },
+    "Frame.005": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 383.5538635253906,
+      "hide": false,
+      "label": "Cylinder",
+      "location": [
+        -80.0,
+        60.0
+      ],
+      "params": {},
+      "width": 613.4024658203125
+    },
+    "Frame.006": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 424.8235778808594,
+      "hide": false,
+      "label": "Sphere",
+      "location": [
+        100.0,
+        80.0
+      ],
+      "params": {},
+      "width": 860.392333984375
+    },
+    "Frame.007": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 181.0,
+      "hide": false,
+      "label": "Get Dictionary",
+      "location": [
+        20.0,
+        20.0
+      ],
+      "params": {},
+      "width": 580.0
+    },
+    "Frame.008": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 278.6666564941406,
+      "hide": false,
+      "label": "Build CellComplex",
+      "location": [
+        -30.0,
+        10.0
+      ],
+      "params": {},
+      "width": 420.0
+    },
+    "Frame.009": {
+      "bl_idname": "NodeFrame",
+      "custom_socket_props": {},
+      "height": 266.0,
+      "hide": false,
+      "label": "Transfer Dictionary",
+      "location": [
+        -40.0,
+        20.0
+      ],
+      "params": {},
+      "width": 257.98876953125
+    },
+    "List Item": {
+      "bl_idname": "SvListItemNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        820.0,
+        260.0
+      ],
+      "params": {
+        "index": 2,
+        "level": 1
+      },
+      "width": 140.0
+    },
+    "List Join": {
+      "bl_idname": "ListJoinNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -120.0,
+        300.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Matrix Euler": {
+      "bl_idname": "SvMatrixEulerNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1928.1263427734375,
+        -138.8492431640625
+      ],
+      "params": {
+        "X": 90.0
+      },
+      "width": 140.0
+    },
+    "Matrix Math": {
+      "bl_idname": "SvMatrixMathNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "Matrix Multiply",
+      "location": [
+        2146.100830078125,
+        -182.1599884033203
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Matrix normal": {
+      "bl_idname": "SvMatrixNormalNode",
+      "custom_socket_props": {
+        "0": {
+          "prop": [
+            -0.5,
+            1.7999999523162842,
+            0.0
+          ]
+        }
+      },
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1927.3818359375,
+        -315.83966064453125
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Note": {
+      "bl_idname": "NoteNode",
+      "color": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1805.2716064453125,
+        102.99829864501953
+      ],
+      "params": {
+        "n_id": "-7062797270911816200",
+        "text": "['Prism,Cylinder,Sphere']"
+      },
+      "use_custom_color": true,
+      "width": 140.316650390625
+    },
+    "Sphere": {
+      "bl_idname": "SphereNode",
+      "color": [
+        0.0,
+        0.5,
+        0.5
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -1041.3939208984375,
+        -60.58088684082031
+      ],
+      "params": {
+        "rad_": 0.800000011920929
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Stethoscope MK2": {
+      "bl_idname": "SvStethoscopeNodeMK2",
+      "color": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": true,
+      "label": "",
+      "location": [
+        1550.0,
+        290.0
+      ],
+      "params": {
+        "location_theta": 1.5,
+        "num_elements": 1,
+        "text_color": [
+          0.949999988079071,
+          0.949999988079071,
+          0.949999988079071
+        ]
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Strings Tools": {
+      "bl_idname": "SvStringsToolsNode",
+      "color": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "custom_socket_props": {
+        "0": {
+          "label": "Text"
+        },
+        "1": {
+          "label": "Characters"
+        }
+      },
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2000.8948974609375,
+        95.0862808227539
+      ],
+      "params": {
+        "chars": "['",
+        "current_op": "lstrip",
+        "sockets_signature": "tc t"
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Strings Tools.001": {
+      "bl_idname": "SvStringsToolsNode",
+      "color": [
+        0.5,
+        0.5,
+        1.0
+      ],
+      "custom_socket_props": {
+        "0": {
+          "label": "Text"
+        },
+        "1": {
+          "label": "Characters"
+        }
+      },
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2180.825927734375,
+        58.45132064819336
+      ],
+      "params": {
+        "chars": "']",
+        "current_op": "rstrip",
+        "sockets_signature": "tc t"
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Temporal Viewer.001": {
+      "bl_idname": "SvViewerDrawMk4",
+      "color": [
+        0.6661409735679626,
+        0.20302200317382812,
+        0.0
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "Temporal Viewer",
+      "location": [
+        790.9573364257812,
+        -93.84429931640625
+      ],
+      "params": {},
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Temporal Viewer.002": {
+      "bl_idname": "SvViewerDrawMk4",
+      "color": [
+        0.6661409735679626,
+        0.20302200317382812,
+        0.0
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "Temporal Viewer",
+      "location": [
+        1323.2135009765625,
+        797.10546875
+      ],
+      "params": {
+        "polygon_color": [
+          0.14000000059604645,
+          0.5400000214576721,
+          0.8100000023841858,
+          0.7206196784973145
+        ]
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Topology.ByGeometry": {
+      "bl_idname": "SvTopologyByGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -843.76220703125,
+        -39.675331115722656
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.Dictionary": {
+      "bl_idname": "SvTopologyDictionary",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1170.0,
+        250.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.Geometry": {
+      "bl_idname": "SvTopologyGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1139.0992431640625,
+        720.4161987304688
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.Geometry.001": {
+      "bl_idname": "SvTopologyGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        585.9498901367188,
+        -182.71356201171875
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.SetDictionary": {
+      "bl_idname": "SvTopologySetDictionary",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -741.22119140625,
+        680.2454223632812
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.SetDictionary.001": {
+      "bl_idname": "SvTopologySetDictionary",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -611.8407592773438,
+        289.239013671875
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.SetDictionary.002": {
+      "bl_idname": "SvTopologySetDictionary",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -381.0015869140625,
+        -233.66006469726562
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.SubTopologies": {
+      "bl_idname": "SvTopologySubTopologies",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        640.0,
+        240.0
+      ],
+      "params": {
+        "subtopologyType": "Cell"
+      },
+      "width": 140.0
+    },
+    "Topology.SubTopologies.001": {
+      "bl_idname": "SvTopologySubTopologies",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        393.3373107910156,
+        -264.36749267578125
+      ],
+      "params": {
+        "subtopologyType": "Edge"
+      },
+      "width": 140.0
+    },
+    "Topology.TransferDictionaries": {
+      "bl_idname": "SvTopologyTransferDictionaries",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        350.0,
+        290.0
+      ],
+      "params": {
+        "TransferEdgeDicts": false,
+        "TransferFaceDicts": false,
+        "TransferVertexDicts": false
+      },
+      "width": 197.98876953125
+    },
+    "Topology.Translate": {
+      "bl_idname": "SvTopologyTranslate",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -818.8016967773438,
+        354.594970703125
+      ],
+      "params": {
+        "X": 1.0
+      },
+      "width": 140.0
+    },
+    "Topology.Translate.001": {
+      "bl_idname": "SvTopologyTranslate",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -621.69970703125,
+        -37.843040466308594
+      ],
+      "params": {
+        "Z": 0.5
+      },
+      "width": 140.0
+    },
+    "Typography Viewer": {
+      "bl_idname": "SvTypeViewerNodeV28",
+      "color": [
+        1.0,
+        0.5889999866485596,
+        0.21400000154972076
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2361.0673828125,
+        -2.042830467224121
+      ],
+      "params": {
+        "fsize": 0.3400000333786011
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    }
+  },
+  "update_lists": [
+    [
+      "Strings Tools.001",
+      0,
+      "Typography Viewer",
+      0
+    ],
+    [
+      "Matrix Math",
+      0,
+      "Typography Viewer",
+      1
+    ],
+    [
+      "Note",
+      0,
+      "Strings Tools",
+      0
+    ],
+    [
+      "Matrix Euler",
+      0,
+      "Matrix Math",
+      0
+    ],
+    [
+      "Matrix normal",
+      0,
+      "Matrix Math",
+      1
+    ],
+    [
+      "Strings Tools",
+      0,
+      "Strings Tools.001",
+      0
+    ],
+    [
+      "Dictionary.ValueAtKey",
+      0,
+      "Note",
+      0
+    ],
+    [
+      "Cell.Prism",
+      0,
+      "Topology.SetDictionary",
+      0
+    ],
+    [
+      "Dictionary.ByKeysValues",
+      0,
+      "Topology.SetDictionary",
+      1
+    ],
+    [
+      "Cell.Cylinder",
+      0,
+      "Topology.Translate",
+      0
+    ],
+    [
+      "Topology.Translate",
+      0,
+      "Topology.SetDictionary.001",
+      0
+    ],
+    [
+      "Dictionary.ByKeysValues.001",
+      0,
+      "Topology.SetDictionary.001",
+      1
+    ],
+    [
+      "Topology.Translate.001",
+      0,
+      "Topology.SetDictionary.002",
+      0
+    ],
+    [
+      "Dictionary.ByKeysValues.002",
+      0,
+      "Topology.SetDictionary.002",
+      1
+    ],
+    [
+      "Topology.ByGeometry",
+      0,
+      "Topology.Translate.001",
+      0
+    ],
+    [
+      "Sphere",
+      0,
+      "Topology.ByGeometry",
+      0
+    ],
+    [
+      "Sphere",
+      1,
+      "Topology.ByGeometry",
+      1
+    ],
+    [
+      "Sphere",
+      2,
+      "Topology.ByGeometry",
+      2
+    ],
+    [
+      "CellComplex.ByCells",
+      0,
+      "Topology.SubTopologies.001",
+      0
+    ],
+    [
+      "Topology.Geometry.001",
+      0,
+      "Temporal Viewer.001",
+      0
+    ],
+    [
+      "Topology.Geometry.001",
+      1,
+      "Temporal Viewer.001",
+      1
+    ],
+    [
+      "Topology.Geometry.001",
+      2,
+      "Temporal Viewer.001",
+      2
+    ],
+    [
+      "Topology.SubTopologies.001",
+      0,
+      "Topology.Geometry.001",
+      0
+    ],
+    [
+      "List Item",
+      0,
+      "Topology.Geometry",
+      0
+    ],
+    [
+      "Topology.Geometry",
+      0,
+      "Temporal Viewer.002",
+      0
+    ],
+    [
+      "Topology.Geometry",
+      1,
+      "Temporal Viewer.002",
+      1
+    ],
+    [
+      "Topology.Geometry",
+      2,
+      "Temporal Viewer.002",
+      2
+    ],
+    [
+      "Topology.SetDictionary",
+      0,
+      "List Join",
+      0
+    ],
+    [
+      "Topology.SetDictionary.001",
+      0,
+      "List Join",
+      1
+    ],
+    [
+      "Topology.SetDictionary.002",
+      0,
+      "List Join",
+      2
+    ],
+    [
+      "List Join",
+      0,
+      "CellComplex.ByCells",
+      0
+    ],
+    [
+      "Topology.TransferDictionaries",
+      0,
+      "Topology.SubTopologies",
+      0
+    ],
+    [
+      "Topology.SubTopologies",
+      0,
+      "List Item",
+      0
+    ],
+    [
+      "List Join",
+      0,
+      "Topology.TransferDictionaries",
+      0
+    ],
+    [
+      "CellComplex.ByCells",
+      0,
+      "Topology.TransferDictionaries",
+      1
+    ],
+    [
+      "Dictionary.ValueAtKey",
+      0,
+      "Stethoscope MK2",
+      0
+    ],
+    [
+      "List Item",
+      0,
+      "Topology.Dictionary",
+      0
+    ],
+    [
+      "Topology.Dictionary",
+      0,
+      "Dictionary.ValueAtKey",
+      0
+    ]
+  ]
+}
