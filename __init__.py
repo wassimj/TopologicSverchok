@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 4, 7),
+    "version": (0, 5, 4, 8),
     "blender": (2, 92, 0),
     "location": "Node Editor",
     "category": "Node",

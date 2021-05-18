@@ -1,0 +1,606 @@
+{
+  "export_version": "0.10",
+  "framed_nodes": {},
+  "groups": {},
+  "nodes": {
+    "A Number": {
+      "bl_idname": "SvNumberNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -760.0,
+        140.0
+      ],
+      "params": {
+        "float_": 2.0
+      },
+      "width": 140.0
+    },
+    "Cell.Prism": {
+      "bl_idname": "SvCellPrism",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        0.0,
+        340.0
+      ],
+      "params": {
+        "Height": 10.0
+      },
+      "width": 140.0
+    },
+    "Cell.Prism.001": {
+      "bl_idname": "SvCellPrism",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2580.0,
+        140.0
+      ],
+      "params": {
+        "Height": 10.0,
+        "Length": 0.75,
+        "Width": 0.75
+      },
+      "width": 140.0
+    },
+    "CellComplex.ByFaces": {
+      "bl_idname": "SvCellComplexByFaces",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1560.0,
+        260.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "CellComplex.ByFaces.001": {
+      "bl_idname": "SvCellComplexByFaces",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2560.0,
+        260.0
+      ],
+      "params": {},
+      "width": 164.2249298095703
+    },
+    "CellComplex.ExternalBoundary": {
+      "bl_idname": "SvCellComplexExternalBoundary",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        760.0,
+        240.0
+      ],
+      "params": {},
+      "width": 203.3387908935547
+    },
+    "CellComplex.InternalBoundaries": {
+      "bl_idname": "SvCellComplexInternalBoundaries",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        760.0,
+        140.0
+      ],
+      "params": {},
+      "width": 205.02783203125
+    },
+    "Cluster.ByTopologies": {
+      "bl_idname": "SvClusterByTopologies",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        360.0,
+        40.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Face.ByWire": {
+      "bl_idname": "SvFaceByWire",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        180.0,
+        40.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Face.Triangulate": {
+      "bl_idname": "SvFaceTriangulate",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1200.0,
+        260.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "List Join": {
+      "bl_idname": "ListJoinNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1380.0,
+        260.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Number Range": {
+      "bl_idname": "SvGenNumberRange",
+      "custom_socket_props": {
+        "1": {
+          "label": "stop"
+        },
+        "2": {
+          "label": "count"
+        }
+      },
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -400.0,
+        40.0
+      ],
+      "params": {
+        "count_": 18,
+        "current_mode": "RANGE_COUNT",
+        "range_mode": "RANGE_COUNT",
+        "start_float": 0.5,
+        "stop_float": 9.5
+      },
+      "width": 140.0
+    },
+    "Scalar Math": {
+      "bl_idname": "SvScalarMathNodeMK4",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -240.0,
+        -220.0
+      ],
+      "params": {
+        "x_": 1.5,
+        "y_": 1.5
+      },
+      "width": 140.0
+    },
+    "Simple deformation": {
+      "bl_idname": "SvSimpleDeformNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2020.0,
+        440.0
+      ],
+      "params": {
+        "angle": 80.0,
+        "angles_mode": "degrees",
+        "factor": -0.8999999761581421,
+        "mode": "Taper"
+      },
+      "width": 140.0
+    },
+    "Simple deformation.001": {
+      "bl_idname": "SvSimpleDeformNode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2200.0,
+        440.0
+      ],
+      "params": {
+        "angle": 80.0,
+        "angles_mode": "degrees",
+        "factor": -0.800000011920929
+      },
+      "width": 140.0
+    },
+    "Temporal Viewer.001": {
+      "bl_idname": "SvViewerDrawMk4",
+      "color": [
+        0.6661409735679626,
+        0.20302200317382812,
+        0.0
+      ],
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "Temporal Viewer",
+      "location": [
+        3540.0,
+        340.0
+      ],
+      "params": {
+        "polygon_color": [
+          0.14000000059604645,
+          0.5400000214576721,
+          0.8100000023841858,
+          0.6034473180770874
+        ]
+      },
+      "use_custom_color": true,
+      "width": 140.0
+    },
+    "Topology.Boolean": {
+      "bl_idname": "SvTopologyBoolean",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        540.0,
+        160.0
+      ],
+      "params": {
+        "BooleanOp": "Slice"
+      },
+      "width": 140.0
+    },
+    "Topology.Boolean.001": {
+      "bl_idname": "SvTopologyBoolean",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2780.0,
+        260.0
+      ],
+      "params": {
+        "BooleanOp": "Impose"
+      },
+      "width": 140.0
+    },
+    "Topology.ByGeometry": {
+      "bl_idname": "SvTopologyByGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2380.0,
+        300.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.CenterOfMass": {
+      "bl_idname": "SvTopologyCenterOfMass",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        2980.0,
+        120.0
+      ],
+      "params": {},
+      "width": 161.91796875
+    },
+    "Topology.Explode": {
+      "bl_idname": "SvTopologyExplode",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        3180.0,
+        280.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.Geometry.003": {
+      "bl_idname": "SvTopologyGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1740.0,
+        260.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.Geometry.004": {
+      "bl_idname": "SvTopologyGeometry",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        3360.0,
+        280.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Topology.SubTopologies": {
+      "bl_idname": "SvTopologySubTopologies",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        1000.0,
+        260.0
+      ],
+      "params": {
+        "subtopologyType": "Face"
+      },
+      "width": 161.836669921875
+    },
+    "Vertex.ByCoordinates": {
+      "bl_idname": "SvVertexByCoordinates",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        -220.0,
+        40.0
+      ],
+      "params": {},
+      "width": 140.0
+    },
+    "Wire.Rectangle": {
+      "bl_idname": "SvWireRectangle",
+      "custom_socket_props": {},
+      "height": 100.0,
+      "hide": false,
+      "label": "",
+      "location": [
+        0.0,
+        40.0
+      ],
+      "params": {
+        "Length": 1.5,
+        "Width": 1.5
+      },
+      "width": 140.0
+    }
+  },
+  "update_lists": [
+    [
+      "Vertex.ByCoordinates",
+      0,
+      "Wire.Rectangle",
+      0
+    ],
+    [
+      "Scalar Math",
+      0,
+      "Wire.Rectangle",
+      1
+    ],
+    [
+      "Scalar Math",
+      0,
+      "Wire.Rectangle",
+      2
+    ],
+    [
+      "A Number",
+      0,
+      "Scalar Math",
+      0
+    ],
+    [
+      "Number Range",
+      0,
+      "Vertex.ByCoordinates",
+      2
+    ],
+    [
+      "A Number",
+      0,
+      "Cell.Prism",
+      1
+    ],
+    [
+      "A Number",
+      0,
+      "Cell.Prism",
+      2
+    ],
+    [
+      "Wire.Rectangle",
+      0,
+      "Face.ByWire",
+      0
+    ],
+    [
+      "Face.ByWire",
+      0,
+      "Cluster.ByTopologies",
+      0
+    ],
+    [
+      "Cell.Prism",
+      0,
+      "Topology.Boolean",
+      0
+    ],
+    [
+      "Cluster.ByTopologies",
+      0,
+      "Topology.Boolean",
+      1
+    ],
+    [
+      "Topology.Boolean",
+      0,
+      "CellComplex.ExternalBoundary",
+      0
+    ],
+    [
+      "Topology.Boolean",
+      0,
+      "CellComplex.InternalBoundaries",
+      0
+    ],
+    [
+      "CellComplex.ExternalBoundary",
+      0,
+      "Topology.SubTopologies",
+      0
+    ],
+    [
+      "Topology.SubTopologies",
+      0,
+      "Face.Triangulate",
+      0
+    ],
+    [
+      "Face.Triangulate",
+      0,
+      "List Join",
+      0
+    ],
+    [
+      "CellComplex.InternalBoundaries",
+      0,
+      "List Join",
+      1
+    ],
+    [
+      "List Join",
+      0,
+      "CellComplex.ByFaces",
+      0
+    ],
+    [
+      "CellComplex.ByFaces",
+      0,
+      "Topology.Geometry.003",
+      0
+    ],
+    [
+      "Topology.Geometry.003",
+      0,
+      "Simple deformation",
+      0
+    ],
+    [
+      "Simple deformation",
+      0,
+      "Simple deformation.001",
+      0
+    ],
+    [
+      "Simple deformation.001",
+      0,
+      "Topology.ByGeometry",
+      0
+    ],
+    [
+      "Topology.Geometry.003",
+      1,
+      "Topology.ByGeometry",
+      1
+    ],
+    [
+      "Topology.Geometry.003",
+      2,
+      "Topology.ByGeometry",
+      2
+    ],
+    [
+      "Topology.ByGeometry",
+      3,
+      "CellComplex.ByFaces.001",
+      0
+    ],
+    [
+      "CellComplex.ByFaces.001",
+      0,
+      "Topology.Boolean.001",
+      0
+    ],
+    [
+      "Cell.Prism.001",
+      0,
+      "Topology.Boolean.001",
+      1
+    ],
+    [
+      "Topology.Boolean.001",
+      0,
+      "Topology.Explode",
+      0
+    ],
+    [
+      "Topology.CenterOfMass",
+      0,
+      "Topology.Explode",
+      1
+    ],
+    [
+      "Topology.Boolean.001",
+      0,
+      "Topology.CenterOfMass",
+      0
+    ],
+    [
+      "Topology.Explode",
+      0,
+      "Topology.Geometry.004",
+      0
+    ],
+    [
+      "Topology.Geometry.004",
+      0,
+      "Temporal Viewer.001",
+      0
+    ],
+    [
+      "Topology.Geometry.004",
+      1,
+      "Temporal Viewer.001",
+      1
+    ],
+    [
+      "Topology.Geometry.004",
+      2,
+      "Temporal Viewer.001",
+      2
+    ]
+  ]
+}

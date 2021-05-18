@@ -33,24 +33,12 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	print(item)
 	cell = None
 	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for aFace in item:
 		faces.push_back(aFace)
 	cell = topologic.Cell.ByFaces(faces)
 	return cell
-
-def recur(input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input[0], list):
-		for anItem in input:
-			output.append(recur(anItem))
-	else:
-		output = processItem(input)
-	return output
 
 class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -67,9 +55,13 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Faces'].sv_get(deepcopy=False)
-		cells = recur(inputs)
-		self.outputs['Cell'].sv_set(flatten(cells))
+		faceList = self.inputs['Faces'].sv_get(deepcopy=False)
+		if isinstance(faceList[0], list) == False:
+			faceList = [faceList]
+		outputs = []
+		for faces in faceList:
+			outputs.append(processItem(faces))
+		self.outputs['Cell'].sv_set(outputs)
 
 def register():
     bpy.utils.register_class(SvCellByFaces)
