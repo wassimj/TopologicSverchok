@@ -1,6 +1,8 @@
 {
   "export_version": "0.10",
-  "framed_nodes": {},
+  "framed_nodes": {
+    "Face.Triangulate": "Frame"
+  },
   "groups": {},
   "nodes": {
     "A Number": {
@@ -10,8 +12,8 @@
       "hide": false,
       "label": "",
       "location": [
-        -760.0,
-        140.0
+        -926.73974609375,
+        54.4276008605957
       ],
       "params": {
         "float_": 2.0
@@ -25,8 +27,8 @@
       "hide": false,
       "label": "",
       "location": [
-        0.0,
-        340.0
+        -166.73977661132812,
+        254.42759704589844
       ],
       "params": {
         "Height": 10.0
@@ -40,8 +42,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2580.0,
-        140.0
+        2564.61376953125,
+        63.742401123046875
       ],
       "params": {
         "Height": 10.0,
@@ -57,10 +59,12 @@
       "hide": false,
       "label": "",
       "location": [
-        1560.0,
-        260.0
+        1616.3150634765625,
+        174.4207763671875
       ],
-      "params": {},
+      "params": {
+        "Tol": 0.0010000000474974513
+      },
       "width": 140.0
     },
     "CellComplex.ByFaces.001": {
@@ -70,8 +74,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2560.0,
-        260.0
+        2544.61376953125,
+        183.74240112304688
       ],
       "params": {},
       "width": 164.2249298095703
@@ -83,8 +87,8 @@
       "hide": false,
       "label": "",
       "location": [
-        760.0,
-        240.0
+        593.26025390625,
+        154.42759704589844
       ],
       "params": {},
       "width": 203.3387908935547
@@ -96,8 +100,8 @@
       "hide": false,
       "label": "",
       "location": [
-        760.0,
-        140.0
+        593.26025390625,
+        54.4276008605957
       ],
       "params": {},
       "width": 205.02783203125
@@ -109,8 +113,8 @@
       "hide": false,
       "label": "",
       "location": [
-        360.0,
-        40.0
+        193.26022338867188,
+        -45.5723991394043
       ],
       "params": {},
       "width": 140.0
@@ -122,8 +126,8 @@
       "hide": false,
       "label": "",
       "location": [
-        180.0,
-        40.0
+        13.260223388671875,
+        -45.5723991394043
       ],
       "params": {},
       "width": 140.0
@@ -135,11 +139,30 @@
       "hide": false,
       "label": "",
       "location": [
-        1200.0,
-        260.0
+        1070.8290252685547,
+        199.56660270690918
       ],
       "params": {},
-      "width": 140.0
+      "width": 237.0909423828125
+    },
+    "Frame": {
+      "bl_idname": "NodeFrame",
+      "color": [
+        0.6079999804496765,
+        0.0,
+        0.005017015151679516
+      ],
+      "custom_socket_props": {},
+      "height": 135.5666046142578,
+      "hide": false,
+      "label": "Make sure this list is flattened",
+      "location": [
+        -163.8502960205078,
+        29.83778190612793
+      ],
+      "params": {},
+      "use_custom_color": true,
+      "width": 297.0909423828125
     },
     "List Join": {
       "bl_idname": "ListJoinNode",
@@ -148,8 +171,8 @@
       "hide": false,
       "label": "",
       "location": [
-        1380.0,
-        260.0
+        1413.818359375,
+        241.10687255859375
       ],
       "params": {},
       "width": 140.0
@@ -168,8 +191,8 @@
       "hide": false,
       "label": "",
       "location": [
-        -400.0,
-        40.0
+        -566.73974609375,
+        -45.5723991394043
       ],
       "params": {
         "count_": 18,
@@ -187,8 +210,8 @@
       "hide": false,
       "label": "",
       "location": [
-        -240.0,
-        -220.0
+        -406.7397766113281,
+        -305.5723876953125
       ],
       "params": {
         "x_": 1.5,
@@ -203,8 +226,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2020.0,
-        440.0
+        2004.6136474609375,
+        363.7424011230469
       ],
       "params": {
         "angle": 80.0,
@@ -221,8 +244,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2200.0,
-        440.0
+        2184.61376953125,
+        363.7424011230469
       ],
       "params": {
         "angle": 80.0,
@@ -243,8 +266,8 @@
       "hide": false,
       "label": "Temporal Viewer",
       "location": [
-        3540.0,
-        340.0
+        3524.61376953125,
+        263.7424011230469
       ],
       "params": {
         "polygon_color": [
@@ -264,8 +287,8 @@
       "hide": false,
       "label": "",
       "location": [
-        540.0,
-        160.0
+        373.2602233886719,
+        74.42760467529297
       ],
       "params": {
         "BooleanOp": "Slice"
@@ -279,8 +302,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2780.0,
-        260.0
+        2764.61376953125,
+        183.74240112304688
       ],
       "params": {
         "BooleanOp": "Impose"
@@ -294,8 +317,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2380.0,
-        300.0
+        2364.61376953125,
+        223.74240112304688
       ],
       "params": {},
       "width": 140.0
@@ -307,8 +330,8 @@
       "hide": false,
       "label": "",
       "location": [
-        2980.0,
-        120.0
+        2964.61376953125,
+        43.742401123046875
       ],
       "params": {},
       "width": 161.91796875
@@ -321,7 +344,7 @@
       "label": "",
       "location": [
         3180.0,
-        280.0
+        200.0
       ],
       "params": {},
       "width": 140.0
@@ -333,8 +356,8 @@
       "hide": false,
       "label": "",
       "location": [
-        1740.0,
-        260.0
+        1816.7454833984375,
+        160.92221069335938
       ],
       "params": {},
       "width": 140.0
@@ -346,8 +369,8 @@
       "hide": false,
       "label": "",
       "location": [
-        3360.0,
-        280.0
+        3344.61376953125,
+        203.74240112304688
       ],
       "params": {},
       "width": 140.0
@@ -359,8 +382,8 @@
       "hide": false,
       "label": "",
       "location": [
-        1000.0,
-        260.0
+        833.26025390625,
+        174.42759704589844
       ],
       "params": {
         "subtopologyType": "Face"
@@ -374,8 +397,8 @@
       "hide": false,
       "label": "",
       "location": [
-        -220.0,
-        40.0
+        -386.7397766113281,
+        -45.5723991394043
       ],
       "params": {},
       "width": 140.0
@@ -387,8 +410,8 @@
       "hide": false,
       "label": "",
       "location": [
-        0.0,
-        40.0
+        -166.73977661132812,
+        -45.5723991394043
       ],
       "params": {
         "Length": 1.5,
@@ -399,117 +422,9 @@
   },
   "update_lists": [
     [
-      "Vertex.ByCoordinates",
-      0,
-      "Wire.Rectangle",
-      0
-    ],
-    [
-      "Scalar Math",
-      0,
-      "Wire.Rectangle",
-      1
-    ],
-    [
-      "Scalar Math",
-      0,
-      "Wire.Rectangle",
-      2
-    ],
-    [
-      "A Number",
-      0,
-      "Scalar Math",
-      0
-    ],
-    [
-      "Number Range",
-      0,
-      "Vertex.ByCoordinates",
-      2
-    ],
-    [
-      "A Number",
-      0,
-      "Cell.Prism",
-      1
-    ],
-    [
-      "A Number",
-      0,
-      "Cell.Prism",
-      2
-    ],
-    [
-      "Wire.Rectangle",
-      0,
-      "Face.ByWire",
-      0
-    ],
-    [
-      "Face.ByWire",
-      0,
-      "Cluster.ByTopologies",
-      0
-    ],
-    [
-      "Cell.Prism",
-      0,
-      "Topology.Boolean",
-      0
-    ],
-    [
-      "Cluster.ByTopologies",
-      0,
-      "Topology.Boolean",
-      1
-    ],
-    [
-      "Topology.Boolean",
-      0,
-      "CellComplex.ExternalBoundary",
-      0
-    ],
-    [
-      "Topology.Boolean",
-      0,
-      "CellComplex.InternalBoundaries",
-      0
-    ],
-    [
-      "CellComplex.ExternalBoundary",
-      0,
-      "Topology.SubTopologies",
-      0
-    ],
-    [
-      "Topology.SubTopologies",
-      0,
-      "Face.Triangulate",
-      0
-    ],
-    [
-      "Face.Triangulate",
-      0,
-      "List Join",
-      0
-    ],
-    [
-      "CellComplex.InternalBoundaries",
-      0,
-      "List Join",
-      1
-    ],
-    [
-      "List Join",
-      0,
-      "CellComplex.ByFaces",
-      0
-    ],
-    [
-      "CellComplex.ByFaces",
-      0,
-      "Topology.Geometry.003",
+      "Topology.ByGeometry",
+      3,
+      "CellComplex.ByFaces.001",
       0
     ],
     [
@@ -523,6 +438,24 @@
       0,
       "Simple deformation.001",
       0
+    ],
+    [
+      "Topology.Geometry.004",
+      0,
+      "Temporal Viewer.001",
+      0
+    ],
+    [
+      "Topology.Geometry.004",
+      1,
+      "Temporal Viewer.001",
+      1
+    ],
+    [
+      "Topology.Geometry.004",
+      2,
+      "Temporal Viewer.001",
+      2
     ],
     [
       "Simple deformation.001",
@@ -543,10 +476,22 @@
       2
     ],
     [
-      "Topology.ByGeometry",
-      3,
-      "CellComplex.ByFaces.001",
+      "Topology.Explode",
+      0,
+      "Topology.Geometry.004",
       0
+    ],
+    [
+      "Face.Triangulate",
+      0,
+      "List Join",
+      0
+    ],
+    [
+      "CellComplex.InternalBoundaries",
+      0,
+      "List Join",
+      1
     ],
     [
       "CellComplex.ByFaces.001",
@@ -563,44 +508,122 @@
     [
       "Topology.Boolean.001",
       0,
-      "Topology.Explode",
+      "Topology.CenterOfMass",
       0
     ],
     [
-      "Topology.CenterOfMass",
+      "CellComplex.ByFaces",
       0,
-      "Topology.Explode",
+      "Topology.Geometry.003",
+      0
+    ],
+    [
+      "List Join",
+      0,
+      "CellComplex.ByFaces",
+      0
+    ],
+    [
+      "A Number",
+      0,
+      "Cell.Prism",
       1
+    ],
+    [
+      "A Number",
+      0,
+      "Cell.Prism",
+      2
+    ],
+    [
+      "Topology.Boolean",
+      0,
+      "CellComplex.ExternalBoundary",
+      0
+    ],
+    [
+      "Topology.Boolean",
+      0,
+      "CellComplex.InternalBoundaries",
+      0
+    ],
+    [
+      "Face.ByWire",
+      0,
+      "Cluster.ByTopologies",
+      0
+    ],
+    [
+      "Wire.Rectangle",
+      0,
+      "Face.ByWire",
+      0
+    ],
+    [
+      "A Number",
+      0,
+      "Scalar Math",
+      0
+    ],
+    [
+      "Cell.Prism",
+      0,
+      "Topology.Boolean",
+      0
+    ],
+    [
+      "Cluster.ByTopologies",
+      0,
+      "Topology.Boolean",
+      1
+    ],
+    [
+      "CellComplex.ExternalBoundary",
+      0,
+      "Topology.SubTopologies",
+      0
+    ],
+    [
+      "Number Range",
+      0,
+      "Vertex.ByCoordinates",
+      2
+    ],
+    [
+      "Vertex.ByCoordinates",
+      0,
+      "Wire.Rectangle",
+      0
+    ],
+    [
+      "Scalar Math",
+      0,
+      "Wire.Rectangle",
+      1
+    ],
+    [
+      "Scalar Math",
+      0,
+      "Wire.Rectangle",
+      2
+    ],
+    [
+      "Topology.SubTopologies",
+      0,
+      "Face.Triangulate",
+      0
     ],
     [
       "Topology.Boolean.001",
       0,
-      "Topology.CenterOfMass",
-      0
-    ],
-    [
       "Topology.Explode",
-      0,
-      "Topology.Geometry.004",
       0
     ],
     [
-      "Topology.Geometry.004",
+      "Topology.CenterOfMass",
       0,
-      "Temporal Viewer.001",
-      0
-    ],
-    [
-      "Topology.Geometry.004",
-      1,
-      "Temporal Viewer.001",
+      "Topology.Explode",
       1
-    ],
-    [
-      "Topology.Geometry.004",
-      2,
-      "Temporal Viewer.001",
-      2
     ]
   ]
 }
