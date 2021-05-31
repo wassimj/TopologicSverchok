@@ -34,14 +34,6 @@ def fixTopologyClass(topology):
   topology.__class__ = classByType(topology.GetType())
   return topology
 
-def getValueAtKey(dict, key):
-	returnValue = None
-	try:
-		returnValue = str((cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
-	except:
-		returnValue = None
-	return returnValue
-
 def relevantSelector(topology):
 	returnVertex = None
 	if topology.GetType() == topologic.Vertex.Type():
@@ -76,6 +68,15 @@ def topologyContains(topology, vertex, tol):
 		return (topologic.CellUtility.Contains(topology, vertex, tol) == 0)
 	return False
 
+def getKeys(item):
+	stl_keys = item.Keys()
+	returnList = []
+	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
+	for x in copyKeys:
+		k = x.c_str()
+		returnList.append(k)
+	return returnList
+
 def transferDictionaries(sources, sinks, tol):
 	for sink in sinks:
 		sinkKeys = []
@@ -87,10 +88,9 @@ def transferDictionaries(sources, sinks, tol):
 				d = source.GetDictionary()
 				if d == None:
 					continue
-				stl_keys = d.Keys()
-				if len(stl_keys) > 0:
-					copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-					sourceKeys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+				stlKeys = d.Keys()
+				if len(stlKeys) > 0:
+					sourceKeys = getKeys(d)
 					for aSourceKey in sourceKeys:
 						if aSourceKey not in sinkKeys:
 							sinkKeys.append(aSourceKey)
@@ -98,19 +98,47 @@ def transferDictionaries(sources, sinks, tol):
 					for i in range(len(sourceKeys)):
 						index = sinkKeys.index(sourceKeys[i])
 						k = cppyy.gbl.std.string(sourceKeys[i])
-						sourceValue = getValueAtKey(d, k)
+						sourceValue = d.ValueAtKey(k).Value()
 						if sourceValue != None:
+							if (isinstance(sourceValue, cppyy.gbl.std.string)):
+								sourceValue = sourceValue.c_str()
 							if sinkValues[index] != "":
-								sinkValues[index] = sinkValues[index]+","+sourceValue
+								if isinstance(sinkValues[index], list):
+									sinkValues[index].append(sourceValue)
+								else:
+									sinkValues[index] = [sinkValues[index], sourceValue]
 							else:
 								sinkValues[index] = sourceValue
+		print(len(sinkKeys))
+		print(sinkKeys)
+		print(len(sinkValues))
+		print(sinkValues)
 		if len(sinkKeys) > 0 and len(sinkValues) > 0:
 			stlKeys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-			for aKey in sinkKeys:
-				stlKeys.push_back(aKey)
+			for sinkKey in sinkKeys:
+				stlKeys.push_back(sinkKey)
 			stlValues = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-			for aValue in sinkValues:
-				stlValues.push_back(topologic.StringAttribute(aValue))
+			for sinkValue in sinkValues:
+				if isinstance(sinkValue, bool):
+					stlValues.push_back(topologic.IntAttribute(sinkValue))
+				elif isinstance(sinkValue, int):
+					stlValues.push_back(topologic.IntAttribute(sinkValue))
+				elif isinstance(sinkValue, float):
+					stlValues.push_back(topologic.DoubleAttribute(sinkValue))
+				elif isinstance(sinkValue, str):
+					stlValues.push_back(topologic.StringAttribute(sinkValue))
+				elif isinstance(sinkValue, list):
+					l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+					for v in sinkValue:
+						if isinstance(v, bool):
+							l.push_back(topologic.IntAttribute(v))
+						elif isinstance(v, int):
+							l.push_back(topologic.IntAttribute(v))
+						elif isinstance(v, float):
+							l.push_back(topologic.DoubleAttribute(v))
+						elif isinstance(v, str):
+							l.push_back(topologic.StringAttribute(v))
+					stlValues.push_back(topologic.ListAttribute(l))
 			newDict = topologic.Dictionary.ByKeysValues(stlKeys, stlValues)
 			_ = sink.SetDictionary(newDict)
 

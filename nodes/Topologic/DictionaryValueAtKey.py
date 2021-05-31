@@ -16,13 +16,26 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(dict, key):
-	returnValue = None
+def processItem(item, key):
+	fv = None
 	try:
-		returnValue = (str(cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
+		v = item.ValueAtKey(key).Value()
 	except:
-		returnValue = None
-	return returnValue
+		raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
+	if (isinstance(v, int) or (isinstance(v, float))):
+		fv = v
+	elif (isinstance(v, cppyy.gbl.std.string)):
+		fv = v.c_str()
+	else:
+		resultList = []
+		for i in v:
+			if isinstance(i.Value(), cppyy.gbl.std.string):
+				resultList.append(i.Value().c_str())
+			else:
+				resultList.append(i.Value())
+		fv = resultList
+	return fv
+
 
 class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -43,8 +56,8 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		
-		DictionaryList = flatten(self.inputs['Dictionary'].sv_get(deepcopy=False))
-		key = flatten(self.inputs['Key'].sv_get(deepcopy=False))[0]
+		DictionaryList = flatten(self.inputs['Dictionary'].sv_get(deepcopy=True))
+		key = flatten(self.inputs['Key'].sv_get(deepcopy=True))[0]
 		outputs = []
 		for aDict in DictionaryList:
 			outputs.append(processItem(aDict, key))

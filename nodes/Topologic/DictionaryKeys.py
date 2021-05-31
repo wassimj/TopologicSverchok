@@ -11,7 +11,12 @@ def processItem(item):
 	stl_keys = item.Keys()
 	returnList = []
 	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	return [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+	for x in copyKeys:
+		k = x.c_str()
+		if k[-8:] != "__type__":
+			returnList.append(k)
+	return returnList
+	#return [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
 
 def recur(input):
 	output = []
@@ -41,7 +46,7 @@ class SvDictionaryKeys(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		
-		inputs = self.inputs['Dictionary'].sv_get(deepcopy=False)
+		inputs = self.inputs['Dictionary'].sv_get(deepcopy=True)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(recur(anInput))

@@ -3,15 +3,41 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
+import topologic
 import cppyy
 
+def getKeys(item):
+	stl_keys = item.Keys()
+	returnList = []
+	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
+	for x in copyKeys:
+		k = x.c_str()
+		returnList.append(k)
+	return returnList
 
 def processItem(item):
-	values = item.Values()
+	keys = getKeys(item)
 	returnList = []
-	for aValue in values:
-		returnList.append(str(cppyy.bind_object(aValue.Value(), "std::string")))
+	fv = None
+	for key in keys:
+		fv = None
+		try:
+			v = item.ValueAtKey(key).Value()
+		except:
+			raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
+		if (isinstance(v, int) or (isinstance(v, float))):
+			fv = v
+		elif (isinstance(v, cppyy.gbl.std.string)):
+			fv = v.c_str()
+		else:
+			resultList = []
+			for i in v:
+				if isinstance(i.Value(), cppyy.gbl.std.string):
+					resultList.append(i.Value().c_str())
+				else:
+					resultList.append(i.Value())
+			fv = resultList
+		returnList.append(fv)
 	return returnList
 
 def recur(input):

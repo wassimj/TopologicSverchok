@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import cppyy
 import time
 
@@ -92,38 +93,76 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(input):
-	graph = input[0]
-	vertex = input[1]
+def classByType(argument):
+	switcher = {
+		1: Vertex,
+		2: Edge,
+		4: Wire,
+		8: Face,
+		16: Shell,
+		32: Cell,
+		64: CellComplex,
+		128: Cluster }
+	return switcher.get(argument, Topology)
 
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = graph.Vertices(vertices)
-	nearestVertex = vertices.front()
-	nearestDistance = topologic.VertexUtility.Distance(vertex, nearestVertex)
-	for aGraphVertex in vertices:
-		newDistance = topologic.VertexUtility.Distance(vertex, aGraphVertex)
-		if newDistance < nearestDistance:
-			nearestDistance = newDistance
-			nearestVertex = aGraphVertex
-	return nearestVertex
+def fixTopologyClass(topology):
+  topology.__class__ = classByType(topology.GetType())
+  return topology
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+def processItem(item):
+	vertex = item[0]
+	key = item[1]
+	value = item[2]
+	fv = None
+	if isinstance(value, list):
+		value.sort()
+	try:
+		d = vertex.GetDictionary()
+		v = d.ValueAtKey(key).Value()
+	except:
+		print("Failed to find the Key and Value")
+		return None
+	if (isinstance(v, int) or (isinstance(v, float))):
+		fv = v
+	elif (isinstance(v, cppyy.gbl.std.string)):
+		fv = v.c_str()
+	else:
+		resultList = []
+		for i in v:
+			if isinstance(i.Value(), cppyy.gbl.std.string):
+				resultList.append(i.Value().c_str())
+			else:
+				resultList.append(i.Value())
+		fv = resultList.sort()
 
-class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
+	print("Value is: "+str(fv))
+	print("Comparing to: "+str(value))
+	if str(fv) == str(value):
+		print("Success!!")
+		return vertex
+	else:
+		print("Failure!!")
+	return None
+
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
+class SvGraphVerticesAtKeyValue(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Finds the nearest Graph Vertex to the input Vertex
+	Tooltip: Outputs the Vertices that have the input Value at the input Key
 	"""
-	bl_idname = 'SvGraphNearestVertex'
-	bl_label = 'Graph.NearestVertex'
-	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	bl_idname = 'SvGraphVerticesAtKeyValue'
+	bl_label = 'Graph.VerticesAtKeyValue'
+	Key: StringProperty(name='Key', update=updateNode)
+	Value: StringProperty(name='Value', update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Graph')
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Vertices')
+		self.inputs.new('SvStringsSocket', 'Key').prop_name='Key'
+		self.inputs.new('SvStringsSocket', 'Value').prop_name='Value'
+		self.outputs.new('SvStringsSocket', 'Vertices')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -132,12 +171,15 @@ class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		graphList = self.inputs['Graph'].sv_get(deepcopy=False)
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		graphList = flatten(graphList)
-		vertexList = flatten(vertexList)
-		inputs = [graphList, vertexList]
-		if ((self.Replication) == "Trim"):
+		vertexList = self.inputs['Vertices'].sv_get(deepcopy=True)
+		keyList = self.inputs['Key'].sv_get(deepcopy=True)[0]
+		valueList = self.inputs['Value'].sv_get(deepcopy=True)[0]
+		inputs = [vertexList, keyList, valueList]
+		outputs = []
+		if ((self.Replication) == "Default"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -148,15 +190,17 @@ class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
-		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+			output = processItem(anInput)
+			print(output)
+			if output:
+				outputs.append(output)
+		self.outputs['Vertices'].sv_set(outputs)
 		end = time.time()
-		print("Nearest Vertex Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Graph.VerticesAtKeyValue Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-	bpy.utils.register_class(SvGraphNearestVertex)
+    bpy.utils.register_class(SvGraphVerticesAtKeyValue)
 
 def unregister():
-	bpy.utils.unregister_class(SvGraphNearestVertex)
+    bpy.utils.unregister_class(SvGraphVerticesAtKeyValue)

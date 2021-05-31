@@ -24,7 +24,7 @@ class SvTopologicVersion(bpy.types.Node, SverchCustomTreeNode):
 		result = re.search('topologic-(.*)-py', filename)
 		topologicPy = 'TopologicPy: '+result.group(1)
 		topologicPy = topologicPy.replace(".","_")
-		topologicSverchok = 'TopologicSverchok: 0_5_4_9'
+		topologicSverchok = 'TopologicSverchok: 0_5_5_0'
 		versions = [topologicCore, topologicPy, topologicSverchok]
 		self.outputs['Version'].sv_set(versions)
 

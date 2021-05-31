@@ -1,11 +1,10 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 import cppyy
-import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -92,51 +91,67 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(input):
-	graph = input[0]
-	vertex = input[1]
+def processItem(item):
+	topology = item[0]
+	contents = item[1]
+	topologyType = item[2]
+	print(contents)
+	if topologyType == "Vertex":
+		t = 1
+	elif topologyType == "Edge":
+		t = 2
+	elif topologyType == "Wire":
+		t = 4
+	elif topologyType == "Face":
+		t = 8
+	elif topologyType == "Shell":
+		t = 16
+	elif topologyType == "Cell":
+		t = 32
+	elif topologyType == "CellComplex":
+		t = 64
+	else:
+		t = 0
+	stl_contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	for aContent in contents:
+		stl_contents.push_back(aContent)
+	return topology.AddContents(stl_contents, t)
 
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = graph.Vertices(vertices)
-	nearestVertex = vertices.front()
-	nearestDistance = topologic.VertexUtility.Distance(vertex, nearestVertex)
-	for aGraphVertex in vertices:
-		newDistance = topologic.VertexUtility.Distance(vertex, aGraphVertex)
-		if newDistance < nearestDistance:
-			nearestDistance = newDistance
-			nearestVertex = aGraphVertex
-	return nearestVertex
-
+topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5),("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7),("Topology", "Topology", "", 8)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
+
+class SvTopologyAddContent(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Finds the nearest Graph Vertex to the input Vertex
+	Tooltip: Adds the input Topology content to the input Topology. If the type is set to Topology, the content will be added to the input topology. Otherwise, it will be added to the closest sub-topology of the specified type.   
 	"""
-	bl_idname = 'SvGraphNearestVertex'
-	bl_label = 'Graph.NearestVertex'
-	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	bl_idname = 'SvTopologyAddContent'
+	bl_label = 'Topology.AddContent'
+	Type: EnumProperty(name="Type", description="Specify subtopology type", default="Topology", items=topologyTypes, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Graph')
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Content')
+		self.inputs.new('SvStringsSocket', 'Type').prop_name = 'Type'
+		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		graphList = self.inputs['Graph'].sv_get(deepcopy=False)
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		graphList = flatten(graphList)
-		vertexList = flatten(vertexList)
-		inputs = [graphList, vertexList]
+
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		contentList = self.inputs['Content'].sv_get(deepcopy=True)
+		typeList = self.inputs['Type'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
+		if isinstance(contentList[0], list) == False:
+			contentList = [contentList]
+		typeList = flatten(typeList)
+		inputs = [topologyList, contentList, typeList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -151,12 +166,10 @@ class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
-		end = time.time()
-		print("Nearest Vertex Operation consumed "+str(round(end - start,2))+" seconds")
+		self.outputs['Topology'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvGraphNearestVertex)
+    bpy.utils.register_class(SvTopologyAddContent)
 
 def unregister():
-	bpy.utils.unregister_class(SvGraphNearestVertex)
+    bpy.utils.unregister_class(SvTopologyAddContent)
