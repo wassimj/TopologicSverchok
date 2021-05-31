@@ -41,7 +41,7 @@ if platform == 'win32':
   else:
     raise Exception("Error: Could not find: "+home+'\\anaconda3\\envs nor '+'C:\\ProgramData\\anaconda3\\envs')
   sitePackages = '\\lib\\site-packages'
-  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith('Blender392')][0]
+  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith('Blender')][0]
   topologicEggName = '\\'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
   if os.path.exists(conda+blenderName+sitePackages):
     sys.path.append(conda+blenderName+sitePackages)
