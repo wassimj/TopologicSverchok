@@ -17,8 +17,8 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 5, 0),
-    "blender": (2, 92, 0),
+    "version": (0, 5, 6, 0),
+    "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
     "description": "Topologic",
@@ -32,16 +32,18 @@ import os, re
 from os.path import expanduser
 from sys import platform
 from os.path import expanduser
+import bpy
 home = expanduser("~")
+blenderVersion =  "Blender"+str(bpy.app.version[0])+str(bpy.app.version[1])
 if platform == 'win32':
-  if os.path.exists(home+'\\anaconda3\\envs'):
-    conda = home+'\\anaconda3\\envs'
-  elif os.path.exists('C:\\ProgramData\\anaconda3\\envs'):
+  if os.path.exists('C:\\ProgramData\\anaconda3\\envs'):
     conda = 'C:\\ProgramData\\anaconda3\\envs'
+  elif os.path.exists(home+'\\anaconda3\\envs'):
+    conda = home+'\\anaconda3\\envs'
   else:
     raise Exception("Error: Could not find: "+home+'\\anaconda3\\envs nor '+'C:\\ProgramData\\anaconda3\\envs')
   sitePackages = '\\lib\\site-packages'
-  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith('Blender')][0]
+  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith(blenderVersion)][0]
   topologicEggName = '\\'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
   if os.path.exists(conda+blenderName+sitePackages):
     sys.path.append(conda+blenderName+sitePackages)
@@ -176,6 +178,7 @@ def nodes_index():
                 ("Topologic.TopologyExportToBRep", "SvTopologyExportToBRep"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
                 ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
+                ("Topologic.TopologyOCCTShape", "SvTopologyOCCTShape"),
                 ("Topologic.TopologyPlace", "SvTopologyPlace"),
                 ("Topologic.TopologyRemoveCollinearEdges", "SvTopologyRemoveCollinearEdges"),
                 ("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces"),
@@ -198,6 +201,7 @@ def nodes_index():
                 ("Topologic.DictionaryValues", "SvDictionaryValues"),
                 ("Topologic.GraphByTopology", "SvGraphByTopology"),
                 ("Topologic.GraphEdges", "SvGraphEdges"),
+				("Topologic.GraphMST", "SvGraphMST"),
 				("Topologic.GraphNearestVertex", "SvGraphNearestVertex"),
                 ("Topologic.GraphShortestPath", "SvGraphShortestPath"),
                 ("Topologic.GraphTopology", "SvGraphTopology"),
@@ -227,7 +231,7 @@ def register_nodes():
 	node_modules = make_node_list()
 	for module in node_modules:
 		module.register()
-	info("Registered %s nodes", len(node_modules))
+	#info("Registered %s nodes", len(node_modules))
 
 def unregister_nodes():
 	global imported_modules
@@ -449,6 +453,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvGraphByTopology'],
             ['SvGraphEdges'],
+            ['SvGraphMST'],
             ['SvGraphNearestVertex'],
             ['SvGraphShortestPath'],
             ['SvGraphTopology'],
@@ -517,6 +522,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyExportToBRep'],
             ['SvTopologyGeometry'],
             ['SvTopologyIsSame'],
+            ['SvTopologyOCCTShape'],
             ['SvTopologyPlace'],
             ['SvTopologyRotate'],
             ['SvTopologyRemoveCollinearEdges'],
@@ -560,7 +566,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
 def register():
     global topologic_menu_classes
 
-    debug("Registering Topologic")
+    #debug("Registering Topologic")
 
     #settings.register()
     #icons.register()

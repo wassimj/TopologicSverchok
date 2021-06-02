@@ -97,20 +97,24 @@ def processKeysValues(keys, values):
 	stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
 	for i in range(len(keys)):
 		stl_keys.push_back(keys[i])
-		if isinstance(values[i], bool):
-			if values[i] == False:
+		if isinstance(values[i], list) and len(values[i]) == 1:
+			value = values[i][0]
+		else:
+			value = values[i]
+		if isinstance(value, bool):
+			if value == False:
 				stl_values.push_back(topologic.IntAttribute(0))
 			else:
 				stl_values.push_back(topologic.IntAttribute(1))
-		elif isinstance(values[i], int):
-			stl_values.push_back(topologic.IntAttribute(values[i]))
-		elif isinstance(values[i], float):
-			stl_values.push_back(topologic.DoubleAttribute(values[i]))
-		elif isinstance(values[i], str):
-			stl_values.push_back(topologic.StringAttribute(values[i]))
-		elif isinstance(values[i], list):
+		elif isinstance(value, int):
+			stl_values.push_back(topologic.IntAttribute(value))
+		elif isinstance(value, float):
+			stl_values.push_back(topologic.DoubleAttribute(value))
+		elif isinstance(value, str):
+			stl_values.push_back(topologic.StringAttribute(value))
+		elif isinstance(value, list):
 			l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-			for v in values[i]:
+			for v in value:
 				if isinstance(v, bool):
 					l.push_back(topologic.IntAttribute(v))
 				elif isinstance(v, int):

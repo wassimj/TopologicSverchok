@@ -229,7 +229,9 @@ def processCellComplex(item):
 							v1 = cells[i].CenterOfMass()
 							v2 = cells[j].CenterOfMass()
 						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-						e.SetDictionary(mergeDictionaries(sharedt))
+						mDict = mergeDictionaries(sharedt)
+						if mDict:
+							e.SetDictionary(mDict)
 						edges.push_back(e)
 	if directApertures == True:
 		cellmat = []
@@ -267,7 +269,9 @@ def processCellComplex(item):
 								v1 = cells[i].CenterOfMass()
 								v2 = cells[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-							e.SetDictionary(mergeDictionaries(ap))
+							mDict = mergeDictionaries(ap)
+							if mDict:
+								e.SetDictionary(mDict)
 							edges.push_back(e)
 
 	cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
@@ -468,6 +472,9 @@ def processShell(item):
 							v1 = topFaces[i].CenterOfMass()
 							v2 = topFaces[j].CenterOfMass()
 						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+						mDict = mergeDictionaries(sharedt)
+						if mDict:
+							e.SetDictionary(mDict)
 						edges.push_back(e)
 	if directApertures == True:
 		facemat = []
@@ -504,6 +511,9 @@ def processShell(item):
 								v1 = topFaces[i].CenterOfMass()
 								v2 = topFaces[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+							mDict = mergeDictionaries(ap)
+							if mDict:
+								e.SetDictionary(mDict)
 							edges.push_back(e)
 
 	topFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
@@ -514,6 +524,7 @@ def processShell(item):
 				vFace = topologic.FaceUtility.InternalVertex(aFace, tolerance)
 			else:
 				vFace = aFace.CenterOfMass()
+			_ = vFace.SetDictionary(aFace.GetDictionary())
 			vertices.push_back(vFace)
 			fEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 			_ = aFace.Edges(fEdges)
@@ -543,6 +554,7 @@ def processShell(item):
 						vst = internalVertex(sharedTopology, tolerance)
 					else:
 						vst = sharedTopology.CenterOfMass()
+					_ = vst.SetDictionary(sharedTopology.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 			if viaSharedApertures:
@@ -551,6 +563,7 @@ def processShell(item):
 						vst = internalVertex(sharedAperture.Topology(), tolerance)
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(sharedAperture.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 			if toExteriorTopologies:
@@ -559,6 +572,7 @@ def processShell(item):
 						vst = internalVertex(exteriorTopology, tolerance)
 					else:
 						vst = exteriorTopology.CenterOfMass()
+					_ = vst.SetDictionary(exteriorTopology.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 			if toExteriorApertures:
@@ -568,6 +582,7 @@ def processShell(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 
@@ -576,6 +591,7 @@ def processShell(item):
 			vFace = internalVertex(aFace, tolerance)
 		else:
 			vFace = aFace.CenterOfMass()
+		_ = vFace.SetDictionary(aFace.GetDictionary())
 		vertices.push_back(vFace)
 	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
 	if len(list(edges)) > 0:
@@ -610,6 +626,7 @@ def processFace(item):
 		vFace = topologic.FaceUtility.InternalVertex(face, tolerance)
 	else:
 		vFace = face.CenterOfMass()
+	_ = vFace.SetDictionary(face.GetDictionary())
 
 	if (toExteriorTopologies == True) or (toExteriorApertures == True):
 		vertices.push_back(vFace)
@@ -629,6 +646,7 @@ def processFace(item):
 						vst = internalVertex(exteriorTopology, tolerance)
 					else:
 						vst = exteriorTopology.CenterOfMass()
+					_ = vst.SetDictionary(exteriorTopology.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 			if toExteriorApertures:
@@ -638,6 +656,7 @@ def processFace(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 	else:
@@ -698,6 +717,9 @@ def processWire(item):
 						except:
 							v2 = topEdges[j].CenterOfMass()
 						e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+						mDict = mergeDictionaries(sharedt)
+						if mDict:
+							e.SetDictionary(mDict)
 						edges.push_back(e)
 	if directApertures == True:
 		edgemat = []
@@ -736,6 +758,9 @@ def processWire(item):
 							except:
 								v2 = topEdges[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
+							mDict = mergeDictionaries(ap)
+							if mDict:
+								e.SetDictionary(mDict)
 							edges.push_back(e)
 
 	topEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
@@ -746,6 +771,7 @@ def processWire(item):
 				vEdge = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
 			except:
 				vEdge = anEdge.CenterOfMass()
+			_ = vEdge.SetDictionary(anEdge.GetDictionary())
 			vertices.push_back(vEdge)
 			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			_ = anEdge.Vertices(vertices)
@@ -779,6 +805,7 @@ def processWire(item):
 						vst = internalVertex(sharedAperture.Topology(), tolerance)
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(sharedAperture.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
 			if toExteriorTopologies:
@@ -792,6 +819,7 @@ def processWire(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
 
@@ -800,6 +828,7 @@ def processWire(item):
 			vEdge = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
 		except:
 			vEdge = anEdge.CenterOfMass()
+		_ = vEdge.SetDictionary(anEdge.GetDictionary())
 		vertices.push_back(vEdge)
 	finalTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
 	if len(list(edges)) > 0:
@@ -837,6 +866,7 @@ def processEdge(item):
 			vEdge = edge.CenterOfMass()
 	else:
 		vEdge = edge.CenterOfMass()
+	_ = vEdge.SetDictionary(edge.GetDictionary())
 
 	if (toExteriorTopologies == True) or (toExteriorApertures == True):
 		vertices.push_back(vFace)
@@ -921,7 +951,7 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 	DirectIfSharedAperturesProp: BoolProperty(name="Direct If Shared Apertures", default=False, update=updateNode)
 	ViaSharedTopologiesProp: BoolProperty(name="Via Shared Topologies", default=False, update=updateNode)
 	ViaSharedAperturesProp: BoolProperty(name="Via Shared Apertures", default=False, update=updateNode)
-	ToExteriorTopologiesProp: BoolProperty(name="To Exterior Topoloogies", default=False, update=updateNode)
+	ToExteriorTopologiesProp: BoolProperty(name="To Exterior Topologies", default=False, update=updateNode)
 	ToExteriorAperturesProp: BoolProperty(name="To Exterior Apertures", default=False, update=updateNode)
 	UseInternalVertexProp: BoolProperty(name="Use Internal Vertex", default=False, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)

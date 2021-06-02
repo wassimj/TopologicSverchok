@@ -109,10 +109,6 @@ def transferDictionaries(sources, sinks, tol):
 									sinkValues[index] = [sinkValues[index], sourceValue]
 							else:
 								sinkValues[index] = sourceValue
-		print(len(sinkKeys))
-		print(sinkKeys)
-		print(len(sinkValues))
-		print(sinkValues)
 		if len(sinkKeys) > 0 and len(sinkValues) > 0:
 			stlKeys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
 			for sinkKey in sinkKeys:
