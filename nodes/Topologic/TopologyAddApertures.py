@@ -66,6 +66,7 @@ def processApertures(subTopologies, apertures, exclusive, tolerance):
 	usedTopologies = []
 	for subTopology in subTopologies:
 			usedTopologies.append(0)
+	ap = 1
 	for aperture in apertures:
 		apCenter = internalVertex(aperture, tolerance)
 		for i in range(len(subTopologies)):
@@ -77,7 +78,8 @@ def processApertures(subTopologies, apertures, exclusive, tolerance):
 				_ = topologic.Aperture.ByTopologyContext(aperture, context)
 				if exclusive == True:
 					usedTopologies[i] = 1
-	return subTopologies
+		ap = ap + 1
+	return None
 
 def processItem(item):
 	topology = item[0]
@@ -145,10 +147,10 @@ class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
-		aperturesList = self.inputs['Apertures'].sv_get(deepcopy=False)
-		exclusiveList = self.inputs['Exclusive'].sv_get(deepcopy=False)[0]
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		aperturesList = self.inputs['Apertures'].sv_get(deepcopy=True)
+		exclusiveList = self.inputs['Exclusive'].sv_get(deepcopy=True)[0]
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)[0]
 		if isinstance(aperturesList[0], list) == False:
 			aperturesList = [aperturesList]
 		subTopologiesList = [self.subtopologyType]

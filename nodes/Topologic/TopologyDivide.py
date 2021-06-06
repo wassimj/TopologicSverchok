@@ -1,11 +1,10 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, EnumProperty, BoolProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 import cppyy
-import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -57,6 +56,7 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
+			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -91,61 +91,63 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def isInside(ib, face, tolerance):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = ib.Vertices(vertices)
-	for vertex in vertices:
-		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:
-			return False
-	return True
+def classByType(argument):
+	switcher = {
+		1: Vertex,
+		2: Edge,
+		4: Wire,
+		8: Face,
+		16: Shell,
+		32: Cell,
+		64: CellComplex,
+		128: Cluster }
+	return switcher.get(argument, Topology)
+
+def fixTopologyClass(topology):
+  topology.__class__ = classByType(topology.GetType())
+  return topology
 
 def processItem(item):
-	face = item[0]
-	ibList = item[1]
-	tolerance = item[2]
-	stl_ibList = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	for ib in ibList:
-		if isInside(ib, face, tolerance):
-			stl_ibList.push_back(ib)
-			_ = face.AddInternalBoundaries(stl_ibList)
-	return face
+	topology = item[0]
+	tool = item[1]
+	transferDictionary = item[2]
+	_ = topology.Divide(tool, transferDictionary)
+	return topology
 
-replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+
+class SvTopologyDivide(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Adds the input internal boundaries (Wires) to the input Face
+	Tooltip: Divide the input Topology using the input Tool and place the result in its Contents   
 	"""
-	bl_idname = 'SvFaceAddInternalBoundaries'
-	bl_label = 'Face.AddInternalBoundaries'
-	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	bl_idname = 'SvTopologyDivide'
+	bl_label = 'Topology.Divide'
+	TransferDictionary: BoolProperty(name="Transfer Dictionary", default=False, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Internal Boundaries')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
-		self.outputs.new('SvStringsSocket', 'Face')
+		self.inputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Tool')
+		self.inputs.new('SvStringsSocket', 'Transfer Dictionary').prop_name = 'TransferDictionary'
+		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=True)
-		ibList = self.inputs['Internal Boundaries'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		faceList = flatten(faceList)
-		toleranceList = flatten(toleranceList)
-		inputs = [faceList, ibList, toleranceList]
-		outputs = []
-		if ((self.Replication) == "Default"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Trim"):
+
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		toolList = self.inputs['Tool'].sv_get(deepcopy=True)
+		tranDictList = self.inputs['Transfer Dictionary'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
+		toolList = flatten(toolList)
+		tranDictList = flatten(tranDictList)
+		inputs = [topologyList, toolList, tranDictList]
+		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -156,14 +158,13 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
+		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Face'].sv_set(output)
-		end = time.time()
-		print("Face Add Internal Boundaries Operation consumed "+str(round(end - start,4))+" seconds")
+		self.outputs['Topology'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvFaceAddInternalBoundaries)
+    bpy.utils.register_class(SvTopologyDivide)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceAddInternalBoundaries)
+    bpy.utils.unregister_class(SvTopologyDivide)

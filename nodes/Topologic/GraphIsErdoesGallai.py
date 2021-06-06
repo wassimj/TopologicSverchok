@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import cppyy
 import time
 
@@ -91,42 +92,29 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def isInside(ib, face, tolerance):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = ib.Vertices(vertices)
-	for vertex in vertices:
-		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:
-			return False
-	return True
-
 def processItem(item):
-	face = item[0]
-	ibList = item[1]
-	tolerance = item[2]
-	stl_ibList = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	for ib in ibList:
-		if isInside(ib, face, tolerance):
-			stl_ibList.push_back(ib)
-			_ = face.AddInternalBoundaries(stl_ibList)
-	return face
+	graph = item[0]
+	sequence = item[1]
+	stl_sequence = cppyy.gbl.std.list[int]()
+	for i in sequence:
+		stl_sequence.push_back(i)
+	return graph.IsErdoesGallai(stl_sequence)
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphIsErdoesGallai(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Adds the input internal boundaries (Wires) to the input Face
+	Tooltip: Returns True if the input sequence satisfies the Erdoes Gallai theorem within the input Graph. Returns False otherwise.
 	"""
-	bl_idname = 'SvFaceAddInternalBoundaries'
-	bl_label = 'Face.AddInternalBoundaries'
-	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+	bl_idname = 'SvGraphIsErdoesGallai'
+	bl_label = 'Graph.IsErdoesGallai'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Internal Boundaries')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
-		self.outputs.new('SvStringsSocket', 'Face')
+		self.inputs.new('SvStringsSocket', 'Graph')
+		self.inputs.new('SvStringsSocket', 'Sequence')
+		self.outputs.new('SvStringsSocket', 'Boolean')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -135,12 +123,11 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=True)
-		ibList = self.inputs['Internal Boundaries'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		faceList = flatten(faceList)
-		toleranceList = flatten(toleranceList)
-		inputs = [faceList, ibList, toleranceList]
+
+		graphList = self.inputs['Graph'].sv_get(deepcopy=False)
+		sequenceList = self.inputs['Sequence'].sv_get(deepcopy=False)
+		graphList = flatten(graphList)
+		inputs = [graphList, sequenceList]
 		outputs = []
 		if ((self.Replication) == "Default"):
 			inputs = repeat(inputs)
@@ -158,12 +145,12 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Face'].sv_set(output)
+		self.outputs['Boolean'].sv_set(outputs)
 		end = time.time()
-		print("Face Add Internal Boundaries Operation consumed "+str(round(end - start,4))+" seconds")
+		print("Graph ErdoesGallai Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-	bpy.utils.register_class(SvFaceAddInternalBoundaries)
+    bpy.utils.register_class(SvGraphIsErdoesGallai)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceAddInternalBoundaries)
+    bpy.utils.unregister_class(SvGraphIsErdoesGallai)

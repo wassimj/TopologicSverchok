@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import cppyy
 import time
 
@@ -91,42 +92,48 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def isInside(ib, face, tolerance):
+def nearestVertex(graph, vertex):
 	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = ib.Vertices(vertices)
-	for vertex in vertices:
-		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:
-			return False
-	return True
+	_ = graph.Vertices(vertices)
+	nearestVertex = vertices.front()
+	nearestDistance = topologic.VertexUtility.Distance(vertex, nearestVertex)
+	for aGraphVertex in vertices:
+		newDistance = topologic.VertexUtility.Distance(vertex, aGraphVertex)
+		if newDistance < nearestDistance:
+			nearestDistance = newDistance
+			nearestVertex = aGraphVertex
+	return nearestVertex
 
 def processItem(item):
-	face = item[0]
-	ibList = item[1]
+	graph = item[0]
+	vertices = item[1]
 	tolerance = item[2]
-	stl_ibList = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	for ib in ibList:
-		if isInside(ib, face, tolerance):
-			stl_ibList.push_back(ib)
-			_ = face.AddInternalBoundaries(stl_ibList)
-	return face
+	if isinstance(vertices, list) == False:
+		vertices = [vertices]
+	stlVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	for aVertex in vertices:
+		ngv = nearestVertex(graph, aVertex)
+		stlVertices.push_back(ngv)
+	_ = graph.RemoveVertices(stlVertices)
+	return graph
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphRemoveVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Adds the input internal boundaries (Wires) to the input Face
+	Tooltip: Removes the input Vertex from the input Graph
 	"""
-	bl_idname = 'SvFaceAddInternalBoundaries'
-	bl_label = 'Face.AddInternalBoundaries'
+	bl_idname = 'SvGraphRemoveVertex'
+	bl_label = 'Graph.RemoveVertex'
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Internal Boundaries')
+		self.inputs.new('SvStringsSocket', 'Graph')
+		self.inputs.new('SvStringsSocket', 'Vertex')
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
-		self.outputs.new('SvStringsSocket', 'Face')
+		self.outputs.new('SvStringsSocket', 'Graph')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -135,16 +142,21 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=True)
-		ibList = self.inputs['Internal Boundaries'].sv_get(deepcopy=True)
+
+		graphList = self.inputs['Graph'].sv_get(deepcopy=True)
+		vertexList = self.inputs['Vertex'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		faceList = flatten(faceList)
+		graphList = flatten(graphList)
 		toleranceList = flatten(toleranceList)
-		inputs = [faceList, ibList, toleranceList]
+		inputs = [graphList, vertexList, toleranceList]
 		outputs = []
 		if ((self.Replication) == "Default"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
+			vertexList = flatten(vertexList)
+			outputs = processItem([graphList[0], vertexList, toleranceList[0]])
+			self.outputs['Graph'].sv_set([outputs])
+			end = time.time()
+			print("Graph Remove Vertex Operation consumed "+str(round(end - start,4))+" seconds")
+			return
 		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -158,12 +170,11 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Face'].sv_set(output)
+		self.outputs['Graph'].sv_set(outputs)
 		end = time.time()
-		print("Face Add Internal Boundaries Operation consumed "+str(round(end - start,4))+" seconds")
-
+		print("Graph Remove Vertex Operation consumed "+str(round(end - start,4))+" seconds")
 def register():
-	bpy.utils.register_class(SvFaceAddInternalBoundaries)
+    bpy.utils.register_class(SvGraphRemoveVertex)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceAddInternalBoundaries)
+    bpy.utils.unregister_class(SvGraphRemoveVertex)

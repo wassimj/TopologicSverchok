@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty, FloatProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -7,6 +7,90 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import cppyy
 import time
+
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
+def repeat(list):
+	maxLength = len(list[0])
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength > maxLength:
+			maxLength = newLength
+	for anItem in list:
+		if (len(anItem) > 0):
+			itemToAppend = anItem[-1]
+		else:
+			itemToAppend = None
+		for i in range(len(anItem), maxLength):
+			anItem.append(itemToAppend)
+	return list
+
+# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
+def onestep(cur,y,base):
+    # one step of the iteration
+    if cur is not None:
+        y.append(cur)
+        base.append(cur)
+    else:
+        y.append(base[0])  # append is simplest, for now
+        base = base[1:]+[base[0]]  # rotate
+    return base
+
+def iterate(list):
+	maxLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength > maxLength:
+			maxLength = newLength
+	for anItem in list:
+		for i in range(len(anItem), maxLength):
+			anItem.append(None)
+		y=[]
+		base=[]
+		for cur in anItem:
+			base = onestep(cur,y,base)
+		returnList.append(y)
+	return returnList
+
+def trim(list):
+	minLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength < minLength:
+			minLength = newLength
+	for anItem in list:
+		anItem = anItem[:minLength]
+		returnList.append(anItem)
+	return returnList
+
+# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
+def interlace(ar_list):
+    if not ar_list:
+        yield []
+    else:
+        for a in ar_list[0]:
+            for prod in interlace(ar_list[1:]):
+                yield [a,]+prod
+
+def transposeList(l):
+	length = len(l[0])
+	returnList = []
+	for i in range(length):
+		tempRow = []
+		for j in range(len(l)):
+			tempRow.append(l[j][i])
+		returnList.append(tempRow)
+	return returnList
 
 
 def classByType(argument):
@@ -129,6 +213,8 @@ def getValues(item):
 	return returnList
 
 def mergeDictionaries(sources):
+	if isinstance(sources, list) == False:
+		sources = [sources]
 	sinkKeys = []
 	sinkValues = []
 	d = sources[0].GetDictionary()
@@ -188,6 +274,7 @@ def mergeDictionaries(sources):
 				stlValues.push_back(topologic.ListAttribute(l))
 		newDict = topologic.Dictionary.ByKeysValues(stlKeys, stlValues)
 		return newDict
+	return None
 
 def processCellComplex(item):
 	topology = item[0]
@@ -255,10 +342,13 @@ def processCellComplex(item):
 					if len(sharedt) > 0:
 						apertureExists = False
 						for x in sharedt:
-							ap = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+							apList = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
 							_ = x.Apertures(ap)
-							ap = list(ap)
-							if len(ap) > 0:
+							apList = list(ap)
+							if len(apList) > 0:
+								apTopList = []
+								for ap in apList:
+									apTopList.append(ap.Topology())
 								apertureExists = True
 								break
 						if apertureExists:
@@ -269,7 +359,7 @@ def processCellComplex(item):
 								v1 = cells[i].CenterOfMass()
 								v2 = cells[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-							mDict = mergeDictionaries(ap)
+							mDict = mergeDictionaries(apTopList)
 							if mDict:
 								e.SetDictionary(mDict)
 							edges.push_back(e)
@@ -321,7 +411,7 @@ def processCellComplex(item):
 						vst = internalVertex(sharedAperture.Topology(), tolerance)
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(sharedAperture.GetDictionary())
+					_ = vst.SetDictionary(sharedAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
 			if toExteriorTopologies:
@@ -340,7 +430,7 @@ def processCellComplex(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
 
@@ -413,7 +503,7 @@ def processCell(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
 	else:
@@ -498,12 +588,15 @@ def processShell(item):
 					if len(sharedt) > 0:
 						apertureExists = False
 						for x in sharedt:
-							ap = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
-							_ = x.Apertures(ap)
-							if len(ap) > 0:
+							apList = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+							_ = x.Apertures(apList)
+							if len(apList) > 0:
 								apertureExists = True
 								break
 						if apertureExists:
+							apTopList = []
+							for ap in apList:
+								apTopList.append(ap.Topology())
 							if useInternalVertex == True:
 								v1 = topologic.FaceUtility.InternalVertex(topFaces[i], tolerance)
 								v2 = topologic.FaceUtility.InternalVertex(topFaces[j], tolerance)
@@ -511,7 +604,7 @@ def processShell(item):
 								v1 = topFaces[i].CenterOfMass()
 								v2 = topFaces[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-							mDict = mergeDictionaries(ap)
+							mDict = mergeDictionaries(apTopList)
 							if mDict:
 								e.SetDictionary(mDict)
 							edges.push_back(e)
@@ -545,7 +638,7 @@ def processShell(item):
 				else:
 					exteriorTopologies.append(anEdge)
 					apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
-					_ = aFace.Apertures(apertures)
+					_ = anEdge.Apertures(apertures)
 					for anAperture in apertures:
 						exteriorApertures.append(anAperture)
 			if viaSharedTopologies:
@@ -563,7 +656,7 @@ def processShell(item):
 						vst = internalVertex(sharedAperture.Topology(), tolerance)
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(sharedAperture.GetDictionary())
+					_ = vst.SetDictionary(sharedAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 			if toExteriorTopologies:
@@ -582,7 +675,7 @@ def processShell(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 
@@ -656,7 +749,7 @@ def processFace(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
 	else:
@@ -758,7 +851,7 @@ def processWire(item):
 							except:
 								v2 = topEdges[j].CenterOfMass()
 							e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-							mDict = mergeDictionaries(ap)
+							mDict = mergeDictionaries(ap.Topology())
 							if mDict:
 								e.SetDictionary(mDict)
 							edges.push_back(e)
@@ -819,7 +912,7 @@ def processWire(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					_ = vst.SetDictionary(exteriorAperture.GetDictionary())
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
 
@@ -895,6 +988,7 @@ def processEdge(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
+					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.push_back(vst)
 					edges.push_back(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
 	else:
@@ -940,6 +1034,8 @@ def processItem(item):
 		raise Exception("ERROR: Graph.ByTopology: Cluster is not supported. Decompose into its sub-topologies first.")
 	return graph
 
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
 class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -955,6 +1051,7 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 	ToExteriorAperturesProp: BoolProperty(name="To Exterior Apertures", default=False, update=updateNode)
 	UseInternalVertexProp: BoolProperty(name="Use Internal Vertex", default=False, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
@@ -968,6 +1065,9 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Graph')
 
+	def draw_buttons(self, context, layout):
+		layout.prop(self, "Replication",text="")
+
 	def process(self):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
@@ -975,48 +1075,41 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			self.outputs['Graph'].sv_set([])
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
-		directList = self.inputs['Direct'].sv_get(deepcopy=False)[0]
-		directAperturesList = self.inputs['DirectIfSharedApertures'].sv_get(deepcopy=False)[0]
-		viaSharedTopologiesList = self.inputs['ViaSharedTopologies'].sv_get(deepcopy=False)[0]
-		viaSharedAperturesList = self.inputs['ViaSharedApertures'].sv_get(deepcopy=False)[0]
-		toExteriorTopologiesList = self.inputs['ToExteriorTopologies'].sv_get(deepcopy=False)[0]
-		toExteriorAperturesList = self.inputs['ToExteriorApertures'].sv_get(deepcopy=False)[0]
-		useInternalVertexList = self.inputs['UseInternalVertex'].sv_get(deepcopy=False)[0]
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		directList = self.inputs['Direct'].sv_get(deepcopy=True)
+		directAperturesList = self.inputs['DirectIfSharedApertures'].sv_get(deepcopy=True)
+		viaSharedTopologiesList = self.inputs['ViaSharedTopologies'].sv_get(deepcopy=True)
+		viaSharedAperturesList = self.inputs['ViaSharedApertures'].sv_get(deepcopy=True)
+		toExteriorTopologiesList = self.inputs['ToExteriorTopologies'].sv_get(deepcopy=True)
+		toExteriorAperturesList = self.inputs['ToExteriorApertures'].sv_get(deepcopy=True)
+		useInternalVertexList = self.inputs['UseInternalVertex'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 
-		maxLength = max([len(topologyList), len(directList), len(directAperturesList), len(viaSharedTopologiesList), len(viaSharedAperturesList), len(toExteriorTopologiesList), len(toExteriorAperturesList), len(useInternalVertexList), len(toleranceList)])
-		for i in range(len(topologyList), maxLength):
-			topologyList.append(topologyList[-1])
-
-		for i in range(len(directList), maxLength):
-			directList.append(directList[-1])
-
-		for i in range(len(directAperturesList), maxLength):
-			directAperturesList.append(directAperturesList[-1])
-
-		for i in range(len(viaSharedTopologiesList), maxLength):
-			viaSharedTopologiesList.append(viaSharedTopologiesList[-1])
-
-		for i in range(len(viaSharedAperturesList), maxLength):
-			viaSharedAperturesList.append(viaSharedAperturesList[-1])
-
-		for i in range(len(toExteriorTopologiesList), maxLength):
-			toExteriorTopologiesList.append(toExteriorTopologiesList[-1])
-
-		for i in range(len(toExteriorAperturesList), maxLength):
-			toExteriorAperturesList.append(toExteriorAperturesList[-1])
-
-		for i in range(len(useInternalVertexList), maxLength):
-			useInternalVertexList.append(useInternalVertexList[-1])
-
-		for i in range(len(toleranceList), maxLength):
-			toleranceList.append(toleranceList[-1])
-
-		inputs = []
+		topologyList = flatten(topologyList)
+		directList = flatten(directList)
+		directAperturesList = flatten(directAperturesList)
+		viaSharedTopologiesList = flatten(viaSharedTopologiesList)
+		viaSharedAperturesList = flatten(viaSharedAperturesList)
+		toExteriorTopologiesList = flatten(toExteriorTopologiesList)
+		toExteriorAperturesList = flatten(toExteriorAperturesList)
+		useInternalVertexList = flatten(useInternalVertexList)
+		toleranceList = flatten(toleranceList)
+		inputs = [topologyList, directList, directAperturesList, viaSharedTopologiesList, viaSharedAperturesList, toExteriorTopologiesList, toExteriorAperturesList, useInternalVertexList, toleranceList]
 		outputs = []
-		if (len(topologyList) == len(directList) == len(directAperturesList) == len(viaSharedTopologiesList) == len(viaSharedAperturesList) == len(toExteriorTopologiesList) == len(toExteriorAperturesList) == len(useInternalVertexList) == len(toleranceList)):
-			inputs = zip(topologyList, directList, directAperturesList, viaSharedTopologiesList, viaSharedAperturesList, toExteriorTopologiesList, toExteriorAperturesList, useInternalVertexList, toleranceList)
+		if ((self.Replication) == "Default"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Graph'].sv_set(outputs)

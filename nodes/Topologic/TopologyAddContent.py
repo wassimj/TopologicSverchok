@@ -91,6 +91,22 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
+def classByType(argument):
+	switcher = {
+		1: Vertex,
+		2: Edge,
+		4: Wire,
+		8: Face,
+		16: Shell,
+		32: Cell,
+		64: CellComplex,
+		128: Cluster }
+	return switcher.get(argument, Topology)
+
+def fixTopologyClass(topology):
+  topology.__class__ = classByType(topology.GetType())
+  return topology
+
 def processItem(item):
 	topology = item[0]
 	contents = item[1]
@@ -115,7 +131,7 @@ def processItem(item):
 	stl_contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
 	for aContent in contents:
 		stl_contents.push_back(aContent)
-	return topology.AddContents(stl_contents, t)
+	return fixTopologyClass(topology.AddContents(stl_contents, t))
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5),("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7),("Topology", "Topology", "", 8)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]

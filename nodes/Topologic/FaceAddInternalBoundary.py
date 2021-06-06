@@ -102,6 +102,8 @@ def isInside(ib, face, tolerance):
 def processItem(item):
 	face = item[0]
 	ibList = item[1]
+	if isinstance(ibList, list) == False:
+		ibList = [ibList]
 	tolerance = item[2]
 	stl_ibList = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	for ib in ibList:
@@ -112,19 +114,19 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceAddInternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Adds the input internal boundaries (Wires) to the input Face
+	Tooltip: Adds the input internal boundary (Wire) to the input Face
 	"""
-	bl_idname = 'SvFaceAddInternalBoundaries'
-	bl_label = 'Face.AddInternalBoundaries'
+	bl_idname = 'SvFaceAddInternalBoundary'
+	bl_label = 'Face.AddInternalBoundary'
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Internal Boundaries')
+		self.inputs.new('SvStringsSocket', 'Wire')
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Face')
 
@@ -136,7 +138,7 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		faceList = self.inputs['Face'].sv_get(deepcopy=True)
-		ibList = self.inputs['Internal Boundaries'].sv_get(deepcopy=True)
+		ibList = self.inputs['Wire'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 		faceList = flatten(faceList)
 		toleranceList = flatten(toleranceList)
@@ -158,12 +160,12 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Face'].sv_set(output)
+		self.outputs['Face'].sv_set(outputs)
 		end = time.time()
 		print("Face Add Internal Boundaries Operation consumed "+str(round(end - start,4))+" seconds")
 
 def register():
-	bpy.utils.register_class(SvFaceAddInternalBoundaries)
+	bpy.utils.register_class(SvFaceAddInternalBoundary)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceAddInternalBoundaries)
+	bpy.utils.unregister_class(SvFaceAddInternalBoundary)
