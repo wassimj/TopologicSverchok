@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -107,11 +108,142 @@ def fixTopologyClass(topology):
   topology.__class__ = classByType(topology.GetType())
   return topology
 
+def getKeysAndValues(item):
+	stl_keys = item.Keys()
+	keys = []
+	values = []
+	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
+	for x in copyKeys:
+		k = x.c_str()
+		keys.append(k)
+	for key in keys:
+		fv = None
+		try:
+			v = item.ValueAtKey(key).Value()
+		except:
+			raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
+		if (isinstance(v, int) or (isinstance(v, float))):
+			fv = v
+		elif (isinstance(v, cppyy.gbl.std.string)):
+			fv = v.c_str()
+		else:
+			tempList = []
+			for i in v:
+				if isinstance(i.Value(), cppyy.gbl.std.string):
+					tempList.append(i.Value().c_str())
+				else:
+					tempList.append(i.Value())
+			fv = tempList
+		values.append(fv)
+	return [keys, values]
+
+def processKeysValues(keys, values):
+	if len(keys) != len(values):
+		raise Exception("Keys and Values do not have the same length")
+	stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
+	stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+	for i in range(len(keys)):
+		stl_keys.push_back(keys[i])
+		if isinstance(values[i], list) and len(values[i]) == 1:
+			value = values[i][0]
+		else:
+			value = values[i]
+		if isinstance(value, bool):
+			if value == False:
+				stl_values.push_back(topologic.IntAttribute(0))
+			else:
+				stl_values.push_back(topologic.IntAttribute(1))
+		elif isinstance(value, int):
+			stl_values.push_back(topologic.IntAttribute(value))
+		elif isinstance(value, float):
+			stl_values.push_back(topologic.DoubleAttribute(value))
+		elif isinstance(value, str):
+			stl_values.push_back(topologic.StringAttribute(value))
+		elif isinstance(value, list):
+			l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+			for v in value:
+				if isinstance(v, bool):
+					l.push_back(topologic.IntAttribute(v))
+				elif isinstance(v, int):
+					l.push_back(topologic.IntAttribute(v))
+				elif isinstance(v, float):
+					l.push_back(topologic.DoubleAttribute(v))
+				elif isinstance(v, str):
+					l.push_back(topologic.StringAttribute(v))
+			stl_values.push_back(topologic.ListAttribute(l))
+		else:
+			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+	return topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+
+def getContents(item):
+	topologyContents = []
+	contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	_ = item.Contents(contents)
+	for aContent in contents:
+		aContent.__class__ = classByType(aContent.GetType())
+		topologyContents.append(aContent)
+	return topologyContents
+
 def processItem(item):
 	topology = item[0]
 	tool = item[1]
 	transferDictionary = item[2]
-	_ = topology.Divide(tool, transferDictionary)
+	addNestingDepth = item[3]
+	try:
+		_ = topology.Divide(tool, False) # Don't transfer dictionaries just yet
+	except:
+		raise Exception("Error: Divide operation failed.")
+	nestingDepth = "1"
+	keys = ["nesting_depth"]
+	values = [nestingDepth]
+
+	if not addNestingDepth and not transferDictionary:
+		return topology
+
+	contents = getContents(topology)
+	for i in range(len(contents)):
+		if not addNestingDepth and transferDictionary:
+			parentDictionary = topology.GetDictionary()
+			if parentDictionary != None:
+				_ = contents[i].setDictionary(parentDictionary)
+		if addNestingDepth and transferDictionary:
+			parentDictionary = topology.GetDictionary()
+			if parentDictionary != None:
+				keys, values = getKeysAndValues(parentDictionary)
+				if ("nesting_depth" in keys):
+					nestingDepth = parentDictionary.ValueAtKey(key).Value().c_str
+				else:
+					keys.append("nesting_depth")
+					values.append(nestingDepth)
+				parentDictionary = processKeysValues(keys, values)
+			else:
+				keys = ["nesting_depth"]
+				values = [nestingDepth]
+			parentDictionary = processKeysValues(keys, values)
+			_ = topology.SetDictionary(parentDictionary)
+			values[keys.index("nesting_depth")] = nestingDepth+"_"+str(i+1)
+			d = processKeysValues(keys, values)
+			_ = contents[i].setDictionary(d)
+		if addNestingDepth and  not transferDictionary:
+			parentDictionary = topology.GetDictionary()
+			if parentDictionary != None:
+				keys, values = getKeysAndValues(parentDictionary)
+				if ("nesting_depth" in keys):
+					nestingDepth = parentDictionary.ValueAtKey("nesting_depth").Value().c_str()
+				else:
+					keys.append("nesting_depth")
+					values.append(nestingDepth)
+				parentDictionary = processKeysValues(keys, values)
+			else:
+				keys = ["nesting_depth"]
+				values = [nestingDepth]
+			parentDictionary = processKeysValues(keys, values)
+			_ = topology.SetDictionary(parentDictionary)
+			keys = ["nesting_depth"]
+			v = nestingDepth+"_"+str(i+1)
+			values = [v]
+			d = processKeysValues(keys, values)
+			_ = contents[i].SetDictionary(d)
 	return topology
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
@@ -125,12 +257,14 @@ class SvTopologyDivide(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvTopologyDivide'
 	bl_label = 'Topology.Divide'
 	TransferDictionary: BoolProperty(name="Transfer Dictionary", default=False, update=updateNode)
+	AddNestingDepth: BoolProperty(name="Add Nesting Depth", default=False, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Tool')
 		self.inputs.new('SvStringsSocket', 'Transfer Dictionary').prop_name = 'TransferDictionary'
+		self.inputs.new('SvStringsSocket', 'Nesting Depth').prop_name = 'AddNestingDepth'
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def draw_buttons(self, context, layout):
@@ -143,10 +277,12 @@ class SvTopologyDivide(bpy.types.Node, SverchCustomTreeNode):
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
 		toolList = self.inputs['Tool'].sv_get(deepcopy=True)
 		tranDictList = self.inputs['Transfer Dictionary'].sv_get(deepcopy=True)
+		addNestingDepthList = self.inputs['Nesting Depth'].sv_get(deepcopy=True)
 		topologyList = flatten(topologyList)
 		toolList = flatten(toolList)
 		tranDictList = flatten(tranDictList)
-		inputs = [topologyList, toolList, tranDictList]
+		addNestingDepthList = flatten(addNestingDepthList)
+		inputs = [topologyList, toolList, tranDictList, addNestingDepthList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

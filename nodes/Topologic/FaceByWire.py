@@ -6,13 +6,23 @@ from sverchok.data_structure import updateNode
 import topologic
 import cppyy
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
 def processItem(item):
 	internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	face = topologic.Face.ByExternalInternalBoundaries(item, internalBoundaries)
 	return face
 
+'''
 def recur(input, output):
-	print(input)
 	if isinstance(input, list):
 		newList = []
 		for anItem in input:
@@ -23,7 +33,8 @@ def recur(input, output):
 		returnValue = processItem(input)
 		output.append(returnValue)
 	return output
-		
+'''
+	
 class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -38,10 +49,11 @@ class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)
+		inputs = self.inputs[0].sv_get(deepcopy=True)
+		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
-			outputs = recur(anInput, outputs)
+			outputs.append(processItem(anInput))
 		self.outputs['Face'].sv_set(outputs)
 
 def register():

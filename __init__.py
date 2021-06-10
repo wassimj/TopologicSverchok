@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 7, 0),
+    "version": (0, 5, 8, 0),
     "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -35,25 +35,14 @@ from os.path import expanduser
 import bpy
 home = expanduser("~")
 blenderVersion =  "Blender"+str(bpy.app.version[0])+str(bpy.app.version[1])
-if platform == 'win32':
-  if os.path.exists('C:\\ProgramData\\anaconda3\\envs'):
-    conda = 'C:\\ProgramData\\anaconda3\\envs'
-  elif os.path.exists(home+'\\anaconda3\\envs'):
-    conda = home+'\\anaconda3\\envs'
-  else:
-    raise Exception("Error: Could not find: "+home+'\\anaconda3\\envs nor '+'C:\\ProgramData\\anaconda3\\envs')
-  sitePackages = '\\lib\\site-packages'
-  blenderName = '\\'+[name for name in os.listdir(conda) if name.startswith(blenderVersion)][0]
-  topologicEggName = '\\'+[name for name in os.listdir(conda+blenderName+sitePackages) if name.startswith('topologic')][0]
-  if os.path.exists(conda+blenderName+sitePackages):
-    sys.path.append(conda+blenderName+sitePackages)
-  else:
-    raise Exception("Error: Could not find "+conda+blenderName+sitePackages)
-  if os.path.exists(conda+blenderName+sitePackages+topologicEggName):
-    sys.path.append(conda+blenderName+sitePackages+topologicEggName)
-  else:
-    raise Exception("Error: Could not find "+conda+blenderName+sitePackages+topologicEggName)
+ 
+win_prefix = os.path.dirname(os.path.realpath(__file__))
+print(win_prefix)
 
+sys.path.append(win_prefix+'\\site-packages')
+topologicEggName = '\\'+[name for name in os.listdir(win_prefix+'\\topologicPy\\site-packages') if name.startswith('topologic')][0]
+sys.path.append(win_prefix+'\\topologicPy\\site-packages'+topologicEggName)
+print(topologicEggName)
 import importlib
 import nodeitems_utils
 import bl_operators
@@ -123,6 +112,7 @@ def nodes_index():
                 ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
                 ("Topologic.FaceByVertices", "SvFaceByVertices"),
+                ("Topologic.FaceCompactness", "SvFaceCompactness"),
                 ("Topologic.FaceExternalBoundary", "SvFaceExternalBoundary"),
                 ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
                 ("Topologic.FaceIsInside", "SvFaceIsInside"),
@@ -142,12 +132,14 @@ def nodes_index():
                 ("Topologic.CellByLoft", "SvCellByLoft"),
                 ("Topologic.CellByShell", "SvCellByShell"),
                 ("Topologic.CellByThickenedFace", "SvCellByThickenedFace"),
+                ("Topologic.CellCompactness", "SvCellCompactness"),
                 ("Topologic.CellExternalBoundary", "SvCellExternalBoundary"),
                 ("Topologic.CellInternalBoundaries", "SvCellInternalBoundaries"),
                 ("Topologic.CellInternalVertex", "SvCellInternalVertex"),
                 ("Topologic.CellIsInside", "SvCellIsInside"),
                 ("Topologic.CellPipe", "SvCellPipe"),
                 ("Topologic.CellPrism", "SvCellPrism"),
+                ("Topologic.CellSurfaceArea", "SvCellSurfaceArea"),
                 ("Topologic.CellVolume", "SvCellVolume"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
                 ("Topologic.CellComplexByCells", "SvCellComplexByCells"),
@@ -383,6 +375,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceByVertices'],
             ['SvFaceByWire'],
             ['SvFaceByWires'],
+            ['SvFaceCompactness'],
             ['SvFaceExternalBoundary'],
             ['SvFaceInternalBoundaries'],
             ['SvFaceInternalVertex'],
@@ -422,12 +415,14 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellByLoft'],
             ['SvCellByShell'],
             ['SvCellByThickenedFace'],
+            ['SvCellCompactness'],
             ['SvCellExternalBoundary'],
             ['SvCellInternalBoundaries'],
             ['SvCellInternalVertex'],
             ['SvCellIsInside'],
             ['SvCellPipe'],
             ['SvCellPrism'],
+            ['SvCellSurfaceArea'],
             ['SvCellVolume'],
         ])
 

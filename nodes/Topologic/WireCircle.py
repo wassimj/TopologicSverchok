@@ -48,6 +48,7 @@ def wireByVertices(vList):
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item, originLocation):
+	print(">>>>>>> WireCircle Enter ")
 	origin = item[0]
 	radius = item[1]
 	sides = item[2]
@@ -92,6 +93,7 @@ def processItem(item, originLocation):
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 	baseWire = fixTopologyClass(topologic.TopologyUtility.Rotate(baseWire, origin, 0, 1, 0, theta))
 	baseWire = fixTopologyClass(topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi))
+	print("<<<<<<< WireCircle Exit ")
 	return baseWire
 
 def matchLengths(list):
@@ -154,6 +156,7 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in newInputs:
 			outputs.append(processItem(anInput, self.originLocation))
+		print(outputs)
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():
