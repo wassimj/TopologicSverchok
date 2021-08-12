@@ -27,12 +27,16 @@ def fixTopologyClass(topology):
 
 def processItem(item):
 	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	try:
-		_ = item.Vertices(vertices)
-	except:
-		print("ERROR: (Topologic>Graph.Vertices) operation failed.")
-		vertices = None
-	return list(vertices)
+	if item:
+		try:
+			_ = item.Vertices(vertices)
+		except:
+			print("ERROR: (Topologic>Graph.Vertices) operation failed.")
+			vertices = None
+	if vertices:
+		return list(vertices)
+	else:
+		return []
 
 class SvGraphVertices(bpy.types.Node, SverchCustomTreeNode):
 	"""

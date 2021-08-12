@@ -34,9 +34,6 @@ class SvTopologyOCCTShape(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Cells'].sv_set([])
-			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:

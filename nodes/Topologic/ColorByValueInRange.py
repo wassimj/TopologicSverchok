@@ -1,11 +1,10 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import EnumProperty, FloatProperty, BoolProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
 import topologic
-import faulthandler
-faulthandler.enable()
+import math
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -92,37 +91,87 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
+def getColor(ratio):
+	r = 0.0
+	g = 0.0
+	b = 0.0
+
+	finalRatio = ratio;
+	if (finalRatio < 0.0):
+		finalRatio = 0.0
+	elif(finalRatio > 1.0):
+		finalRatio = 1.0
+
+	if (finalRatio >= 0.0 and finalRatio <= 0.25):
+		r = 0.0
+		g = 4.0 * finalRatio
+		b = 1.0
+	elif (finalRatio > 0.25 and finalRatio <= 0.5):
+		r = 0.0
+		g = 1.0
+		b = 1.0 - 4.0 * (finalRatio - 0.25)
+	elif (finalRatio > 0.5 and finalRatio <= 0.75):
+		r = 4.0*(finalRatio - 0.5);
+		g = 1.0
+		b = 0.0
+	else:
+		r = 1.0
+		g = 1.0 - 4.0 * (finalRatio - 0.75)
+		b = 0.0
+
+	rcom =  (max(min(r, 1.0), 0.0))
+	gcom =  (max(min(g, 1.0), 0.0))
+	bcom =  (max(min(b, 1.0), 0.0))
+
+	return [rcom,gcom,bcom]
+
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
-	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
-	except:
-		vert = None
-	return vert
+	value = item[0]
+	minValue = item[1]
+	maxValue = item[2]
+	alpha = item[3]
+	useAlpha = item[4]
+	color = None
+	if minValue > maxValue:
+		temp = minValue;
+		maxValue = minValue
+		maxValue = temp
+
+	val = value
+	val = max(min(val,maxValue), minValue) # bracket value to the min and max values
+	if (maxValue - minValue) != 0:
+		val = (val - minValue)/(maxValue - minValue)
+	else:
+		val = 0
+	rgbList = getColor(val)
+	if useAlpha:
+		rgbList.append(alpha)
+	return tuple(rgbList)
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvColorByValueInRange(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Creates a color from the input value within the input range   
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	bl_idname = 'SvColorByValueInRange'
+	bl_label = 'Color.ByValueInRange'
+	Value: FloatProperty(name="Value", default=0, precision=4, update=updateNode)
+	MinValue: FloatProperty(name="Min Value",  default=0, precision=4, update=updateNode)
+	MaxValue: FloatProperty(name="Max Value",  default=1, precision=4, update=updateNode)
+	Alpha: FloatProperty(name="Alpha",  default=1, min=0, max=1, precision=4, update=updateNode)
+	UseAlpha: BoolProperty(name="Use Alpha", default=False, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Value').prop_name = 'Value'
+		self.inputs.new('SvStringsSocket', 'Min Value').prop_name = 'MinValue'
+		self.inputs.new('SvStringsSocket', 'Max Value').prop_name = 'MaxValue'
+		self.inputs.new('SvStringsSocket', 'Alpha').prop_name = 'Alpha'
+		self.inputs.new('SvStringsSocket', 'Use Alpha').prop_name = 'UseAlpha'
+		self.outputs.new('SvStringsSocket', 'Color')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -130,13 +179,17 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [xList, yList, zList]
+		valueList = self.inputs['Value'].sv_get(deepcopy=True)
+		minValueList = self.inputs['Min Value'].sv_get(deepcopy=True)
+		maxValueList = self.inputs['Max Value'].sv_get(deepcopy=True)
+		alphaList = self.inputs['Alpha'].sv_get(deepcopy=True)
+		useAlphaList = self.inputs['Use Alpha'].sv_get(deepcopy=True)
+		valueList = flatten(valueList)
+		minValueList = flatten(minValueList)
+		maxValueList = flatten(maxValueList)
+		alphaList = flatten(alphaList)
+		useAlphaList = flatten(useAlphaList)
+		inputs = [valueList, minValueList, maxValueList, alphaList, useAlphaList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -151,10 +204,10 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+		self.outputs['Color'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+    bpy.utils.register_class(SvColorByValueInRange)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+    bpy.utils.unregister_class(SvColorByValueInRange)

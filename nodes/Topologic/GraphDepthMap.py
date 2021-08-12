@@ -1,11 +1,12 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
+from sverchok.data_structure import updateNode
 
 import topologic
-import faulthandler
-faulthandler.enable()
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
+import cppyy
+import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -57,7 +58,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -93,51 +93,62 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
-	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
-	except:
-		vert = None
-	return vert
+	print(item)
+	graph = item[0]
+	vertexList = item[1]
+	tolerance = item[2]
+	stl_vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	_ = graph.Vertices(stl_vertices)
+	graphVertices = list(stl_vertices)
+	if len(vertexList) == 0:
+		vertexList = graphVertices
+	depthMap = []
+	for va in vertexList:
+		depth = 0
+		for vb in graphVertices:
+			if topologic.Topology.IsSame(va, vb):
+				dist = 0
+			else:
+				dist = graph.TopologicalDistance(va, vb, tolerance)
+			depth = depth + dist
+		depthMap.append(depth)
+	return depthMap
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphDepthMap(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Outputs a depthmap (see https://en.wikipedia.org/wiki/Space_syntax) from an input graph, an input graph vertex, and a list of target graph vertices. If targets are left blank, it will use all vertices in the graph
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	bl_idname = 'SvGraphDepthMap'
+	bl_label = 'Graph.DepthMap'
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Graph')
+		self.inputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
+		self.outputs.new('SvStringsSocket', 'DepthMap')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [xList, yList, zList]
-		if ((self.Replication) == "Trim"):
+		graphList = self.inputs['Graph'].sv_get(deepcopy=True)
+		vertexList = self.inputs['Vertex'].sv_get(deepcopy=True)
+		graphList = flatten(graphList)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
+		toleranceList = flatten(toleranceList)
+		inputs = [graphList, vertexList, toleranceList]
+		if ((self.Replication) == "Default"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -151,10 +162,11 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
-
+		self.outputs['DepthMap'].sv_set(outputs)
+		end = time.time()
+		print("Graph DepthMap Operation consumed "+str(round(end - start,4))+" seconds")
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+    bpy.utils.register_class(SvGraphDepthMap)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+    bpy.utils.unregister_class(SvGraphDepthMap)

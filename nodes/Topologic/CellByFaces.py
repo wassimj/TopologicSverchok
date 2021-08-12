@@ -15,7 +15,7 @@
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from bpy.props import StringProperty
+from bpy.props import StringProperty, FloatProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -32,12 +32,18 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(item):
+def processItem(item, tol):
 	cell = None
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	stl_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for aFace in item:
-		faces.push_back(aFace)
-	cell = topologic.Cell.ByFaces(faces)
+		stl_faces.push_back(aFace)
+	print("Trying to Create a Cell")
+	cell = None
+	try:
+		cell = topologic.Cell.ByFaces(stl_faces, tol)
+		print("     Created a Cell")
+	except:
+		cell = None
 	return cell
 
 class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
@@ -47,20 +53,24 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellByFaces'
 	bl_label = 'Cell.ByFaces'
+	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Faces')
+		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		faceList = self.inputs['Faces'].sv_get(deepcopy=False)
+		faceList = self.inputs['Faces'].sv_get(deepcopy=True)
+		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
+
 		if isinstance(faceList[0], list) == False:
 			faceList = [faceList]
 		outputs = []
 		for faces in faceList:
-			outputs.append(processItem(faces))
+			outputs.append(processItem(faces, tol))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():

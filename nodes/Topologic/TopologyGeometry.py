@@ -10,6 +10,7 @@ from sverchok.utils.sv_mesh_utils import get_unique_faces
 import topologic
 from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
+import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -88,18 +89,21 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Faces')
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
 			return
-		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
+		inputs = self.inputs['Topology'].sv_get(deepcopy=True)
 		inputs = flatten(inputs)
-		vertices = []
-		edges = []
-		faces = []
-		for anInput in inputs: # Collect all the vertices from all the inputs
+		finalVertexList = []
+		finalEdgeList = []
+		finalFaceList = []
+		for anInput in inputs:
+			vertices = []
+			edges = []
+			faces = []
 			if anInput == None:
-				vertices.append([])
 				continue
 			topVerts = cppyy.gbl.std.list[Vertex.Ptr]()
 			if (anInput.GetType() == 1): #input is a vertex, just add it and process it
@@ -111,12 +115,6 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 					vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
 				except:
 					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
-
-		for anInput in inputs:
-			if anInput == None:
-				edges.append([])
-				faces.append([])
-				continue
 			topEdges = cppyy.gbl.std.list[Edge.Ptr]()
 			if (anInput.GetType() == 2): #Input is an Edge, just add it and process it
 				topEdges.push_back(anInput)
@@ -176,11 +174,16 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 							fVertexIndex = len(vertices)-1
 						f.append(fVertexIndex)
 					faces.append(f)
+			finalVertexList.append(vertices)
+			finalEdgeList.append(edges)
+			finalFaceList.append(faces)
 		
-		faces = get_unique_faces(faces) #Make sure we do not accidentally have duplicate faces
-		self.outputs['Vertices'].sv_set([vertices])
-		self.outputs['Edges'].sv_set([edges])
-		self.outputs['Faces'].sv_set([faces])
+		#faces = get_unique_faces(faces) #Make sure we do not accidentally have duplicate faces
+		self.outputs['Vertices'].sv_set(finalVertexList)
+		self.outputs['Edges'].sv_set(finalEdgeList)
+		self.outputs['Faces'].sv_set(finalFaceList)
+		end = time.time()
+		print("Topology.GeometryNew Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
 	bpy.utils.register_class(SvTopologyGeometry)

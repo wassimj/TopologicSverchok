@@ -133,14 +133,12 @@ def relevantSelector(topology):
 def topologyContains(topology, vertex, tol):
 	contains = False
 	if topology.GetType() == topologic.Vertex.Type():
-		print("topologyContains: Vertex")
 		try:
 			contains = (topologic.VertexUtility.Distance(sourceVertex, vertex) <= tol)
 		except:
 			contains = False
 		return contains
 	elif topology.GetType() == topologic.Edge.Type():
-		print("topologyContains: Edge")
 		try:
 			_ = topologic.EdgeUtility.ParameterAtPoint(topology, vertex)
 			contains = True
@@ -148,10 +146,8 @@ def topologyContains(topology, vertex, tol):
 			contains = False
 		return contains
 	elif topology.GetType() == topologic.Face.Type():
-		print("topologyContains: Face")
 		return topologic.FaceUtility.IsInside(topology, vertex, tol)
 	elif topology.GetType() == topologic.Cell.Type():
-		print("topologyContains: Cell")
 		return (topologic.CellUtility.Contains(topology, vertex, tol) == 0)
 	return False
 
@@ -249,12 +245,10 @@ def promote(item): #Fix Clusters with single entities
 	topVertices = list(topVertices)
 	if len(topCC) == 1:
 		cc = topCC[0]
-		print("Self Merge: Found a single CellComplex")
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = cc.Vertices(ccVertices)
 		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
-			print("Self Merge: This CellComplex is the only thing in this Cluster")
 			resultingTopologies.append(cc)
 	if len(topCC) == 0 and len(topCells) == 1:
 		cell = topCells[0]
@@ -262,10 +256,8 @@ def promote(item): #Fix Clusters with single entities
 		_ = cell.Vertices(ccVertices)
 		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
-			print("Self Merge: This Cell is the only thing in this Cluster")
 			resultingTopologies.append(cell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 1:
-		print("Self Merge: Found a single Shell")
 		shell = topShells[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = shell.Vertices(ccVertices)
@@ -273,7 +265,6 @@ def promote(item): #Fix Clusters with single entities
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(shell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 1:
-		print("Self Merge: Found a single Face")
 		face = topFaces[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = face.Vertices(ccVertices)
@@ -281,7 +272,6 @@ def promote(item): #Fix Clusters with single entities
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(face)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 1:
-		print("Self Merge: Found a single Wire")
 		wire = topWires[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = wire.Vertices(ccVertices)
@@ -289,7 +279,6 @@ def promote(item): #Fix Clusters with single entities
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(wire)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
-		print("Self Merge: Found a single Edge")
 		edge = topEdges[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = wire.Vertices(ccVertices)
@@ -297,11 +286,9 @@ def promote(item): #Fix Clusters with single entities
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:
-		print("Self Merge: Found a single Vertex")
 		vertex = topVertices[0]
 		resultingTopologies.append(vertex)
 	if len(resultingTopologies) == 1:
-		print("Self Merge: Topology contains only one element. Returning that element")
 		return resultingTopologies[0]
 	return item
 
@@ -312,7 +299,6 @@ def processItem(item):
 	tranDict = item[3]
 	tolerance = item[4]
 	topologyC = None
-	print(operation)
 	try:
 		if operation == "Union":
 			topologyC = topologyA.Union(topologyB, False)

@@ -3,10 +3,13 @@ from bpy.props import StringProperty, FloatProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 import sys
-sys.path.append("C:\\ProgramData\\Anaconda3\\envs\\Blender377\\Lib\\site-packages")
-import ifcopenshell
-import ifcopenshell.geom
+try:
+	import ifcopenshell
+	import ifcopenshell.geom
+except:
+	raise Exception("Error: TopologyByImportedIFC: ifcopenshell is not present on your system. Install BlenderBIM to resolve.")
 import topologic
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/

@@ -164,12 +164,12 @@ class SvVertexNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		verticesList = self.inputs['Vertices'].sv_get(deepcopy=False)
-		useKDTreeList = self.inputs['Use k-d Tree'].sv_get(deepcopy=False)[0]
-		if isinstance(verticesList[0], list) == False:
-			verticesList = [verticesList]
-		
+		vertexList = self.inputs['Vertex'].sv_get(deepcopy=True)
+		verticesList = self.inputs['Vertices'].sv_get(deepcopy=True)
+		useKDTreeList = self.inputs['Use k-d Tree'].sv_get(deepcopy=True)[0]
+		if verticesList:
+			if isinstance(verticesList[0], list) == False:
+				verticesList = [verticesList]
 		outputs = []
 		trees = []
 		for i in range(len(verticesList)):

@@ -5,6 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 import cppyy
+import time
 
 def processItem(item):
 	resultingTopologies = []
@@ -31,12 +32,10 @@ def processItem(item):
 	topVertices = list(topVertices)
 	if len(topCC) == 1:
 		cc = topCC[0]
-		print("Self Merge: Found a single CellComplex")
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = cc.Vertices(ccVertices)
 		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
-			print("Self Merge: This CellComplex is the only thing in this Cluster")
 			resultingTopologies.append(cc)
 	if len(topCC) == 0 and len(topCells) == 1:
 		cell = topCells[0]
@@ -44,10 +43,8 @@ def processItem(item):
 		_ = cell.Vertices(ccVertices)
 		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
-			print("Self Merge: This Cell is the only thing in this Cluster")
 			resultingTopologies.append(cell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 1:
-		print("Self Merge: Found a single Shell")
 		shell = topShells[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = shell.Vertices(ccVertices)
@@ -55,7 +52,6 @@ def processItem(item):
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(shell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 1:
-		print("Self Merge: Found a single Face")
 		face = topFaces[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = face.Vertices(ccVertices)
@@ -63,7 +59,6 @@ def processItem(item):
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(face)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 1:
-		print("Self Merge: Found a single Wire")
 		wire = topWires[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = wire.Vertices(ccVertices)
@@ -71,7 +66,6 @@ def processItem(item):
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(wire)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
-		print("Self Merge: Found a single Edge")
 		edge = topEdges[0]
 		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		_ = wire.Vertices(ccVertices)
@@ -79,11 +73,9 @@ def processItem(item):
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:
-		print("Self Merge: Found a single Vertex")
 		vertex = topVertices[0]
 		resultingTopologies.append(vertex)
 	if len(resultingTopologies) == 1:
-		print("Self Merge: Topology contains only one element. Returning that element")
 		return resultingTopologies[0]
 	return item.SelfMerge()
 
@@ -99,6 +91,7 @@ class SvTopologySelfMerge(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
@@ -106,6 +99,8 @@ class SvTopologySelfMerge(bpy.types.Node, SverchCustomTreeNode):
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
+		end = time.time()
+		print("Topology.Geometry Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
 	bpy.utils.register_class(SvTopologySelfMerge)

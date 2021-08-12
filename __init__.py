@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 5, 8, 0),
+    "version": (0, 5, 9, 0),
     "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -29,20 +29,21 @@ bl_info = {
 
 import sys
 import os, re
-from os.path import expanduser
 from sys import platform
-from os.path import expanduser
 import bpy
-home = expanduser("~")
 blenderVersion =  "Blender"+str(bpy.app.version[0])+str(bpy.app.version[1])
  
 win_prefix = os.path.dirname(os.path.realpath(__file__))
-print(win_prefix)
 
-sys.path.append(win_prefix+'\\site-packages')
-topologicEggName = '\\'+[name for name in os.listdir(win_prefix+'\\topologicPy\\site-packages') if name.startswith('topologic')][0]
-sys.path.append(win_prefix+'\\topologicPy\\site-packages'+topologicEggName)
-print(topologicEggName)
+if platform != 'win32':
+	sys.path.append(win_prefix+'/site-packages')
+	topologicEggName = '/'+[name for name in os.listdir(win_prefix+'/topologicPy/site-packages') if name.startswith('topologic')][0]
+	sys.path.append(win_prefix+'/topologicPy/site-packages'+topologicEggName)
+else:
+	sys.path.append(win_prefix+'\\site-packages')
+	topologicEggName = '\\'+[name for name in os.listdir(win_prefix+'\\topologicPy\\site-packages') if name.startswith('topologic')][0]
+	sys.path.append(win_prefix+'\\topologicPy\\site-packages'+topologicEggName)
+
 import importlib
 import nodeitems_utils
 import bl_operators
@@ -56,18 +57,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, zip_long_repeat
 from sverchok.utils.logging import info, debug
 
+import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import cppyy
-
-# Bug in cppyy seems to be fixed. No need for this hack
-#vertices = cppyy.gbl.std.list[Vertex.Ptr]()
-#edges = cppyy.gbl.std.list[Edge.Ptr]()
-#wires = cppyy.gbl.std.list[Wire.Ptr]()
-#faces = cppyy.gbl.std.list[Face.Ptr]()
-#shells = cppyy.gbl.std.list[Shell.Ptr]()
-#cells = cppyy.gbl.std.list[Cell.Ptr]()
-#cellcomplexes = cppyy.gbl.std.list[CellComplex.Ptr]()
-#clusters = cppyy.gbl.std.list[Cluster.Ptr]()
 
 #from topologicsverchok import icons
 # make sverchok the root module name, (if sverchok dir not named exactly "sverchok")
@@ -101,6 +93,7 @@ def nodes_index():
                 ("Topologic.WireCircle", "SvWireCircle"),
                 ("Topologic.WireCycles", "SvWireCycles"),
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
+                ("Topologic.WireIsSimilar", "SvWireIsSimilar"),
                 ("Topologic.WireRectangle", "SvWireRectangle"),
                 ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.FaceAddAperture", "SvFaceAddAperture"),
@@ -158,6 +151,8 @@ def nodes_index():
                 ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
+                ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
+                ("Topologic.TopologyByOCCTShape", "SvTopologyByOCCTShape"),
                 ("Topologic.TopologyByString", "SvTopologyByString"),
                 ("Topologic.TopologyCenterOfMass", "SvTopologyCenterOfMass"),
                 ("Topologic.TopologyCentroid", "SvTopologyCentroid"),
@@ -207,6 +202,7 @@ def nodes_index():
                 ("Topologic.GraphContainsVertex", "SvGraphContainsVertex"),
                 ("Topologic.GraphDegreeSequence", "SvGraphDegreeSequence"),
                 ("Topologic.GraphDensity", "SvGraphDensity"),
+                ("Topologic.GraphDepthMap", "SvGraphDepthMap"),
                 ("Topologic.GraphDiameter", "SvGraphDiameter"),
                 ("Topologic.GraphEdge", "SvGraphEdge"),
                 ("Topologic.GraphEdges", "SvGraphEdges"),
@@ -226,7 +222,8 @@ def nodes_index():
                 ("Topologic.GraphTopology", "SvGraphTopology"),
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
-                ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue")
+                ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
+                ("Topologic.ColorByValueInRange", "SvColorByValueInRange")
                 ]
                 )]
 
@@ -244,8 +241,6 @@ def make_node_list():
 imported_modules = make_node_list()
 
 reload_event = False
-
-import bpy
 
 def register_nodes():
 	node_modules = make_node_list()
@@ -353,6 +348,7 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvWireCircle'],
             ['SvWireCycles'],
             ['SvWireIsClosed'],
+            ['SvWireIsSimilar'],
             ['SvWireRectangle'],
             ['SvWireStar'],
         ])
@@ -486,6 +482,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphContainsVertex'],
             ['SvGraphDegreeSequence'],
             ['SvGraphDensity'],
+            ['SvGraphDepthMap'],
             ['SvGraphDiameter'],
             ['SvGraphEdge'],
             ['SvGraphEdges'],
@@ -555,6 +552,8 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyBoundingBox'],
             ['SvTopologyByGeometry'],
             ['SvTopologyByImportedBRep'],
+            ['SvTopologyByImportedIFC'],
+            ['SvTopologyByOCCTShape'],
 			['SvTopologyByString'],
             ['SvTopologyCenterOfMass'],
             ['SvTopologyCentroid'],
@@ -592,6 +591,17 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
         ])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
+class NODEVIEW_MT_AddTPSubcategoryColor(bpy.types.Menu):
+    bl_label = "TPSubcategoryColor"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryColor'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvColorByValueInRange'],
+        ])
+
+make_class('TPSubcategoryColor', 'Topologic @ Color')
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
     bl_label = 'Topologic'
@@ -606,11 +616,12 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Cell'],
             ['@ CellComplex'],
             ['@ Cluster'],
+            ['@ Topology'],
 			['@ Aperture'],
+            ['@ Color'],
             ['@ Context'],
 			['@ Dictionary'],
             ['@ Graph'],
-            ['@ Topology'],
             ['@ About'],
         ])
 
@@ -634,11 +645,12 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAperture)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryColor)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
@@ -666,11 +678,12 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCell)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAperture)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryColor)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryTopology)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()
     #icons.unregister()

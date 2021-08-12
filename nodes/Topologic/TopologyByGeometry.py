@@ -9,6 +9,7 @@ from sverchok.utils.handle_blender_data import correct_collection_length
 from sverchok.utils.nodes_mixins.show_3d_properties import Show3DProperties
 import sverchok.utils.meshes as me
 
+import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, ShellUtility, CellUtility, TopologyUtility
 import cppyy
 from itertools import cycle
@@ -75,7 +76,11 @@ def topologyByFaces(faces, tolerance):
 				output = Shell.ByFaces(faces)
 			except:
 				try:
-					output = Cluster.ByTopologies(faces)
+					topologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+					for aFace in faces:
+						topologies.push_back(aFace)
+					output = Cluster.ByTopologies(topologies)
+					output = output.SelfMerge()
 				except:
 					print("ERROR: Could not create any topology from the input faces!")
 					output = None
@@ -85,14 +90,11 @@ def topologyByEdges(edges):
 	output = None
 	if len(edges) == 1:
 		return fixTopologyClass(edges.front())
-	try:
-		output = Wire.ByEdges(edges)
-	except:
-		try:
-			output = Cluster.ByTopologies(edges)
-		except:
-			print("ERROR: Could not create any topology from the input edges!")
-			output = None
+	topologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	for anEdge in edges:
+		topologies.push_back(anEdge)
+	output = Cluster.ByTopologies(topologies)
+	output = output.SelfMerge()
 	return fixTopologyClass(output)
 
 class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):

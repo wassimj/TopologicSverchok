@@ -14,6 +14,7 @@ from topologicsverchok.nodes.Topologic.Replication import flatten, repeat, onest
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 def processItem(item):
+	print("Graph.ShortestPaths: Processing item")
 	topology = None
 	graph = item[0]
 	vertexA = item[1]
@@ -24,6 +25,8 @@ def processItem(item):
 	print("Graph Shortest Paths - Time Limit: "+str(timeLimit))
 	paths = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 	_ = graph.ShortestPaths(vertexA, vertexB, vertexKey, edgeKey, True, timeLimit, paths)
+	paths = list(paths)
+	print("Graph Shortest Paths: Found "+str(len(paths))+" paths")
 	return list(paths)
 
 
@@ -87,6 +90,7 @@ class SvGraphShortestPaths(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
+			print("Graph.ShortestPaths: Sending to Processing")
 			outputs.append(processItem(anInput))
 		self.outputs['Wires'].sv_set(outputs)
 		end = time.time()

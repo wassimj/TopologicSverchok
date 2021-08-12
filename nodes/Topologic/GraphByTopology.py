@@ -1014,24 +1014,25 @@ def processVertex(item):
 
 def processItem(item):
 	topology = item[0]
-	classType = topology.GetType()
 	graph = None
-	if classType == 64: #CellComplex
-		graph = processCellComplex(item)
-	elif classType == 32: #Cell
-		graph = processCell(item)
-	elif classType == 16: #Shell
-		graph = processShell(item)
-	elif classType == 8: #Face
-		graph = processFace(item)
-	elif classType == 4: #Wire
-		graph = processWire(item)
-	elif classType == 2: #Edge
-		graph = processEdge(item)
-	elif classType == 1: #Vertex
-		graph = processVertex(item)
-	elif classType == 128: #Cluster
-		raise Exception("ERROR: Graph.ByTopology: Cluster is not supported. Decompose into its sub-topologies first.")
+	if topology:
+		classType = topology.GetType()
+		if classType == 64: #CellComplex
+			graph = processCellComplex(item)
+		elif classType == 32: #Cell
+			graph = processCell(item)
+		elif classType == 16: #Shell
+			graph = processShell(item)
+		elif classType == 8: #Face
+			graph = processFace(item)
+		elif classType == 4: #Wire
+			graph = processWire(item)
+		elif classType == 2: #Edge
+			graph = processEdge(item)
+		elif classType == 1: #Vertex
+			graph = processVertex(item)
+		elif classType == 128: #Cluster
+			raise Exception("ERROR: Graph.ByTopology: Cluster is not supported. Decompose into its sub-topologies first.")
 	return graph
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
