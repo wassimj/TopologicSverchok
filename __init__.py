@@ -225,6 +225,10 @@ def nodes_index():
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange"),
                 ("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
+                ("Topologic.EnergyModelByTopology", "SvEnergyModelByTopology"),
+                ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
+                ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
+                ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
                 ("Topologic.EnergyModelSpaceTypes", "SvEnergyModelSpaceTypes"),
                 ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies")
                 ]
@@ -614,6 +618,10 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvEnergyModelByImportedOSM'],
+            ['SvEnergyModelByTopology'],
+            ['SvEnergyModelDefaultConstructionSets'],
+            ['SvEnergyModelDefaultScheduleSets'],
+            ['SvEnergyModelExportToOSM'],
             ['SvEnergyModelSpaceTypes'],
             ['SvEnergyModelTopologies'],
         ])

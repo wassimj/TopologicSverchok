@@ -1,0 +1,60 @@
+import bpy
+from bpy.props import IntProperty, FloatProperty, StringProperty
+from sverchok.node_tree import SverchCustomTreeNode
+from sverchok.data_structure import updateNode
+
+import openstudio
+
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
+
+def processItem(item):
+    sets = item.getDefaultConstructionSets()
+    names = []
+    for aSet in sets:
+        names.append(aSet.name().get())
+    return [sets, names]
+		
+class SvEnergyModelDefaultConstructionSets(bpy.types.Node, SverchCustomTreeNode):
+	"""
+	Triggers: Topologic
+	Tooltip: Returns the Defaul Construction Sets found in the input Energy Model
+	"""
+	bl_idname = 'SvEnergyModelDefaultConstructionSets'
+	bl_label = 'EnergyModel.DefaultConstructionSets'
+	def sv_init(self, context):
+		self.inputs.new('SvStringsSocket', 'Energy Model')
+		self.outputs.new('SvStringsSocket', 'Sets')
+		self.outputs.new('SvStringsSocket', 'Names')
+
+	def process(self):
+		if not any(socket.is_linked for socket in self.outputs):
+			return
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Sets'].sv_set([])
+			self.outputs['Names'].sv_set([])
+			return
+		inputs = self.inputs['Energy Model'].sv_get(deepcopy=False)
+		inputs = flatten(inputs)
+		setOutputs = []
+		nameOutputs = []
+		for anInput in inputs:
+			sets, names = processItem(anInput)
+			setOutputs.append(sets)
+			nameOutputs.append(names)
+		self.outputs['Sets'].sv_set(setOutputs)
+		self.outputs['Names'].sv_set(nameOutputs)
+
+def register():
+	bpy.utils.register_class(SvEnergyModelDefaultConstructionSets)
+
+def unregister():
+	bpy.utils.unregister_class(SvEnergyModelDefaultConstructionSets)
