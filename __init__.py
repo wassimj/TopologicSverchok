@@ -223,7 +223,10 @@ def nodes_index():
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
-                ("Topologic.ColorByValueInRange", "SvColorByValueInRange")
+                ("Topologic.ColorByValueInRange", "SvColorByValueInRange"),
+                ("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
+                ("Topologic.EnergyModelSpaceTypes", "SvEnergyModelSpaceTypes"),
+                ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies")
                 ]
                 )]
 
@@ -602,6 +605,20 @@ class NODEVIEW_MT_AddTPSubcategoryColor(bpy.types.Menu):
         ])
 
 make_class('TPSubcategoryColor', 'Topologic @ Color')
+
+class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
+    bl_label = "TPSubcategoryEnergyModel"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryEnergyModel'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvEnergyModelByImportedOSM'],
+            ['SvEnergyModelSpaceTypes'],
+            ['SvEnergyModelTopologies'],
+        ])
+
+make_class('TPSubcategoryEnergyModel', 'Topologic @ EnergyModel')
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
     bl_label = 'Topologic'
@@ -622,6 +639,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Context'],
 			['@ Dictionary'],
             ['@ Graph'],
+            ['@ EnergyModel'],
             ['@ About'],
         ])
 
@@ -651,6 +669,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
@@ -684,6 +703,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()
     #icons.unregister()
