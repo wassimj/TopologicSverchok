@@ -244,7 +244,7 @@ def processItem(item):
             faceNormal = topologic.FaceUtility.NormalAtParameters(buildingFace, 0.5, 0.5)
             osFaceNormal = openstudio.Vector3d(faceNormal.X(), faceNormal.Y(), faceNormal.Z())
             osFaceNormal.normalize()
-            if osFaceNormal.dot(osSurface.outwardNormal()) < 0:
+            if osFaceNormal.dot(osSurface.outwardNormal()) < 1e-6:
                 osSurface.setVertices(list(reversed(osFacePoints)))
             if math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175:
                 osSurface.setSurfaceType("Floor")
@@ -279,7 +279,7 @@ def processItem(item):
                                         apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
                                         osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal.X(), apertureFaceNormal.Y(), apertureFaceNormal.Z())
                                         osSubSurfaceNormal.normalize()
-                                        if osSubSurfaceNormal.dot(osSurface.outwardNormal()) < 0:
+                                        if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
                                             osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
                                         osSubSurface.setSubSurfaceType("FixedWindow");
                                         osSubSurface.setSurface(osSurface)
