@@ -124,6 +124,27 @@ def getSubTopologies(topology, subTopologyClass):
         _ = topology.CellComplexes(values)
     return list(values)
 
+def valueAtKey(dict, key):
+    fv = None
+    try:
+        v = dict.ValueAtKey(key).Value()
+    except:
+        print("Error: Could not retrieve a Value at the specified key ("+key+")")
+        return None
+    if (isinstance(v, int) or (isinstance(v, float))):
+        fv = v
+    elif (isinstance(v, cppyy.gbl.std.string)):
+        fv = v.c_str()
+    else:
+        resultList = []
+        for i in v:
+            if isinstance(i.Value(), cppyy.gbl.std.string):
+                resultList.append(i.Value().c_str())
+            else:
+                resultList.append(i.Value())
+        fv = resultList
+    return fv
+
 def processItem(item):
     '''
     building = topologic.Topology.ByString(open("C:/Users/wassi/osmFiles/TopologicBuilding.brep", "r").read())
@@ -144,31 +165,18 @@ def processItem(item):
     #osModel = openstudio.model.Model.load(openstudio.toPath(openStudioTemplatePath)).get()
 
     osModel = item[0]
-    print(osModel)
     weatherFilePath = item[1]
-    print(weatherFilePath)
     designDayFilePath = item[2]
-    print(designDayFilePath)
     building = item[3]
-    print(building)
     shadingSurfaces = item[4]
-    print(shadingSurfaces)
     floorLevels = item[5]
-    print(floorLevels)
     buildingName = item[6]
-    print(buildingName)
     buildingType = item[7]
-    print(buildingType)
     defaultSpaceType = item[8]
-    print(defaultSpaceType)
     northAxis = item[9]
-    print(northAxis)
     glazingRatio = item[10]
-    print(glazingRatio)
     coolingTemp = item[11]
-    print(coolingTemp)
     heatingTemp = item[12]
-    print(heatingTemp)
 
     osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath)).get()
     openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
@@ -206,6 +214,13 @@ def processItem(item):
     for spaceNumber, buildingCell in enumerate(getSubTopologies(building, topologic.Cell)):
         osSpace = openstudio.model.Space(osModel)
         osSpaceZ = buildingCell.CenterOfMass().Z()
+        cellDictionary = buildingCell.GetDictionary()
+        if cellDictionary:
+            osSpaceTypeName = valueAtKey(cellDictionary,'type')
+            if osSpaceTypeName:
+                sp_ = osModel.getSpaceTypeByName(osSpaceTypeName)
+                if sp_.is_initialized():
+                    osSpace.setSpaceType(sp_.get())
         osBuildingStory = osBuildingStorys[0]
         for x in osBuildingStorys:
             osBuildingStoryZ = x.nominalZCoordinate().get()
@@ -214,7 +229,11 @@ def processItem(item):
             if osBuildingStoryZ < osSpaceZ:
                 osBuildingStory = x
             break
-        osSpace.setName(osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber))
+        osSpaceName = valueAtKey(cellDictionary,'name')
+        if osSpaceName:
+            osSpace.setName(osSpaceName)
+        else:
+            osSpace.setName(osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber))
         osSpace.setBuildingStory(osBuildingStory)
 
         for faceNumber, buildingFace in enumerate(getSubTopologies(buildingCell, topologic.Face)):
@@ -238,7 +257,32 @@ def processItem(item):
                 if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
                     osSurface.setOutsideBoundaryCondition("Ground")
                 else:
-                    osSurface.setWindowToWallRatio(glazingRatio)
+                    if glazingRatio > 0: #user wants to use default glazing ratio on all surfaces
+                        osSurface.setWindowToWallRatio(glazingRatio)
+                    else: # See if there is a glazingRatio in the dictionary of the face
+                        faceDictionary = buildingFace.GetDictionary()
+                        if faceDictionary:
+                            faceGlazingRatio = valueAtKey(faceDictionary,'glazing ratio')
+                            if faceGlazingRatio and faceGlazingRatio >= 0:
+                                osSurface.setWindowToWallRatio(faceGlazingRatio)
+                            else: # Look for apertures and use as subsurfaces
+                                apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+                                _ = buildingFace.Apertures(apertures)
+                                apertures = list(apertures)
+                                if len(apertures) > 0:
+                                    for aperture in apertures:
+                                        osSubSurfacePoints = []
+                                        apertureFace = getSubTopologies(aperture.Topology(), topologic.Face)[0]
+                                        for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                                            osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
+                                        osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
+                                        apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
+                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal.X(), apertureFaceNormal.Y(), apertureFaceNormal.Z())
+                                        osSubSurfaceNormal.normalize()
+                                        if osSubSurfaceNormal.dot(osSurface.outwardNormal()) < 0:
+                                            osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
+                                        osSubSurface.setSubSurfaceType("FixedWindow");
+                                        osSubSurface.setSurface(osSurface)
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
