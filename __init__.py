@@ -229,7 +229,9 @@ def nodes_index():
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
+                ("Topologic.EnergyModelRunSimulation", "SvEnergyModelRunSimulation"),
                 ("Topologic.EnergyModelSpaceTypes", "SvEnergyModelSpaceTypes"),
+                ("Topologic.EnergyModelSqlFile", "SvEnergyModelSqlFile"),
                 ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies")
                 ]
                 )]
@@ -622,7 +624,9 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelDefaultConstructionSets'],
             ['SvEnergyModelDefaultScheduleSets'],
             ['SvEnergyModelExportToOSM'],
+            ['SvEnergyModelRunSimulation'],
             ['SvEnergyModelSpaceTypes'],
+            ['SvEnergyModelSqlFile'],
             ['SvEnergyModelTopologies'],
         ])
 
