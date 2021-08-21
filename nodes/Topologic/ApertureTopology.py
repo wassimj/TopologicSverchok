@@ -26,7 +26,7 @@ def processItem(item):
 class SvApertureTopology(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outpute the Topology of the input Aperture   
+	Tooltip: Outputs the Topology of the input Aperture   
 	"""
 	bl_idname = 'SvApertureTopology'
 	bl_label = 'Aperture.Topology'
@@ -38,7 +38,7 @@ class SvApertureTopology(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		apertureList = self.inputs['Topology'].sv_get(deepcopy=True)
+		apertureList = self.inputs['Aperture'].sv_get(deepcopy=True)
 		apertureList = flatten(apertureList)
 		outputs = []
 		for anAperture in apertureList:

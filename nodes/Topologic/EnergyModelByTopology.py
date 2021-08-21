@@ -146,23 +146,6 @@ def valueAtKey(dict, key):
     return fv
 
 def processItem(item):
-    '''
-    building = topologic.Topology.ByString(open("C:/Users/wassi/osmFiles/TopologicBuilding.brep", "r").read())
-    shadingSurfaces = topologic.Topology.ByString(open("C:/Users/wassi/osmFiles/TopologicShadingSurfaces.brep", "r").read())
-    floorLevels = list(range(0, 70, 10))
-    buildingName = "Multi-Storey Building"
-    buildingType = "Commercial"
-    defaultSpaceType = "189.1-2009 - Office - WholeBuilding - Md Office - CZ4-8"
-    northAxis = 0
-    glazingRatio = 0.4
-    coolingTemp = 25.0
-    heatingTemp = 20.0
-    weatherFilePath = "C:/Users/wassi/osmFiles/GBR_London.Gatwick.037760_IWEC.epw"
-    designDayFilePath = "C:/Users/wassi/osmFiles/GBR_London.Gatwick.037760_IWEC.ddy"
-    openStudioTemplatePath = "C:/Users/wassi/osmFiles/OSMTemplate-OfficeBuilding-3.2.0.osm"
-    '''
-
-    #osModel = openstudio.model.Model.load(openstudio.toPath(openStudioTemplatePath)).get()
 
     osModel = item[0]
     weatherFilePath = item[1]
@@ -231,6 +214,7 @@ def processItem(item):
             break
         osSpaceName = valueAtKey(cellDictionary,'name')
         if osSpaceName:
+            print("osSpaceName"+osSpaceName)
             osSpace.setName(osSpaceName)
         else:
             osSpace.setName(osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber))
