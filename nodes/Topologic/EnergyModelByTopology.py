@@ -255,35 +255,40 @@ def processItem(item):
                         osSurface.setOutsideBoundaryCondition("Ground")
                     else:
                         if glazingRatio > 0: #user wants to use default glazing ratio on all surfaces
+                            print("Setting Glazing Ratio to: "+str(glazingRatio))
                             osSurface.setWindowToWallRatio(glazingRatio)
                         else: # See if there is a glazingRatio in the dictionary of the face
                             faceDictionary = buildingFace.GetDictionary()
+                            usedGlazingRatio = False
                             if faceDictionary:
                                 # Get the keys
                                 keys = getKeys(faceDictionary)
-                                print(keys)
                                 if ('glazing ratio' in keys):
                                     faceGlazingRatio = valueAtKey(faceDictionary,'glazing ratio')
                                     if faceGlazingRatio and faceGlazingRatio >= 0:
                                         osSurface.setWindowToWallRatio(faceGlazingRatio)
-                                    else: # Look for apertures and use as subsurfaces
-                                        apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
-                                        _ = buildingFace.Apertures(apertures)
-                                        apertures = list(apertures)
-                                        if len(apertures) > 0:
-                                            for aperture in apertures:
-                                                osSubSurfacePoints = []
-                                                apertureFace = getSubTopologies(aperture.Topology(), topologic.Face)[0]
-                                                for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
-                                                    osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
-                                                osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
-                                                apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
-                                                osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal.X(), apertureFaceNormal.Y(), apertureFaceNormal.Z())
-                                                osSubSurfaceNormal.normalize()
-                                                if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
-                                                    osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
-                                                osSubSurface.setSubSurfaceType("FixedWindow");
-                                                osSubSurface.setSurface(osSurface)
+                                        usedGlazingRatio = True
+                            if not usedGlazingRatio: # Look for apertures and use as subsurfaces
+                                apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+                                _ = buildingFace.Apertures(apertures)
+                                apertures = list(apertures)
+                                print("Apertures:")
+                                print(apertures)
+                                if len(apertures) > 0:
+                                    for aperture in apertures:
+                                        osSubSurfacePoints = []
+                                        apertureFace = getSubTopologies(aperture, topologic.Face)[0]
+                                        for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                                            osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
+                                        osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
+                                        apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
+                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal.X(), apertureFaceNormal.Y(), apertureFaceNormal.Z())
+                                        osSubSurfaceNormal.normalize()
+                                        if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
+                                            osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
+                                        osSubSurface.setSubSurfaceType("FixedWindow")
+                                        osSubSurface.setSurface(osSurface)
+                                        print("***** Set Subsurface *****")
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
