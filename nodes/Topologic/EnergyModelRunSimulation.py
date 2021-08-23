@@ -97,9 +97,10 @@ def transposeList(l):
 
 def processItem(item):
     model = item[0]
-    osBinaryPath = item[1]
-    outputFolder = item[2]
-    run = item[3]
+    weatherFile = item[1]
+    osBinaryPath = item[2]
+    outputFolder = item[3]
+    run = item[4]
     if not run:
         return None
     utcnow = datetime.utcnow()
@@ -113,7 +114,7 @@ def processItem(item):
     workflow = model.workflowJSON()
     workflow.setSeedFile(openstudio.openstudioutilitiescore.toPath(osmPath))
     print("Seed File Set")
-    workflow.setWeatherFile(openstudio.openstudioutilitiescore.toPath("C:/Users/wassi/osmFiles/GBR_London.Gatwick.037760_IWEC.epw"))
+    workflow.setWeatherFile(openstudio.openstudioutilitiescore.toPath(weatherFile))
     print("Weather File Set")
     workflow.saveAs(openstudio.openstudioutilitiescore.toPath(oswPath))
     print("OSW File Saved")
@@ -140,6 +141,7 @@ class SvEnergyModelRunSimulation(bpy.types.Node, SverchCustomTreeNode):
 
     def sv_init(self, context):
         self.inputs.new('SvStringsSocket', 'Energy Model')
+        self.inputs.new('SvStringsSocket', 'Weather File Path')
         self.inputs.new('SvStringsSocket', 'OpenStudio Binary Path')
         self.inputs.new('SvStringsSocket', 'Output Folder')
         self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
@@ -152,16 +154,18 @@ class SvEnergyModelRunSimulation(bpy.types.Node, SverchCustomTreeNode):
         if not any(socket.is_linked for socket in self.outputs):
             return
         modelList = self.inputs['Energy Model'].sv_get(deepcopy=True)
+        weatherFileList = self.inputs['Weather File Path'].sv_get(deepcopy=True)
         osBinaryPathList = self.inputs['OpenStudio Binary Path'].sv_get(deepcopy=True)
         outputFolderList = self.inputs['Output Folder'].sv_get(deepcopy=True)
         runList = self.inputs['Run'].sv_get(deepcopy=True)
 
         modelList = flatten(modelList)
+        weatherFileList = flatten(weatherFileList)
         osBinaryPathList = flatten(osBinaryPathList)
         outputFolderList = flatten(outputFolderList)
         runList = flatten(runList)
 
-        inputs = [modelList, osBinaryPathList, outputFolderList, runList]
+        inputs = [modelList, weatherFileList, osBinaryPathList, outputFolderList, runList]
         outputs = []
         if ((self.Replication) == "Default"):
             inputs = repeat(inputs)
