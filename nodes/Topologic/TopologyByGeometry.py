@@ -67,13 +67,13 @@ def topologyByFaces(faces, tolerance):
 	if len(faces) == 1:
 		return fixTopologyClass(faces.front())
 	try:
-		output = Cell.ByFaces(faces)
+		output = Cell.ByFaces(faces, tolerance)
 	except:
 		try:
 			output = CellComplex.ByFaces(faces, tolerance)
 		except:
 			try:
-				output = Shell.ByFaces(faces)
+				output = Shell.ByFaces(faces, tolerance)
 			except:
 				try:
 					topologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
