@@ -1051,7 +1051,7 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 	ToExteriorTopologiesProp: BoolProperty(name="To Exterior Topologies", default=False, update=updateNode)
 	ToExteriorAperturesProp: BoolProperty(name="To Exterior Apertures", default=False, update=updateNode)
 	UseInternalVertexProp: BoolProperty(name="Use Internal Vertex", default=False, update=updateNode)
-	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min= 0, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):

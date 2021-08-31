@@ -37,13 +37,14 @@ def processItem(item, tol):
 	stl_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for aFace in item:
 		stl_faces.push_back(aFace)
-	print("Trying to Create a Cell")
-	cell = None
+	cell = topologic.Cell.ByFaces(stl_faces, tol)
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 	try:
-		cell = topologic.Cell.ByFaces(stl_faces, tol)
-		print("     Created a Cell")
+		_ = cell.Vertices(vertices)
 	except:
-		cell = None
+		raise Exception("Error: Could not create a valid Cell. Please check input.")
+	if len(vertices) < 4:
+		raise Exception("Error: Could not create a valid Cell. Please check input.")
 	return cell
 
 class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
@@ -53,7 +54,7 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellByFaces'
 	bl_label = 'Cell.ByFaces'
-	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
+	Tol: FloatProperty(name='Tol', default=0.0001, min=0, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Faces')
@@ -61,6 +62,7 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def process(self):
+		self.outputs['Cell'].sv_set([])
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		faceList = self.inputs['Faces'].sv_get(deepcopy=True)

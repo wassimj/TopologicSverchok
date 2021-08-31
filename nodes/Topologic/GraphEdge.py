@@ -27,7 +27,7 @@ class SvGraphEdge(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvGraphEdge'
 	bl_label = 'Graph.Edge'
-	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):

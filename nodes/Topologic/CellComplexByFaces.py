@@ -17,24 +17,17 @@ def flatten(element):
 	return returnList
 
 def processItem(item, tol):
-	print(item)
+	item = flatten(item)
 	cellComplex = None
 	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for aFace in item:
 		faces.push_back(aFace)
 	cellComplex = topologic.CellComplex.ByFaces(faces, tol)
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	_ = cellComplex.Vertices(vertices)
+	if len(vertices) < 4:
+		raise Exception("Error: Could not create a valid CellComplex. Please check input.")
 	return cellComplex
-
-def recur(input, tol):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input[0], list):
-		for anItem in input:
-			output.append(recur(anItem, tol))
-	else:
-		output = processItem(input, tol)
-	return output
 
 class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -52,11 +45,16 @@ class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
+			self.outputs['CellComplex'].sv_set([])
 			return
-		inputs = self.inputs['Faces'].sv_get(deepcopy=False)
-		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
-		cellComplexes = recur(inputs, tol)
-		self.outputs['CellComplex'].sv_set(flatten(cellComplexes))
+		inputs = self.inputs['Faces'].sv_get(deepcopy=True)
+		if isinstance(inputs[0], list) == False:
+			inputs = [inputs]
+		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
+		outputs = []
+		for anInput in inputs:
+			outputs.append(processItem(anInput, tol))
+		self.outputs['CellComplex'].sv_set(outputs)
 
 def register():
     bpy.utils.register_class(SvCellComplexByFaces)

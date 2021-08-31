@@ -19,7 +19,15 @@ def processItem(faces, tol):
 	stl_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for face in faces:
 		stl_faces.push_back(face)
-	return topologic.Shell.ByFaces(stl_faces, tol)
+	shell = topologic.Shell.ByFaces(stl_faces, tol)
+	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	try:
+		_ = shell.Vertices(vertices)
+	except:
+		raise Exception("Error: Could not create a valid Shell. Please check input.")
+	if len(vertices) < 3:
+		raise Exception("Error: Could not create a valid Shell. Please check input.")
+	return shell
 
 class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""

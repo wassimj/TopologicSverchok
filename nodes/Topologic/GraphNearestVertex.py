@@ -116,7 +116,7 @@ class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvGraphNearestVertex'
 	bl_label = 'Graph.NearestVertex'
-	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, min=0, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
