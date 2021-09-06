@@ -156,8 +156,8 @@ After install, select the CMD.exe Prompt from the *Home* tab in the *Anaconda Na
 Open Blender, choose scripting and make note of the python version being used. We will assume it is python 3.7.7. Go back to the Anaconda CMD.exe Prompt and type the following:
 
 ```
-conda create --name Blender377 python=3.7.7
-conda activate Blender377
+conda create --name Blender392 python=3.9.1
+conda activate Blender392
 ```
 
 4. **Install cppyy**
@@ -167,8 +167,15 @@ Stay in the Anaconda CMD.exe Prompt and type the following:
 ```
 pip install cppyy
 ```
+5. **Install openstudio**
 
-5. **Re-install TopologicPy**
+Stay in the Anaconda CMD.exe Prompt and type the following:
+
+```
+pip install openstudio
+```
+
+6. **Re-install TopologicPy**
 
 Stay in the Anaconda CMD.exe Prompt and type the following:
 
@@ -177,7 +184,7 @@ cd C:/Users/*homefolder*/topologicbim/topologicPy/cpython
 python setup.py build
 python setup.py install
 ```
-6. **Test in Blender**
+7. **Test in Blender**
 
 At the scripting command prompt in Blender, type the following script.
 
