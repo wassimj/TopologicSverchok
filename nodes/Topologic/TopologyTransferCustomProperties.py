@@ -174,7 +174,7 @@ def transferCustomProperties(sources, sinks, tol):
 						index = sinkKeys.index(sourceKeys[i])
 						k = cppyy.gbl.std.string(sourceKeys[i])
 						sourceValue = d.ValueAtKey(k).Value()
-						if sourceValue != None:
+						if sourceValue:
 							if (isinstance(sourceValue, cppyy.gbl.std.string)):
 								sourceValue = sourceValue.c_str()
 							if sinkValues[index] != "":
