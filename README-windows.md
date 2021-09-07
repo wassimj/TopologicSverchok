@@ -7,7 +7,9 @@ The 3 steps below should be all you need to install Topologic for Blender/Sverch
 This installation assumes that you have already installed **Blender 2.93** and the latest versions of **sverchok** and **BlenderBIM**.
 
 
-1. **Download Microsoft Visual Studio 2019 and make sure you also include "Desktop Development with C++ Tools" from the Tools and Features
+1. **Download Microsoft Visual Studio 2019**
+
+**IMPORTANT**: Make sure you also include "Desktop Development with C++ Tools" from the Tools and Features.
 
 Download from https://visualstudio.microsoft.com/ This is a large download. Be patient.
 
