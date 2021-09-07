@@ -19,13 +19,13 @@ Download fromh https://topologic.app/bin/TopologicSV-WINDOWS-1.0.0.zip
 
 3. **Install for Blender**
 
-. Launch Blender
-. Choose Edit
-. Choose Preferences
-. Choose Add-ons
-. Choose Install
-. Select the TopologicSV-WINDOWS-1.0.0.zip that you have downloaded to install.
-. Once the installation is complete, double-click the checkbox next to **Topologic Node** to activate Topologic
+* Launch Blender
+* Choose Edit
+* Choose Preferences
+* Choose Add-ons
+* Choose Install
+* Select the TopologicSV-WINDOWS-1.0.0.zip that you have downloaded to install.
+* Once the installation is complete, double-click the checkbox next to **Topologic Node** to activate Topologic
 
 ### Install on Windows 10 independently of Blender
 
