@@ -1,6 +1,30 @@
 This projects creates a Topologic python module from the Topologic C++ sources (available at https://github.com/NonManifoldTopology/Topologic.git)
 
-### Install on Windows 10
+### Install for Blender 2.93 with Sverchok
+
+The 3 steps below should be all you need to install Topologic for Blender/Sverchok. TopologicSverchok is only compatible with Windows 10, Microsoft Visual Studio 2019, Blender 2.93, Python 3.9, openstudio 3.2.1, and OpenCascade 7.4.0.
+
+This installation assumes that you have already installed **Blender 2.93** and the latest versions of **sverchok** and **BlenderBIM**.
+
+1. **Download Microsoft Visual Studio 2019 and make sure you also include "Desktop Development with C++ Tools" from the Tools and Features
+
+Download from https://visualstudio.microsoft.com/ This is a large download. Be patient.
+
+2. **Download topologicSverchok**
+
+Download fromh https://topologic.app/bin/TopologicSV-WINDOWS-1.0.0.zip
+
+3. **Install for Blender**
+
+. Launch Blender
+. Choose Edit
+. Choose Preferences
+. Choose Add-ons
+. Choose Install
+. Select the TopologicSV-WINDOWS-1.0.0.zip that you have downloaded to install.
+. Once the installation is complete, double-click the checkbox next to **Topologic Node** to activate Topologic
+
+### Install on Windows 10 independently of Blender
 
 The instructions below are for Microsoft Windows 10. In these instructions we assume *Visual Studio Community 2017* *opencascade 7.4.0* and *python3.8.8*. We also assume that your account has Adminstrator priviliges.
 
@@ -139,9 +163,9 @@ START
    [10.0, 10.0, 10.0]
 DONE
 ```
-### How to install for Blender
+### How to install for Blender from sources
 
-Blender 2.9.2 uses python 3.7.7. Therefore, it is advisable to create a virtual environment and install cppyy and TopologicPy in that environment. You can then simply point Blender's python to use the files in that virtual envrionment. Here is one way to accomplish that using Anaconda
+Blender 2.9.3 uses python 3.9 Therefore, it is advisable to create a virtual environment and install cppyy and TopologicPy in that environment. You can then simply point Blender's python to use the files in that virtual envrionment. Here is one way to accomplish that using Anaconda
 
 1. **Download Anaconda** 
 
