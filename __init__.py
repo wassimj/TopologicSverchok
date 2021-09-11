@@ -188,6 +188,7 @@ def nodes_index():
                 ("Topologic.TopologyTriangulate", "SvTopologyTriangulate"),
                 ("Topologic.TopologyTypeAsString", "SvTopologyTypeAsString"),
                 ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
+                ("Topologic.ContractByParameters", "SvContractByParameters"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryByMergedDictionaries", "SvDictionaryByMergedDictionaries"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
@@ -229,6 +230,7 @@ def nodes_index():
                 ("Topologic.EnergyModelByTopology", "SvEnergyModelByTopology"),
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
+                ("Topologic.EnergyModelExportToGbXML", "SvEnergyModelExportToGbXML"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
                 ("Topologic.EnergyModelQuery", "SvEnergyModelQuery"),
                 ("Topologic.EnergyModelRunSimulation", "SvEnergyModelRunSimulation"),
@@ -600,6 +602,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyTriangulate'],
             ['SvTopologyTypeAsString'],
             ['SvTopologyTypeID'],
+            ['SvContractByParameters'],
         ])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
@@ -626,6 +629,7 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelByTopology'],
             ['SvEnergyModelDefaultConstructionSets'],
             ['SvEnergyModelDefaultScheduleSets'],
+            ['SvEnergyModelExportToGbXML'],
             ['SvEnergyModelExportToOSM'],
             ['SvEnergyModelQuery'],
             ['SvEnergyModelRunSimulation'],
