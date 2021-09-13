@@ -228,14 +228,18 @@ def nodes_index():
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange"),
                 ("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
                 ("Topologic.EnergyModelByTopology", "SvEnergyModelByTopology"),
+                ("Topologic.EnergyModelColumnNames", "SvEnergyModelColumnNames"),
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
                 ("Topologic.EnergyModelExportToGbXML", "SvEnergyModelExportToGbXML"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
                 ("Topologic.EnergyModelQuery", "SvEnergyModelQuery"),
+                ("Topologic.EnergyModelReportNames", "SvEnergyModelReportNames"),
+                ("Topologic.EnergyModelRowNames", "SvEnergyModelRowNames"),
                 ("Topologic.EnergyModelRunSimulation", "SvEnergyModelRunSimulation"),
                 ("Topologic.EnergyModelSpaceTypes", "SvEnergyModelSpaceTypes"),
                 ("Topologic.EnergyModelSqlFile", "SvEnergyModelSqlFile"),
+                ("Topologic.EnergyModelTableNames", "SvEnergyModelTableNames"),
                 ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies")
                 ]
                 )]
@@ -627,14 +631,18 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvEnergyModelByImportedOSM'],
             ['SvEnergyModelByTopology'],
+            ['SvEnergyModelColumnNames'],
             ['SvEnergyModelDefaultConstructionSets'],
             ['SvEnergyModelDefaultScheduleSets'],
             ['SvEnergyModelExportToGbXML'],
             ['SvEnergyModelExportToOSM'],
             ['SvEnergyModelQuery'],
+            ['SvEnergyModelReportNames'],
+            ['SvEnergyModelRowNames'],
             ['SvEnergyModelRunSimulation'],
             ['SvEnergyModelSpaceTypes'],
             ['SvEnergyModelSqlFile'],
+            ['SvEnergyModelTableNames'],
             ['SvEnergyModelTopologies'],
         ])
 
