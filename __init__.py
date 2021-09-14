@@ -240,7 +240,8 @@ def nodes_index():
                 ("Topologic.EnergyModelSpaceTypes", "SvEnergyModelSpaceTypes"),
                 ("Topologic.EnergyModelSqlFile", "SvEnergyModelSqlFile"),
                 ("Topologic.EnergyModelTableNames", "SvEnergyModelTableNames"),
-                ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies")
+                ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies"),
+                ("Topologic.EnergyModelUnits", "SvEnergyModelUnits")
                 ]
                 )]
 
@@ -644,6 +645,7 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelSqlFile'],
             ['SvEnergyModelTableNames'],
             ['SvEnergyModelTopologies'],
+            ['SvEnergyModelUnits'],
         ])
 
 make_class('TPSubcategoryEnergyModel', 'Topologic @ EnergyModel')
