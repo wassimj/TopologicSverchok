@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -101,13 +100,7 @@ def processItem(item):
 		verticesA = [verticesA]
 	if isinstance(verticesB, list) == False:
 		verticesB = [verticesB]
-	stlVerticesA = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	for aVertex in verticesA:
-		stlVerticesA.push_back(aVertex)
-	stlVerticesB = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	for aVertex in verticesB:
-		stlVerticesB.push_back(aVertex)
-	_ = graph.Connect(stlVerticesA, stlVerticesB, tolerance)
+	_ = graph.Connect(verticesA, verticesB, tolerance)
 	return graph
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

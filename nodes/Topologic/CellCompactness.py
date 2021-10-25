@@ -4,11 +4,10 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import math
 
 def processItem(item):
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faces = []
 	_ = item.Faces(faces)
 	area = 0.0
 	for aFace in faces:

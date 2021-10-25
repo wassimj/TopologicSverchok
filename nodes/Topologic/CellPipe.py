@@ -21,7 +21,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import math
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -108,27 +107,11 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def wireByVertices(vList):
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	for i in range(len(vList)-1):
-		edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
-	edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
+		edges.append(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
+	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item):
@@ -164,24 +147,22 @@ def processItem(item):
 
 	baseWire = wireByVertices(baseV)
 	topWire = wireByVertices(topV)
-	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	wires.push_back(baseWire)
-	wires.push_back(topWire)
+	wires = [baseWire, topWire]
 	cyl = topologic.CellUtility.ByLoft(wires)
 	phi = math.degrees(math.atan2(dy, dx)) # Rotation around Y-Axis
 	if dist < 0.0001:
 		theta = 0
 	else:
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
-	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta))
-	cyl = fixTopologyClass(topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi))
+	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta)
+	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi)
 	zzz = topologic.Vertex.ByCoordinates(0,0,0)
 	returnList = [cyl]
 	if endcapA:
 		endcapA = topologic.Topology.DeepCopy(endcapA)
 		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 1, 0, theta)
-		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 0, 1, phi)
-		endcapA = fixTopologyClass(topologic.TopologyUtility.Translate(endcapA, origin.X(), origin.Y(), origin.Z()))
+		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 0, 1, phi + 180)
+		endcapA = topologic.TopologyUtility.Translate(endcapA, origin.X(), origin.Y(), origin.Z())
 		returnList.append(endcapA)
 	if endcapB:
 		origin = edge.EndVertex()
@@ -202,8 +183,8 @@ def processItem(item):
 			theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 		endcapB = topologic.Topology.DeepCopy(endcapB)
 		endcapB = topologic.TopologyUtility.Rotate(endcapB, zzz, 0, 1, 0, theta)
-		endcapB = topologic.TopologyUtility.Rotate(endcapB, zzz, 0, 0, 1, phi)
-		endcapB = fixTopologyClass(topologic.TopologyUtility.Translate(endcapB, origin.X(), origin.Y(), origin.Z()))
+		endcapB = topologic.TopologyUtility.Rotate(endcapB, zzz, 0, 0, 1, phi + 180)
+		endcapB = topologic.TopologyUtility.Translate(endcapB, origin.X(), origin.Y(), origin.Z())
 		returnList.append(endcapB)
 	return returnList
 

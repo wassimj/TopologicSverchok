@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -19,10 +18,10 @@ def flatten(element):
 
 def processItem(item):
 	cluster = None
-	topologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	topologies = []
 	for aTopology in item:
 		copyTopology = topologic.Topology.DeepCopy(aTopology)
-		topologies.push_back(copyTopology)
+		topologies.append(copyTopology)
 	cluster = topologic.Cluster.ByTopologies(topologies)
 	return cluster
 

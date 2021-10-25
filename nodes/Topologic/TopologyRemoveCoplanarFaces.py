@@ -4,10 +4,13 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
-import numpy
-from numpy.linalg import norm
-from numpy import dot
+
+try:
+	import numpy
+	from numpy.linalg import norm
+	from numpy import dot
+except:
+	raise Exception("Error: Could not import numpy.")
 import math
 import time
 
@@ -68,55 +71,51 @@ def removeFace(face, faces):
 	return faces
 
 def shellToFace(shell):
-	externalEdges = cppyy.gbl.std.list[topologic.Topology.Ptr]()
-	shellEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	externalEdges = []
+	shellEdges = []
 	_ = shell.Edges(shellEdges)
 	for shellEdge in shellEdges:
-		stl_edgeFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-		_ = shellEdge.Faces(stl_edgeFaces)
-		edgeFaces = list(stl_edgeFaces)
+		edgeFaces = []
+		_ = shellEdge.Faces(edgeFaces)
 		if len(edgeFaces) < 2:
-			externalEdges.push_back(shellEdge)
+			externalEdges.append(shellEdge)
 	cluster = topologic.Cluster.ByTopologies(externalEdges)
 	cluster = cluster.SelfMerge()
 	# This cluster could be made of more than 1 wire
-	stl_wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	stl_wires = []
 	_ = cluster.Wires(stl_wires)
 	wires = []
 	areas = []
 	for aWire in stl_wires:
+		print("BEFORE")
+		print(aWire)
 		aWire = topologic.WireUtility.RemoveCollinearEdges(aWire, 0.1)
-		ib = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-		#wireVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-		#_ = aWire.Vertices(wireVertices)
-		#poly = []
-		#for aVertex in wireVertices:
-		#	poly.append((aVertex.X(), aVertex.Y(), aVertex.Z()))
-		#areas.append(poly_area(poly))
-		face = topologic.Face.ByExternalInternalBoundaries(aWire, ib)
-		#faces.append(face)
-		wires.append(aWire)
-		areas.append(topologic.FaceUtility.Area(face))
+		print("AFTER")
+		print(aWire)
+		if(aWire):
+			face = topologic.Face.ByExternalBoundary(aWire)
+			wires.append(aWire)
+			areas.append(topologic.FaceUtility.Area(face))
 	wires = [x for _, x in sorted(zip(areas, wires))] #Sort wires according to their areas
-	ib = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	print(wires)
+	ib = []
 	for internalWire in wires[0:len(wires)-1]:
-		ib.push_back(internalWire)
+		ib.append(internalWire)
 	finalFace = topologic.Face.ByExternalInternalBoundaries(wires[-1], ib)
 	return finalFace
 
 def match(faceA, faceB, angTol):
 	if topologic.Topology.IsSame(faceA, faceB):
 		return False
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	faceA.SharedEdges(faceB, edges)
-	edges = list(edges)
 	if len(edges) < 1:
 		return False
 	# Compute the normal of each face
 	n1 = topologic.FaceUtility.NormalAtParameters(faceA,0.5, 0.5)
-	v1 = [n1.X(), n1.Y(), n1.Z()]
+	v1 = [n1[0], n1[1], n1[2]]
 	n2 = topologic.FaceUtility.NormalAtParameters(faceB,0.5, 0.5)
-	v2 = [n2.X(), n2.Y(), n2.Z()]
+	v2 = [n2[0], n2[1], n2[2]]
 	# Compute the angle between the two Faces
 	ang = angle(v1, v2)
 	if (ang > angTol):
@@ -132,43 +131,39 @@ def findCoplanarFaces(faceA, faces, angTol, matchedFaces):
 	return matchedFaces
 
 def processItem(topology, angTol, tolerance):
-	t = topology.GetType()
+	t = topology.Type()
 	if (t == 1) or (t == 2) or (t == 4) or (t == 8) or (t == 128):
 		return topology
 	# Get the faces of the Topology
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faces = []
 	_ = topology.Faces(faces)
-	faces = list(faces)
 	finalFaces = faces.copy()
 	for faceA in faces:
 		matchedFaces = [faceA]
 		matchedFaces = findCoplanarFaces(faceA, faces, angTol, matchedFaces)
 		if (len(matchedFaces) > 1):
-			stl_matched_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+			stl_matched_faces = []
 			for matchedFace in matchedFaces:
-				stl_matched_faces.push_back(matchedFace)
+				stl_matched_faces.append(matchedFace)
 			shell = topologic.Shell.ByFaces(stl_matched_faces)
 			newFace = shellToFace(shell)
 			finalFaces.append(newFace)
 			for matchedFace in matchedFaces:
 				finalFaces = removeFace(matchedFace, finalFaces)
-	stl_final_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-	for aFace in finalFaces:
-		stl_final_faces.push_back(aFace)
 	returnTopology = topology
 	if t == 16: # Shell
 		try:
-			returnTopology = topologic.Shell.ByFaces(stl_final_faces, tolerance)
+			returnTopology = topologic.Shell.ByFaces(finalFaces, tolerance)
 		except:
 			returnTopology = topology
 	elif t == 32: # Cell
 		try:
-			returnTopology = topologic.Cell.ByFaces(stl_final_faces, tolerance)
+			returnTopology = topologic.Cell.ByFaces(finalFaces, tolerance)
 		except:
 			returnTopology = topology
 	elif t == 64: #CellComplex
 		try:
-			returnTopology = topologic.CellComplex.ByFaces(stl_final_faces, tolerance)
+			returnTopology = topologic.CellComplex.ByFaces(finalFaces, tolerance)
 		except:
 			returnTopology = topology
 	return returnTopology

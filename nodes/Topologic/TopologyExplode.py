@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -92,42 +91,17 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
-def create_stl_list(cppyy_data_type):
-    values = cppyy.gbl.std.list[cppyy_data_type]()
-    return values
-
-def convert_to_stl_list(py_list, cppyy_data_type):
-    values = create_stl_list(cppyy_data_type)
-    for i in py_list:
-        values.push_back(i)
-    return values
 
 def relevantSelector(topology):
 	returnVertex = None
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		return topology
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		return topologic.EdgeUtility.PointAtParameter(topology, 0.5)
-	elif topology.GetType() == topologic.Face.Type():
-		return topologic.FaceUtility.InternalVertex(topology)
-	elif topology.GetType() == topologic.Cell.Type():
-		return topologic.CellUtility.InternalVertex(topology)
+	elif topology.Type() == topologic.Face.Type():
+		return topologic.FaceUtility.InternalVertex(topology, 0.0001)
+	elif topology.Type() == topologic.Cell.Type():
+		return topologic.CellUtility.InternalVertex(topology, 0.0001)
 	else:
 		return topology.Centroid()
 
@@ -137,11 +111,11 @@ def processItem(item):
 	scale = item[2]
 	typeFilter = item[3]
 	topologies = []
-	newTopologies = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+	newTopologies = []
 	cluster = None
 	if topology.__class__ == topologic.Graph:
-		graphTopology = fixTopologyClass(topology.Topology())
-		graphEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		graphTopology = topology.Topology()
+		graphEdges = []
 		_ = graphTopology.Edges(graphEdges)
 		for anEdge in graphEdges:
 			sv = anEdge.StartVertex()
@@ -161,23 +135,23 @@ def processItem(item):
 			newZ = (oldZ - origin.Z())*scale + origin.Z()
 			newEv = topologic.Vertex.ByCoordinates(newX, newY, newZ)
 			newEdge = topologic.Edge.ByStartVertexEndVertex(newSv, newEv)
-			newTopologies.push_back(newEdge)
+			newTopologies.append(newEdge)
 		cluster = topologic.Cluster.ByTopologies(newTopologies)
 	else:
 		if typeFilter == "Vertex":
-			topologies = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			topologies = []
 			_ = topology.Vertices(topologies)
 		elif typeFilter == "Edge":
-			topologies = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			topologies = []
 			_ = topology.Edges(topologies)
 		elif typeFilter == "Face":
-			topologies = cppyy.gbl.std.list[topologic.Face.Ptr]()
+			topologies = []
 			_ = topology.Faces(topologies)
 		elif typeFilter == "Cell":
-			topologies = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+			topologies = []
 			_ = topology.Cells(topologies)
 		else:
-			topologies = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			topologies = []
 			_ = topology.Vertices(topologies)
 		for aTopology in topologies:
 			c = relevantSelector(aTopology)
@@ -191,7 +165,7 @@ def processItem(item):
 			yT = newY - oldY
 			zT = newZ - oldZ
 			newTopology = topologic.TopologyUtility.Translate(aTopology, xT, yT, zT)
-			newTopologies.push_back(newTopology)
+			newTopologies.append(newTopology)
 		cluster = topologic.Cluster.ByTopologies(newTopologies)
 	return cluster
 

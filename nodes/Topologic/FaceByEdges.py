@@ -4,7 +4,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
+def processItem(item):
+	return topologic.Face.ByEdges(item)
 
 class SvFaceByEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -21,14 +23,13 @@ class SvFaceByEdges(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Edges'].sv_get(deepcopy=False)
-		edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-		faces = []
-		for edgeList in inputs:
-			for edge in edgeList:
-				edges.push_back(edge)
-		faces.append(topologic.Face.ByEdges(edges))
-		self.outputs['Face'].sv_set([wires])
+		inputs = self.inputs['Edges'].sv_get(deepcopy=True)
+		if isinstance(inputs[0], list) == False:
+			inputs = [inputs]
+		outputs = []
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
+		self.outputs['Face'].sv_set(outputs)
 
 def register():
     bpy.utils.register_class(SvFaceByEdges)

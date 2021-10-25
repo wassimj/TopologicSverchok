@@ -20,7 +20,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -33,19 +32,11 @@ def flatten(element):
 	return returnList
 
 def processItem(item, tol):
-	cell = None
-	stl_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-	for aFace in item:
-		stl_faces.push_back(aFace)
-	cell = topologic.Cell.ByFaces(stl_faces, tol)
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	try:
-		_ = cell.Vertices(vertices)
-	except:
-		raise Exception("Error: Could not create a valid Cell. Please check input.")
-	if len(vertices) < 4:
-		raise Exception("Error: Could not create a valid Cell. Please check input.")
-	return cell
+	cell = topologic.Cell.ByFaces(item, tol)
+	if cell:
+		return cell
+	else:
+		raise Exception("CellByFaces - Could not create a valid Cell")
 
 class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""

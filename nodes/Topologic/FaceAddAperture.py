@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 def matchLengths(list):
@@ -47,7 +46,7 @@ def processItem(faces, apertures, exclusive, tolerance):
 	for face in faces:
 			usedFaces.append(0)
 	for aperture in apertures:
-		apCenter = topologic.FaceUtility.InternalVertex(aperture)
+		apCenter = topologic.FaceUtility.InternalVertex(aperture, tolerance)
 		for i in range(len(faces)):
 			face = faces[i]
 			if exclusive == True and usedFaces[i] == 1:

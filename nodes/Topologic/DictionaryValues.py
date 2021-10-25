@@ -4,40 +4,38 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+from topologic import Dictionary, IntAttribute, DoubleAttribute, StringAttribute, ListAttribute
 
-def getKeys(item):
-	stl_keys = item.Keys()
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
 	returnList = []
-	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	for x in copyKeys:
-		k = x.c_str()
-		returnList.append(k)
+	for attr in listAttributes:
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
 	return returnList
 
 def processItem(item):
-	keys = getKeys(item)
+	keys = item.Keys()
 	returnList = []
-	fv = None
 	for key in keys:
-		fv = None
 		try:
-			v = item.ValueAtKey(key).Value()
+			attr = item.ValueAtKey(key)
 		except:
-			raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
-		if (isinstance(v, int) or (isinstance(v, float))):
-			fv = v
-		elif (isinstance(v, cppyy.gbl.std.string)):
-			fv = v.c_str()
+			raise Exception("Dictionary.Values - Error: Could not retrieve a Value at the specified key ("+key+")")
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
+		elif isinstance(attr, ListAttribute):
+			returnList.append(listAttributeValues(attr))
 		else:
-			resultList = []
-			for i in v:
-				if isinstance(i.Value(), cppyy.gbl.std.string):
-					resultList.append(i.Value().c_str())
-				else:
-					resultList.append(i.Value())
-			fv = resultList
-		returnList.append(fv)
+			returnList.append("")
 	return returnList
 
 def recur(input):

@@ -8,7 +8,6 @@ import ifcopenshell
 import ifcopenshell.geom
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, ShellUtility, CellUtility, TopologyUtility
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):

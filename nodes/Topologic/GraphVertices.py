@@ -5,28 +5,10 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	if item:
 		try:
 			_ = item.Vertices(vertices)
@@ -34,7 +16,7 @@ def processItem(item):
 			print("ERROR: (Topologic>Graph.Vertices) operation failed.")
 			vertices = None
 	if vertices:
-		return list(vertices)
+		return vertices
 	else:
 		return []
 

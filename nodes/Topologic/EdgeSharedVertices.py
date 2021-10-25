@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
 class SvEdgeSharedVertices(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic

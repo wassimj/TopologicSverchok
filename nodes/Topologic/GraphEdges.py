@@ -1,36 +1,19 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
-def processItem(item):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+def processItem(item, tolerance):
+	vertices = []
 	_ = item.Vertices(vertices)
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-	_ = item.Edges(vertices, 0.001, edges)
-	return list(edges)
+	edges = []
+	_ = item.Edges(vertices, tolerance, edges)
+	return edges
 
 class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -39,8 +22,10 @@ class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvGraphEdges'
 	bl_label = 'Graph.Edges'
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Graph')
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Edges')
 
 	def process(self):
@@ -51,9 +36,10 @@ class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Edges'].sv_set([])
 			return
 		inputs = self.inputs['Graph'].sv_get(deepcopy=False)
+		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=True)[0][0]
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
+			outputs.append(processItem(anInput, tolerance))
 		self.outputs['Edges'].sv_set(outputs)
 		end = time.time()
 		print("Graph.Edges Operation consumed "+str(round(end - start,2))+" seconds")

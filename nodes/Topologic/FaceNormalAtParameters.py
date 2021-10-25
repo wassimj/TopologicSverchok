@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -90,15 +91,14 @@ def transposeList(l):
 	return returnList
 
 def processItem(item, outputType, decimals):
-	coords = None
 	face = item[0]
 	u = item[1]
 	v = item[2]
 	try:
 		coords = topologic.FaceUtility.NormalAtParameters(face, u, v)
-		x = round(coords.X(), decimals)
-		y = round(coords.Y(), decimals)
-		z = round(coords.Z(), decimals)
+		x = round(coords[0], decimals)
+		y = round(coords[1], decimals)
+		z = round(coords[2], decimals)
 		returnResult = []
 		if outputType == "XYZ":
 			returnResult = [x,y,z]

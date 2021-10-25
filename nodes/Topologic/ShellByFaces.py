@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -16,18 +16,7 @@ def flatten(element):
 	return returnList
 
 def processItem(faces, tol):
-	stl_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-	for face in faces:
-		stl_faces.push_back(face)
-	shell = topologic.Shell.ByFaces(stl_faces, tol)
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	try:
-		_ = shell.Vertices(vertices)
-	except:
-		raise Exception("Error: Could not create a valid Shell. Please check input.")
-	if len(vertices) < 3:
-		raise Exception("Error: Could not create a valid Shell. Please check input.")
-	return shell
+	return topologic.Shell.ByFaces(faces, tol)
 
 class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""

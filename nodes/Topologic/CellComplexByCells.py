@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
-import cppyy
 import time
 import warnings
 
@@ -19,22 +18,6 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(cells):
 	cellComplex = cells[0]
 	for i in range(1,len(cells)):
@@ -42,9 +25,9 @@ def processItem(cells):
 			cellComplex = cellComplex.Merge(cells[i], False)
 		except:
 			raise Exception("Error: CellComplex.ByCells operation failed during processing the input Cells")
-	if cellComplex.GetType() != 64: #64 is the type of a CellComplex
+	if cellComplex.Type() != 64: #64 is the type of a CellComplex
 		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
-	return fixTopologyClass(cellComplex)
+	return cellComplex
 
 class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 	"""

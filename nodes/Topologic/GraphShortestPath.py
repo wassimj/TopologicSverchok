@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -92,22 +91,6 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	topology = None
 	graph = item[0]
@@ -116,7 +99,7 @@ def processItem(item):
 	vertexKey = item[3]
 	edgeKey = item[4]
 	print(edgeKey)
-	topology = fixTopologyClass(graph.ShortestPath(vertexA, vertexB, vertexKey, edgeKey))
+	topology = graph.ShortestPath(vertexA, vertexB, vertexKey, edgeKey)
 	return topology
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

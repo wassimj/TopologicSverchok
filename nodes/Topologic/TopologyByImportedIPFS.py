@@ -5,8 +5,10 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
-import ipfshttpclient
+try:
+	import ipfshttpclient
+except:
+	raise Exception("Error: Could not import ipfshttpclient.")
 import os
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/

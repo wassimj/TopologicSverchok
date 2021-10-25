@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
 import topologic
-import cppyy
 
 def getValueAtKey(dict, key):
 	returnValue = "None"

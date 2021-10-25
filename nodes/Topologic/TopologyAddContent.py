@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -91,49 +90,12 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	topology = item[0]
 	contents = item[1]
-	topologyType = item[2]
-	print(contents)
-	if topologyType == "Vertex":
-		t = 1
-	elif topologyType == "Edge":
-		t = 2
-	elif topologyType == "Wire":
-		t = 4
-	elif topologyType == "Face":
-		t = 8
-	elif topologyType == "Shell":
-		t = 16
-	elif topologyType == "Cell":
-		t = 32
-	elif topologyType == "CellComplex":
-		t = 64
-	else:
-		t = 0
-	stl_contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
-	for aContent in contents:
-		stl_contents.push_back(aContent)
-	return fixTopologyClass(topology.AddContents(stl_contents, t))
+	topologyType = topology.Type()
+	return topology.AddContents(contents, topologyType)
 
-topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5),("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7),("Topology", "Topology", "", 8)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 
@@ -144,7 +106,6 @@ class SvTopologyAddContent(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyAddContent'
 	bl_label = 'Topology.AddContent'
-	Type: EnumProperty(name="Type", description="Specify subtopology type", default="Topology", items=topologyTypes, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
@@ -162,12 +123,10 @@ class SvTopologyAddContent(bpy.types.Node, SverchCustomTreeNode):
 
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
 		contentList = self.inputs['Content'].sv_get(deepcopy=True)
-		typeList = self.inputs['Type'].sv_get(deepcopy=True)
 		topologyList = flatten(topologyList)
 		if isinstance(contentList[0], list) == False:
 			contentList = [contentList]
-		typeList = flatten(typeList)
-		inputs = [topologyList, contentList, typeList]
+		inputs = [topologyList, contentList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

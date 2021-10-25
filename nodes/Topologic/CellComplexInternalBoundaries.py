@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -18,9 +17,9 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faces = []
 	_ = item.InternalBoundaries(faces)
-	return list(faces)
+	return faces
 
 class SvCellComplexInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 	"""

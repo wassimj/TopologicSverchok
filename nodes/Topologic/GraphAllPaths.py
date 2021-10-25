@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 import importlib
@@ -18,9 +17,9 @@ def processItem(item):
 	vertexA = item[1]
 	vertexB = item[2]
 	timeLimit = item[3]
-	paths = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	paths = []
 	_ = graph.AllPaths(vertexA, vertexB, True, timeLimit, paths)
-	return list(paths)
+	return paths
 
 
 class SvGraphAllPaths(bpy.types.Node, SverchCustomTreeNode):

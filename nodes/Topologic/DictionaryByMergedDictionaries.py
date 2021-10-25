@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -16,39 +15,95 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def getKeys(item):
-	stl_keys = item.Keys()
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
 	returnList = []
-	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	for x in copyKeys:
-		k = x.c_str()
-		returnList.append(k)
+	for attr in listAttributes:
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
 	return returnList
 
+def getValueAtKey(item, key):
+	try:
+		attr = item.ValueAtKey(key)
+	except:
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
+
 def getValues(item):
-	keys = getKeys(item)
+	keys = item.Keys()
 	returnList = []
-	fv = None
 	for key in keys:
-		fv = None
 		try:
-			v = item.ValueAtKey(key).Value()
+			attr = item.ValueAtKey(key)
 		except:
-			raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
-		if (isinstance(v, int) or (isinstance(v, float))):
-			fv = v
-		elif (isinstance(v, cppyy.gbl.std.string)):
-			fv = v.c_str()
+			raise Exception("Dictionary.Values - Error: Could not retrieve a Value at the specified key ("+key+")")
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
+		elif isinstance(attr, topologic.ListAttribute):
+			returnList.append(listAttributeValues(attr))
 		else:
-			resultList = []
-			for i in v:
-				if isinstance(i.Value(), cppyy.gbl.std.string):
-					resultList.append(i.Value().c_str())
-				else:
-					resultList.append(i.Value())
-			fv = resultList
-		returnList.append(fv)
+			returnList.append("")
 	return returnList
+
+def processKeysValues(keys, values):
+	if len(keys) != len(values):
+		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
+	stl_keys = []
+	stl_values = []
+	for i in range(len(keys)):
+		if isinstance(keys[i], str):
+			stl_keys.append(keys[i])
+		else:
+			stl_keys.append(str(keys[i]))
+		if isinstance(values[i], list) and len(values[i]) == 1:
+			value = values[i][0]
+		else:
+			value = values[i]
+		if isinstance(value, bool):
+			if value == False:
+				stl_values.append(topologic.IntAttribute(0))
+			else:
+				stl_values.append(topologic.IntAttribute(1))
+		elif isinstance(value, int):
+			stl_values.append(topologic.IntAttribute(value))
+		elif isinstance(value, float):
+			stl_values.append(topologic.DoubleAttribute(value))
+		elif isinstance(value, str):
+			stl_values.append(topologic.StringAttribute(value))
+		elif isinstance(value, list):
+			l = []
+			for v in value:
+				if isinstance(v, bool):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, int):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, float):
+					l.append(topologic.DoubleAttribute(v))
+				elif isinstance(v, str):
+					l.append(topologic.StringAttribute(v))
+			stl_values.append(topologic.ListAttribute(l))
+		else:
+			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	return myDict
 
 def processItem(sources):
 	sinkKeys = []
@@ -57,59 +112,35 @@ def processItem(sources):
 	if d != None:
 		stlKeys = d.Keys()
 		if len(stlKeys) > 0:
-			sinkKeys = getKeys(d)
+			sinkKeys = d.Keys()
 			sinkValues = getValues(d)
-	for i in range(1,len(sources)):
-		d = sources[i]
-		if d == None:
-			continue
-		stlKeys = d.Keys()
-		if len(stlKeys) > 0:
-			sourceKeys = getKeys(d)
-			for aSourceKey in sourceKeys:
-				if aSourceKey not in sinkKeys:
-					sinkKeys.append(aSourceKey)
-					sinkValues.append("")
-			for i in range(len(sourceKeys)):
-				index = sinkKeys.index(sourceKeys[i])
-				k = cppyy.gbl.std.string(sourceKeys[i])
-				sourceValue = d.ValueAtKey(k).Value()
-				if sourceValue != None:
-					if sinkValues[index] != "":
-						if isinstance(sinkValues[index], list):
-							sinkValues[index].append(sourceValue)
+		for i in range(1,len(sources)):
+			d = sources[i]
+			if d == None:
+				continue
+			stlKeys = d.Keys()
+			if len(stlKeys) > 0:
+				sourceKeys = d.Keys()
+				for aSourceKey in sourceKeys:
+					if aSourceKey not in sinkKeys:
+						sinkKeys.append(aSourceKey)
+						sinkValues.append("")
+				for i in range(len(sourceKeys)):
+					index = sinkKeys.index(sourceKeys[i])
+					sourceValue = getValueAtKey(d,sourceKeys[i])
+					if sourceValue != None:
+						if sinkValues[index] != "":
+							if isinstance(sinkValues[index], list):
+								sinkValues[index].append(sourceValue)
+							else:
+								sinkValues[index] = [sinkValues[index], sourceValue]
 						else:
-							sinkValues[index] = [sinkValues[index], sourceValue]
-					else:
-						sinkValues[index] = sourceValue
+							sinkValues[index] = sourceValue
+	print(sinkValues)
 	if len(sinkKeys) > 0 and len(sinkValues) > 0:
-		stlKeys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-		for sinkKey in sinkKeys:
-			stlKeys.push_back(sinkKey)
-		stlValues = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-		for sinkValue in sinkValues:
-			if isinstance(sinkValue, bool):
-				stlValues.push_back(topologic.IntAttribute(sinkValue))
-			elif isinstance(sinkValue, int):
-				stlValues.push_back(topologic.IntAttribute(sinkValue))
-			elif isinstance(sinkValue, float):
-				stlValues.push_back(topologic.DoubleAttribute(sinkValue))
-			elif isinstance(sinkValue, str):
-				stlValues.push_back(topologic.StringAttribute(sinkValue))
-			elif isinstance(sinkValue, list):
-				l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-				for v in sinkValue:
-					if isinstance(v, bool):
-						l.push_back(topologic.IntAttribute(v))
-					elif isinstance(v, int):
-						l.push_back(topologic.IntAttribute(v))
-					elif isinstance(v, float):
-						l.push_back(topologic.DoubleAttribute(v))
-					elif isinstance(v, str):
-						l.push_back(topologic.StringAttribute(v))
-				stlValues.push_back(topologic.ListAttribute(l))
-		newDict = topologic.Dictionary.ByKeysValues(stlKeys, stlValues)
+		newDict = processKeysValues(sinkKeys, sinkValues)
 		return newDict
+	return None
 
 class SvDictionaryByMergedDictionaries(bpy.types.Node, SverchCustomTreeNode):
 	"""

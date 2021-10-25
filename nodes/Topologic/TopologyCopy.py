@@ -5,24 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import time
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -35,7 +18,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return fixTopologyClass(topologic.Topology.DeepCopy(item))
+	return topologic.Topology.DeepCopy(item)
 
 def recur(input):
 	output = []

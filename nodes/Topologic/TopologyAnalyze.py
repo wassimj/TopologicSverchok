@@ -4,10 +4,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item):
-	return topologic.Topology.Analyze(item).c_str()
+	return topologic.Topology.Analyze(item)
 
 def recur(input):
 	output = []

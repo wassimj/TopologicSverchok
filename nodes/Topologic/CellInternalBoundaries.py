@@ -4,12 +4,11 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item):
-	shells = cppyy.gbl.std.list[topologic.Shell.Ptr]()
+	shells = []
 	_ = item.InternalBoundaries(shells)
-	return list(shells)
+	return shells
 
 def recur(input):
 	output = []

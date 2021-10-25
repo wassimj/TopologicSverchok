@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,17 +16,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item, tol):
-	item = flatten(item)
-	cellComplex = None
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-	for aFace in item:
-		faces.push_back(aFace)
-	cellComplex = topologic.CellComplex.ByFaces(faces, tol)
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	_ = cellComplex.Vertices(vertices)
-	if len(vertices) < 4:
-		raise Exception("Error: Could not create a valid CellComplex. Please check input.")
-	return cellComplex
+	return topologic.CellComplex.ByFaces(item, tol)
 
 class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""

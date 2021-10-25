@@ -20,7 +20,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -35,10 +34,9 @@ def flatten(element):
 def processItem(cell):
 	returnList = []
 	if cell.Type() == topologic.Cell.Type():
-		cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+		cells = []
 		_ = cell.AdjacentCells(cells)
-		returnList = list(cells)
-	return returnList
+	return cells
 
 class SvCellAdjacentCells(bpy.types.Node, SverchCustomTreeNode):
 	"""

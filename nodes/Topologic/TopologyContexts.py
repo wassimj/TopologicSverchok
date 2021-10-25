@@ -4,12 +4,11 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item):
-	contexts = cppyy.gbl.std.list[topologic.Context.Ptr]()
+	contexts = []
 	_ = item.Contexts(contexts)
-	return list(contexts)
+	return contexts
 
 def recur(input):
 	output = []

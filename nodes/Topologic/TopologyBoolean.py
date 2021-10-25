@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -93,22 +92,6 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def getValueAtKey(dict, key):
 	returnValue = None
 	try:
@@ -119,35 +102,35 @@ def getValueAtKey(dict, key):
 
 def relevantSelector(topology):
 	returnVertex = None
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		return topology
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		return topologic.EdgeUtility.PointAtParameter(topology, 0.5)
-	elif topology.GetType() == topologic.Face.Type():
+	elif topology.Type() == topologic.Face.Type():
 		return topologic.FaceUtility.InternalVertex(topology)
-	elif topology.GetType() == topologic.Cell.Type():
+	elif topology.Type() == topologic.Cell.Type():
 		return topologic.CellUtility.InternalVertex(topology)
 	else:
 		return topology.Centroid()
 
 def topologyContains(topology, vertex, tol):
 	contains = False
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		try:
 			contains = (topologic.VertexUtility.Distance(sourceVertex, vertex) <= tol)
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		try:
 			_ = topologic.EdgeUtility.ParameterAtPoint(topology, vertex)
 			contains = True
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Face.Type():
+	elif topology.Type() == topologic.Face.Type():
 		return topologic.FaceUtility.IsInside(topology, vertex, tol)
-	elif topology.GetType() == topologic.Cell.Type():
+	elif topology.Type() == topologic.Cell.Type():
 		return (topologic.CellUtility.Contains(topology, vertex, tol) == 0)
 	return False
 
@@ -218,7 +201,7 @@ def highestDimension(topology):
 		if len(vertices) > 0:
 			return topologic.Vertex.Type()
 	else:
-		return(topology.GetType())
+		return(topology.Type())
 
 def promote(item): #Fix Clusters with single entities
 	resultingTopologies = []
@@ -318,14 +301,10 @@ def processItem(item):
 			topologyC = topologyA.Imprint(topologyB, False)
 		else:
 			raise Exception("ERROR: (Topologic>Topology.Boolean) invalid boolean operation name: "+operation)
-		if topologyC:
-			topologyC = fixTopologyClass(topologyC)
-		else:
-			return None
 	except:
 		raise Exception("ERROR: (Topologic>Topology.Boolean) operation failed.")
 		topologyC = None
-	topologyC = promote(topologyC)
+	#topologyC = promote(topologyC)
 	if tranDict == True:
 		sourceVertices = []
 		sourceEdges = []

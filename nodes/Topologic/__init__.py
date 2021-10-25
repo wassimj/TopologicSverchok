@@ -23,7 +23,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary, Aperture
-import cppyy
 import time
 
 def flatten(element):

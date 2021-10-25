@@ -3,7 +3,10 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-import openstudio
+try:
+	import openstudio
+except:
+	raise Exception("Error: Could not import openstudio.")
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):

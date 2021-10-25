@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -95,7 +94,7 @@ def transposeList(l):
 def processItem(item):
 	graph = item[0]
 	vertex = item[1]
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = graph.AdjacentVertices(vertex, vertices)
 	return list(vertices)
 

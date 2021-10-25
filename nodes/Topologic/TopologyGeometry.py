@@ -8,8 +8,8 @@ import uuid
 from sverchok.utils.sv_mesh_utils import get_unique_faces
 
 import topologic
-from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, AttributeManager, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
-import cppyy
+from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
+
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -22,25 +22,8 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher[argument]
-
-def fixTopologyClass(topology):
-	topology.__class__ = classByType(topology.GetType())
-	return topology
-
 def getSubTopologies(topology, subTopologyClass):
-	pointer = subTopologyClass.Ptr
-	topologies = cppyy.gbl.std.list[pointer]()
+	topologies = []
 	if subTopologyClass == Vertex:
 		_ = topology.Vertices(topologies)
 	elif subTopologyClass == Edge:
@@ -55,18 +38,15 @@ def getSubTopologies(topology, subTopologyClass):
 		_ = topology.Cells(topologies)
 	elif subTopologyClass == CellComplex:
 		_ = topology.CellComplexes(topologies)
- 
-	for aTopology in topologies:
-		fixTopologyClass(aTopology)
 	return topologies
 
 def triangulate(faces):
 	triangles = []
 	for aFace in faces:
-		ib = cppyy.gbl.std.list[Wire.Ptr]()
+		ib = []
 		_ = aFace.InternalBoundaries(ib)
 		if len(ib) != 0:
-			faceTriangles = cppyy.gbl.std.list[Face.Ptr]()
+			faceTriangles = []
 			FaceUtility.Triangulate(aFace, 0.0, faceTriangles)
 			for aFaceTriangle in faceTriangles:
 				triangles.append(aFaceTriangle)
@@ -105,9 +85,9 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 			faces = []
 			if anInput == None:
 				continue
-			topVerts = cppyy.gbl.std.list[Vertex.Ptr]()
-			if (anInput.GetType() == 1): #input is a vertex, just add it and process it
-				topVerts.push_back(anInput)
+			topVerts = []
+			if (anInput.Type() == 1): #input is a vertex, just add it and process it
+				topVerts.append(anInput)
 			else:
 				_ = anInput.Vertices(topVerts)
 			for aVertex in topVerts:
@@ -115,10 +95,10 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 					vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
 				except:
 					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
-			topEdges = cppyy.gbl.std.list[Edge.Ptr]()
-			if (anInput.GetType() == 2): #Input is an Edge, just add it and process it
-				topEdges.push_back(anInput)
-			elif (anInput.GetType() > 2):
+			topEdges = []
+			if (anInput.Type() == 2): #Input is an Edge, just add it and process it
+				topEdges.append(anInput)
+			elif (anInput.Type() > 2):
 				_ = anInput.Edges(topEdges)
 			for anEdge in topEdges:
 				e = []
@@ -138,17 +118,17 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 				e.append(evIndex)
 				if ([e[0], e[1]] not in edges) and ([e[1], e[0]] not in edges):
 					edges.append(e)
-			topFaces = cppyy.gbl.std.list[Face.Ptr]()
-			if (anInput.GetType() == 8): # Input is a Face, just add it and process it
-				topFaces.push_back(anInput)
-			elif (anInput.GetType() > 8):
+			topFaces = []
+			if (anInput.Type() == 8): # Input is a Face, just add it and process it
+				topFaces.append(anInput)
+			elif (anInput.Type() > 8):
 				_ = anInput.Faces(topFaces)
 			for aFace in topFaces:
-				ib = cppyy.gbl.std.list[Wire.Ptr]()
+				ib = []
 				_ = aFace.InternalBoundaries(ib)
 				if(len(ib) > 0):
-					triFaces = cppyy.gbl.std.list[Face.Ptr]()
-					FaceUtility.Triangulate(aFace, 0.0, triFaces)
+					triFaces = []
+					_ = FaceUtility.Triangulate(aFace, 0.0, triFaces)
 					for aTriFace in triFaces:
 						wire = aTriFace.ExternalBoundary()
 						faceVertices = getSubTopologies(wire, Vertex)

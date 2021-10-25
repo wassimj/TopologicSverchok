@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 import math
 import itertools
@@ -163,9 +162,9 @@ def processItem(item):
 		raise Exception("Error: Wire.IsSimilar - Wire A is not closed.")
 	if (wireB.IsClosed() == False):
 		raise Exception("Error: Wire.IsSimilar - Wire B is not closed.")
-	edgesA = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edgesA = []
 	_ = wireA.Edges(edgesA)
-	edgesB = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edgesB = []
 	_ = wireB.Edges(edgesB)
 	if len(edgesA) != len(edgesB):
 		return False

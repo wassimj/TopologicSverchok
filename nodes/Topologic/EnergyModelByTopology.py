@@ -4,9 +4,11 @@ from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, 
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-import openstudio
 import topologic
-import cppyy
+try:
+	import openstudio
+except:
+	raise Exception("Error: Could not import openstudio.")
 import math
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -106,57 +108,50 @@ def processItem(item):
 	return vert
 
 def getSubTopologies(topology, subTopologyClass):
-    pointer = subTopologyClass.Ptr
-    values = cppyy.gbl.std.list[pointer]()
+    subTopologies = []
     if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(values)
+        _ = topology.Vertices(subTopologies)
     elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(values)
+        _ = topology.Edges(subTopologies)
     elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(values)
+        _ = topology.Wires(subTopologies)
     elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(values)
+        _ = topology.Faces(subTopologies)
     elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(values)
+        _ = topology.Shells(subTopologies)
     elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(values)
+        _ = topology.Cells(subTopologies)
     elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(values)
-    return list(values)
+        _ = topology.CellComplexes(subTopologies)
+    return subTopologies
 
-def valueAtKey(dict, key):
-    fv = None
-    try:
-        print("Trying to get value at key")
-        v = dict.ValueAtKey(key).Value()
-    except:
-        print("Error: Could not retrieve a Value at the specified key ("+key+")")
-        return None
-    if (isinstance(v, int) or (isinstance(v, float))):
-        fv = v
-    elif (isinstance(v, cppyy.gbl.std.string)):
-        fv = v.c_str()
-        print("FV_C_STR: "+fv)
-    else:
-        resultList = []
-        for i in v:
-            if isinstance(i.Value(), cppyy.gbl.std.string):
-                resultList.append(i.Value().c_str())
-            else:
-                resultList.append(i.Value())
-        fv = resultList
-    print("FV: "+fv)
-    return fv
-
-def getKeys(dict):
-	stl_keys = dict.Keys()
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
 	returnList = []
-	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	for x in copyKeys:
-		k = x.c_str()
-		if k[-8:] != "__type__":
-			returnList.append(k)
+	for attr in listAttributes:
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
 	return returnList
+
+def valueAtKey(item, key):
+	try:
+		attr = item.ValueAtKey(key)
+	except:
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 def processItem(item):
 
@@ -174,12 +169,16 @@ def processItem(item):
     coolingTemp = item[11]
     heatingTemp = item[12]
 
-    osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath)).get()
-    openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
-    ddyModel = openstudio.openstudioenergyplus.loadAndTranslateIdf(openstudio.toPath(designDayFilePath)).get()
 
-    for ddy in ddyModel.getObjectsByType(openstudio.IddObjectType("OS:SizingPeriod:DesignDay")):
-        osModel.addObject(ddy.clone())
+    osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath))
+    if osEPWFile.is_initialized():
+        osEPWFile = osEPWFile.get()
+        openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
+    ddyModel = openstudio.openstudioenergyplus.loadAndTranslateIdf(openstudio.toPath(designDayFilePath))
+    if ddyModel.is_initialized():
+        ddyModel = ddyModel.get()
+        for ddy in ddyModel.getObjectsByType(openstudio.IddObjectType("OS:SizingPeriod:DesignDay")):
+            osModel.addObject(ddy.clone())
 
     osBuilding = osModel.getBuilding()
     osBuilding.setStandardsNumberOfStories(len(floorLevels) - 1)
@@ -239,7 +238,7 @@ def processItem(item):
                     osFacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                 osSurface = openstudio.model.Surface(osFacePoints, osModel)
                 faceNormal = topologic.FaceUtility.NormalAtParameters(buildingFace, 0.5, 0.5)
-                osFaceNormal = openstudio.Vector3d(faceNormal.X(), faceNormal.Y(), faceNormal.Z())
+                osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
                 osFaceNormal.normalize()
                 if osFaceNormal.dot(osSurface.outwardNormal()) < 1e-6:
                     osSurface.setVertices(list(reversed(osFacePoints)))
@@ -248,7 +247,7 @@ def processItem(item):
 
                 osSurface.setSpace(osSpace)
                 osSurface.setName(osSpace.name().get() + "_SURFACE_" + str(faceNumber))
-                faceCells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+                faceCells = []
                 _ = topologic.FaceUtility.AdjacentCells(buildingFace, buildingTopology, faceCells)
                 if len(faceCells) == 1:
                     if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
@@ -262,18 +261,15 @@ def processItem(item):
                             usedGlazingRatio = False
                             if faceDictionary:
                                 # Get the keys
-                                keys = getKeys(faceDictionary)
+                                keys = faceDictionary.Keys()
                                 if ('glazing ratio' in keys):
                                     faceGlazingRatio = valueAtKey(faceDictionary,'glazing ratio')
                                     if faceGlazingRatio and faceGlazingRatio >= 0:
                                         osSurface.setWindowToWallRatio(faceGlazingRatio)
                                         usedGlazingRatio = True
                             if not usedGlazingRatio: # Look for apertures and use as subsurfaces
-                                apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+                                apertures = []
                                 _ = buildingFace.Apertures(apertures)
-                                apertures = list(apertures)
-                                print("Apertures:")
-                                print(apertures)
                                 if len(apertures) > 0:
                                     for aperture in apertures:
                                         osSubSurfacePoints = []
@@ -282,13 +278,12 @@ def processItem(item):
                                             osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                                         osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
                                         apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
-                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal.X(), apertureFaceNormal.Y(), apertureFaceNormal.Z())
+                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal[0], apertureFaceNormal[1], apertureFaceNormal[2])
                                         osSubSurfaceNormal.normalize()
                                         if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
                                             osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
                                         osSubSurface.setSubSurfaceType("FixedWindow")
                                         osSubSurface.setSurface(osSurface)
-                                        print("***** Set Subsurface *****")
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
@@ -309,7 +304,7 @@ def processItem(item):
             facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
         aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
         faceNormal = topologic.FaceUtility.NormalAtParameters(contextFace, 0.5, 0.5)
-        osFaceNormal = openstudio.Vector3d(faceNormal.X(), faceNormal.Y(), faceNormal.Z())
+        osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
         osFaceNormal.normalize()
         if osFaceNormal.dot(aShadingSurface.outwardNormal()) < 0:
             aShadingSurface.setVertices(list(reversed(facePoints)))

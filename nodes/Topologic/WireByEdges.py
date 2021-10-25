@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,27 +16,10 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	wire = None
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 	for anEdge in item:
-		if anEdge.GetType() == 2:
+		if anEdge.Type() == 2:
 			if wire == None:
 				wire = anEdge
 			else:
@@ -45,12 +27,8 @@ def processItem(item):
 					wire = wire.Merge(anEdge)
 				except:
 					continue
-		# edges.push_back(anEdge)
-	# wire = topologic.Wire.ByEdges(edges)
-	if wire.GetType() != 4:
+	if wire.Type() != 4:
 		raise Exception("Error: Could not create Wire. Please check input")
-	else:
-		wire = fixTopologyClass(wire)
 	return wire
 
 def recur(input):
@@ -79,8 +57,8 @@ class SvWireByEdges(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Edges'].sv_get(deepcopy=False)
-		wires = recur(inputs)
+		edgeList = self.inputs['Edges'].sv_get(deepcopy=False)
+		wires = recur(edgeList)
 		self.outputs['Wire'].sv_set(flatten(wires))
 
 def register():

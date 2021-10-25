@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import math
 
 def classByType(argument):
@@ -25,14 +24,14 @@ def fixTopologyClass(topology):
   return topology
 
 def wireByVertices(vList):
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	for i in range(len(vList)-1):
-		edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
-	edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
+		edges.append(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
+	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = item.Vertices(vertices)
 	x = []
 	y = []
@@ -59,9 +58,7 @@ def processItem(item):
 	vt4 = topologic.Vertex.ByCoordinates(minX, maxY, maxZ)
 	baseWire = wireByVertices([vb1, vb2, vb3, vb4])
 	topWire = wireByVertices([vt1, vt2, vt3, vt4])
-	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	wires.push_back(baseWire)
-	wires.push_back(topWire)
+	wires = [baseWire, topWire]
 	return ([topologic.CellUtility.ByLoft(wires), vb1, vt3])
 
 

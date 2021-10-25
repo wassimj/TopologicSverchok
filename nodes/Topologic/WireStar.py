@@ -21,30 +21,13 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import math
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def wireByVertices(vList):
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	for i in range(len(vList)-1):
-		edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
-	edges.push_back(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
+		edges.append(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
+	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item, originLocation):
@@ -77,7 +60,7 @@ def processItem(item, originLocation):
 	if originLocation == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
-		baseWire = fixTopologyClass(topologic.TopologyUtility.Translate(baseWire, -xmin, -ymin, 0))
+		baseWire = topologic.TopologyUtility.Translate(baseWire, -xmin, -ymin, 0)
 
 	x1 = origin.X()
 	y1 = origin.Y()
@@ -94,8 +77,8 @@ def processItem(item, originLocation):
 		theta = 0
 	else:
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Y-Axis
-	baseWire = fixTopologyClass(topologic.TopologyUtility.Rotate(baseWire, origin, 0, 1, 0, theta))
-	baseWire = fixTopologyClass(topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi))
+	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 1, 0, theta)
+	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
 	return baseWire
 
 def matchLengths(list):

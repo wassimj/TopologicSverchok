@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -96,8 +96,8 @@ def processItem(item, tol):
 	edge = None
 	if topologic.Topology.IsSame(sv, ev):
 		return None
-	if topologic.VertexUtility.Distance(sv, ev) < tol:
-		return None
+	#if topologic.VertexUtility.Distance(sv, ev) < tol:
+		#return None
 	try:
 		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
 	except:

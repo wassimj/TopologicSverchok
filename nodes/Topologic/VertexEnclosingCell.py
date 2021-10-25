@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 def matchLengths(list):
@@ -23,7 +22,7 @@ def matchLengths(list):
 	return list
 
 def boundingBox(cell):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = cell.Vertices(vertices)
 	x = []
 	y = []
@@ -39,16 +38,17 @@ def processItem(input):
 	cells = input[1]
 	exclusive = input[2]
 	tolerance = input[3]
-	usedCells = input[4]
+	enclosingCells = []
 	for i in range(len(cells)):
-		if exclusive == True and usedCells[i] == 1:
-			continue
 		bbox = boundingBox(cells[i])
 		minX = bbox[0]
 		if ((vertex.X() < bbox[0]) or (vertex.Y() < bbox[1]) or (vertex.Z() < bbox[2]) or (vertex.X() > bbox[3]) or (vertex.Y() > bbox[4]) or (vertex.Z() > bbox[5])) == False:
 			if topologic.CellUtility.Contains(cells[i], vertex, tolerance) == 0:
-				return(cells[i], i)
-	return [None, None]
+				if exclusive:
+					return([cells[i]])
+				else:
+					enclosingCells.append(cells[i])
+	return enclosingCells
 
 class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -81,21 +81,10 @@ class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
 		if isinstance(cellsList[0], list) == False:
 			cellsList = [cellsList]
 		outputs = []
-		usedCellsList = []
-		for cells in cellsList:
-			usedCells = []
-			for cell in cells:
-				usedCells.append(0)
-			usedCellsList.append(usedCells)
-		matchLengths([vertexList, cellsList, exclusiveList, toleranceList, usedCellsList])
-		inputs = zip(vertexList, cellsList, exclusiveList, toleranceList, usedCellsList)
+		matchLengths([vertexList, cellsList, exclusiveList, toleranceList])
+		inputs = zip(vertexList, cellsList, exclusiveList, toleranceList)
 		for anInput in inputs:
-			result = processItem(anInput)
-			enclosingCell = result[0]
-			if enclosingCell != None:
-				index = result[1]
-				anInput[4][index] = 1
-			outputs.append(enclosingCell)
+			outputs.append(processItem(anInput))
 		end = time.time()
 		print("Enclosing Cell Operation consumed "+str(round(end - start,4))+" seconds")
 		self.outputs['Cell'].sv_set(outputs)

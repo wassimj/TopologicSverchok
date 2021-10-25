@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
 def flatten(element):
 	returnList = []
 	if isinstance(element, list) == True:
@@ -29,30 +29,10 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	v = item[0]
 	t = item[1]
-	dist = None
-	try:
-		dist = topologic.VertexUtility.Distance(v, t)
-	except:
-		dist = None
+	dist = topologic.VertexUtility.Distance(v, t)
 	return dist
 
 class SvVertexDistance(bpy.types.Node, SverchCustomTreeNode):

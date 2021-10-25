@@ -5,28 +5,9 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
 
 def processItem(item):
-	topology = None
-	topology = fixTopologyClass(topologic.Topology.DeepCopy(Topology.ByString(item)))
-	return topology
+	return topologic.Topology.DeepCopy(Topology.ByString(item))
 		
 class SvTopologyByString(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -46,8 +27,14 @@ class SvTopologyByString(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Topology'].sv_set([])
 			return
 		inputs = self.inputs['String'].sv_get(deepcopy=False)
+		if isinstance(inputs[0], list):
+			newInputs = []
+			for anInput in inputs:
+				newInputs.append(anInput[0])
+		else:
+			newInputs = inputs
 		outputs = []
-		for anInput in inputs:
+		for anInput in newInputs:
 			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
 

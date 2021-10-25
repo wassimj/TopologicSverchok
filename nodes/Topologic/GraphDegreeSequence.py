@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -19,9 +18,9 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	sequence = cppyy.gbl.std.list[int]()
+	sequence = []
 	_ = item.DegreeSequence(sequence)
-	return list(sequence)
+	return sequence
 
 class SvGraphDegreeSequence(bpy.types.Node, SverchCustomTreeNode):
 	"""

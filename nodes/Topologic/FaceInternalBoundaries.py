@@ -4,10 +4,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item):
-	wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	wires = []
 	_ = item.InternalBoundaries(wires)
 	return list(wires)
 
@@ -37,9 +36,9 @@ class SvFaceInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Cell'].sv_set([])
+			self.outputs['Wires'].sv_set([])
 			return
-		inputs = self.inputs['Cell'].sv_get(deepcopy=False)
+		inputs = self.inputs['Face'].sv_get(deepcopy=True)
 		outputs = recur(inputs)
 		if (len(outputs) == 1):
 			outputs = outputs[0]

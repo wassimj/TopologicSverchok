@@ -5,25 +5,11 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
-
-def classByType(argument):
-  switcher = {
-    1: Vertex,
-    2: Edge,
-    4: Wire,
-    8: Face,
-    16: Shell,
-    32: Cell,
-    64: CellComplex,
-    128: Cluster }
-  return switcher.get(argument, Topology)
-
 
 def processItem(item):
-	apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
+	apertures = []
 	_ = item.Apertures(apertures)
-	return list(apertures)
+	return apertures
 
 def recur(input):
 	output = []

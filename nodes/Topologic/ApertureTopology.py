@@ -15,12 +15,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	topology = None
-	try:
-		topology = topologic.Aperture.Topology()
-	except:
-		topology = None
-	return topology
+	return topologic.Aperture.Topology(item)
 
 
 class SvApertureTopology(bpy.types.Node, SverchCustomTreeNode):

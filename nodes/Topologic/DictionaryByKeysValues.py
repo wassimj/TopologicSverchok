@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+from topologic import Dictionary, IntAttribute, DoubleAttribute, StringAttribute, ListAttribute
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -92,41 +92,45 @@ def transposeList(l):
 
 def processKeysValues(keys, values):
 	if len(keys) != len(values):
-		raise Exception("Keys and Values do not have the same length")
-	stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-	stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
+	stl_keys = []
+	stl_values = []
 	for i in range(len(keys)):
-		stl_keys.push_back(keys[i])
+		if isinstance(keys[i], str):
+			stl_keys.append(keys[i])
+		else:
+			stl_keys.append(str(keys[i]))
 		if isinstance(values[i], list) and len(values[i]) == 1:
 			value = values[i][0]
 		else:
 			value = values[i]
 		if isinstance(value, bool):
 			if value == False:
-				stl_values.push_back(topologic.IntAttribute(0))
+				stl_values.append(topologic.IntAttribute(0))
 			else:
-				stl_values.push_back(topologic.IntAttribute(1))
+				stl_values.append(topologic.IntAttribute(1))
 		elif isinstance(value, int):
-			stl_values.push_back(topologic.IntAttribute(value))
+			stl_values.append(topologic.IntAttribute(value))
 		elif isinstance(value, float):
-			stl_values.push_back(topologic.DoubleAttribute(value))
+			stl_values.append(topologic.DoubleAttribute(value))
 		elif isinstance(value, str):
-			stl_values.push_back(topologic.StringAttribute(value))
+			stl_values.append(topologic.StringAttribute(value))
 		elif isinstance(value, list):
-			l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+			l = []
 			for v in value:
 				if isinstance(v, bool):
-					l.push_back(topologic.IntAttribute(v))
+					l.append(topologic.IntAttribute(v))
 				elif isinstance(v, int):
-					l.push_back(topologic.IntAttribute(v))
+					l.append(topologic.IntAttribute(v))
 				elif isinstance(v, float):
-					l.push_back(topologic.DoubleAttribute(v))
+					l.append(topologic.DoubleAttribute(v))
 				elif isinstance(v, str):
-					l.push_back(topologic.StringAttribute(v))
-			stl_values.push_back(topologic.ListAttribute(l))
+					l.append(topologic.StringAttribute(v))
+			stl_values.append(topologic.ListAttribute(l))
 		else:
 			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
-	return topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	return myDict
 
 def processItem(item):
 	keys = item[0]

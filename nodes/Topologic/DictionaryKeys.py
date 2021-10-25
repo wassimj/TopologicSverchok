@@ -3,20 +3,11 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
-import cppyy
-
+#from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
+from topologic import Dictionary
 
 def processItem(item):
-	stl_keys = item.Keys()
-	returnList = []
-	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	for x in copyKeys:
-		k = x.c_str()
-		if k[-8:] != "__type__":
-			returnList.append(k)
-	return returnList
-	#return [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+	return item.Keys()
 
 def recur(input):
 	output = []

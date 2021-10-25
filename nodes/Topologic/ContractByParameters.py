@@ -4,11 +4,11 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
 import topologic
-
 import time
-#import sys
-#sys.path.append(path)
-from web3 import Web3, HTTPProvider
+try:
+	from web3 import Web3, HTTPProvider
+except:
+	raise Exception("Error: Could not import web3.")
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):

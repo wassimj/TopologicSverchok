@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -95,9 +94,9 @@ def transposeList(l):
 def processItem(item):
 	vertex = item[0]
 	parent = item[1]
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	_ = topologic.VertexUtility.AdjacentEdges(vertex, parent, edges)
-	return list(edges)
+	return edges
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 

@@ -4,10 +4,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item):
-	return str(item.GetTypeAsString())
+	return [item.Type(), item.GetTypeAsString()]
 
 def recur(input):
 	output = []
@@ -20,16 +19,17 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyTypeAsString(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyType(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the BREP string of the input Topology    
+	Tooltip: Outputs the type of the input Topology as an integer ID and a string Name
 	"""
-	bl_idname = 'SvTopologyTypeAsString'
-	bl_label = 'Topology.TypeAsString'
+	bl_idname = 'SvTopologyType'
+	bl_label = 'Topology.Type'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.outputs.new('SvStringsSocket', 'Type String')
+		self.outputs.new('SvStringsSocket', 'ID')
+		self.outputs.new('SvStringsSocket', 'Name')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -38,13 +38,17 @@ class SvTopologyTypeAsString(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Cells'].sv_set([])
 			return
 		inputs = self.inputs[0].sv_get(deepcopy=False)
-		outputs = []
+		ids = []
+		names = []
 		for anInput in inputs:
-			outputs.append(recur(anInput))
-		self.outputs['Type String'].sv_set(outputs)
+			output = recur(anInput))
+			ids.append(output[0])
+			names.append(output[1])
+		self.outputs['ID'].sv_set(ids)
+		self.outputs['Name'].sv_set(names)
 
 def register():
-	bpy.utils.register_class(SvTopologyTypeAsString)
+	bpy.utils.register_class(SvTopologyType)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyTypeAsString)
+	bpy.utils.unregister_class(SvTopologyType)

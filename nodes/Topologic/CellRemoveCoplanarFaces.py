@@ -4,10 +4,13 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import numpy
-from numpy.linalg import norm
-from numpy import dot
+try:
+	import numpy
+	from numpy.linalg import norm
+	from numpy import dot
+except:
+	raise Exception("Error: Could not import numpy.")
 import math
 import time
 

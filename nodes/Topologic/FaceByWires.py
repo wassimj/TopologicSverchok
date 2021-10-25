@@ -4,15 +4,9 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(externalBoundary, internalBoundaries):
-	stl_ib = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-	for ib in iinternalBoundaries:
-		if ib:
-			stl_ib.push_back(ib)
-	face = topologic.Face.ByExternalInternalBoundaries(externalBoundary, stl_ib)
-	return face
+	return topologic.Face.ByExternalInternalBoundaries(externalBoundary, internalBoundaries)
 
 def recur(input):
 	output = []

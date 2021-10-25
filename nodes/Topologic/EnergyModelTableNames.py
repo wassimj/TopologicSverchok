@@ -3,7 +3,10 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-import openstudio
+try:
+	import openstudio
+except:
+	raise Exception("Error: Could not import openstudio.")
 from datetime import datetime
 import os
 import subprocess

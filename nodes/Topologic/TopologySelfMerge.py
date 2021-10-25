@@ -4,72 +4,58 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 def processItem(item):
 	resultingTopologies = []
-	topCC = cppyy.gbl.std.list[topologic.CellComplex.Ptr]()
+	topCC = []
 	_ = item.CellComplexes(topCC)
-	topCC = list(topCC)
-	topCells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+	topCells = []
 	_ = item.Cells(topCells)
-	topCells = list(topCells)
-	topShells = cppyy.gbl.std.list[topologic.Shell.Ptr]()
+	topShells = []
 	_ = item.Shells(topShells)
-	topShells = list(topShells)
-	topFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	topFaces = []
 	_ = item.Faces(topFaces)
-	topFaces = list(topFaces)
-	topWires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+	topWires = []
 	_ = item.Wires(topWires)
-	topWires = list(topWires)
-	topEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	topEdges = []
 	_ = item.Edges(topEdges)
-	topEdges = list(topEdges)
-	topVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	topVertices = []
 	_ = item.Vertices(topVertices)
-	topVertices = list(topVertices)
 	if len(topCC) == 1:
 		cc = topCC[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = cc.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cc)
 	if len(topCC) == 0 and len(topCells) == 1:
 		cell = topCells[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = cell.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 1:
 		shell = topShells[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = shell.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(shell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 1:
 		face = topFaces[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = face.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(face)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 1:
 		wire = topWires[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = wire.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(wire)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
 		edge = topEdges[0]
-		ccVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		ccVertices = []
 		_ = wire.Vertices(ccVertices)
-		ccVertices = list(ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:

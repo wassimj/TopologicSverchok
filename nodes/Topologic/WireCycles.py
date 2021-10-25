@@ -21,7 +21,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import math
 import time
 
@@ -109,22 +108,6 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 #Based on open source code from: https://stackoverflow.com/questions/12367801/finding-all-cycles-in-undirected-graphs
 
 def vIndex(v, vList, tolerance):
@@ -192,11 +175,11 @@ def processItem(item):
 	maxVertices = item[1]
 	tolerance = item[2]
 
-	tEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	tEdges = []
 	_ = wire.Edges(tEdges)
-	tVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	tVertices = []
 	_ = wire.Vertices(tVertices)
-	tVertices = list(tVertices)
+	tVertices = tVertices
 
 	graph = []
 	for anEdge in tEdges:
@@ -215,14 +198,14 @@ def processItem(item):
 	resultWires = []
 	for i in range(len(result)):
 		c = result[i]
-		resultEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		resultEdges = []
 		for j in range(len(c)-1):
 			v1 = c[j]
 			v2 = c[j+1]
 			e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
-			resultEdges.push_back(e)
+			resultEdges.append(e)
 		e = topologic.Edge.ByStartVertexEndVertex(c[len(c)-1], c[0])
-		resultEdges.push_back(e)
+		resultEdges.append(e)
 		resultWire = topologic.Wire.ByEdges(resultEdges)
 		resultWires.append(resultWire)
 	return resultWires

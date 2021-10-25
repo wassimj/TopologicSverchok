@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -93,9 +92,9 @@ def transposeList(l):
 	return returnList
 
 def nearestVertex(graph, vertex):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = graph.Vertices(vertices)
-	nearestVertex = vertices.front()
+	nearestVertex = vertices[0]
 	nearestDistance = topologic.VertexUtility.Distance(vertex, nearestVertex)
 	for aGraphVertex in vertices:
 		newDistance = topologic.VertexUtility.Distance(vertex, aGraphVertex)
@@ -110,11 +109,10 @@ def processItem(item):
 	tolerance = item[2]
 	if isinstance(vertices, list) == False:
 		vertices = [vertices]
-	stlVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	gVertices = []
 	for aVertex in vertices:
-		ngv = nearestVertex(graph, aVertex)
-		stlVertices.push_back(ngv)
-	_ = graph.RemoveVertices(stlVertices)
+		gVertices.append(nearestVertex(graph, aVertex))
+	_ = graph.RemoveVertices(gVertices)
 	return graph
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

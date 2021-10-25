@@ -33,16 +33,10 @@ from sys import platform
 import bpy
 blenderVersion =  "Blender"+str(bpy.app.version[0])+str(bpy.app.version[1])
  
-win_prefix = os.path.dirname(os.path.realpath(__file__))
-
-if platform != 'win32':
-	sys.path.append(win_prefix+'/site-packages')
-	topologicEggName = '/'+[name for name in os.listdir(win_prefix+'/topologicPy/site-packages') if name.startswith('topologic')][0]
-	sys.path.append(win_prefix+'/topologicPy/site-packages'+topologicEggName)
-else:
-	sys.path.append(win_prefix+'\\site-packages')
-	topologicEggName = '\\'+[name for name in os.listdir(win_prefix+'\\topologicPy\\site-packages') if name.startswith('topologic')][0]
-	sys.path.append(win_prefix+'\\topologicPy\\site-packages'+topologicEggName)
+topologicPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "site-packages", "topologic")
+sys.path.append(topologicPath)
+topologicPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "site-packages")
+sys.path.append(topologicPath)
 
 import importlib
 import nodeitems_utils
@@ -59,7 +53,7 @@ from sverchok.utils.logging import info, debug
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
+
 
 #from topologicsverchok import icons
 # make sverchok the root module name, (if sverchok dir not named exactly "sverchok")
@@ -68,7 +62,7 @@ if __name__ != "topologicsverchok":
     sys.modules["topologicsverchok"] = sys.modules[__name__]
 
 def nodes_index():
-	return [("Topologic", [
+	coreNodes = [
                 ("Topologic.Version", "SvTopologicVersion"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
@@ -96,7 +90,7 @@ def nodes_index():
                 ("Topologic.WireIsSimilar", "SvWireIsSimilar"),
                 ("Topologic.WireRectangle", "SvWireRectangle"),
                 ("Topologic.WireStar", "SvWireStar"),
-                ("Topologic.FaceAddAperture", "SvFaceAddAperture"),
+                ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
                 ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
                 ("Topologic.FaceAdjacentCells", "SvFaceAdjacentCells"),
                 ("Topologic.FaceAdjacentShells", "SvFaceAdjacentShells"),
@@ -120,6 +114,7 @@ def nodes_index():
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
                 ("Topologic.CellAdjacentCells", "SvCellAdjacentCells"),
+                ("Topologic.CellCone", "SvCellCone"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
                 ("Topologic.CellByLoft", "SvCellByLoft"),
@@ -151,8 +146,6 @@ def nodes_index():
                 ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
-                ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
-                ("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                 ("Topologic.TopologyByOCCTShape", "SvTopologyByOCCTShape"),
                 ("Topologic.TopologyByString", "SvTopologyByString"),
                 ("Topologic.TopologyCenterOfMass", "SvTopologyCenterOfMass"),
@@ -167,7 +160,6 @@ def nodes_index():
                 ("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
                 ("Topologic.TopologyExplode", "SvTopologyExplode"),
                 ("Topologic.TopologyExportToBRep", "SvTopologyExportToBRep"),
-                ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS"),
                 ("Topologic.TopologyFilter", "SvTopologyFilter"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
                 ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
@@ -188,7 +180,7 @@ def nodes_index():
                 ("Topologic.TopologyTransferDictionaries", "SvTopologyTransferDictionaries"),
                 ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
                 ("Topologic.TopologyTriangulate", "SvTopologyTriangulate"),
-                ("Topologic.TopologyTypeAsString", "SvTopologyTypeAsString"),
+                ("Topologic.TopologyType", "SvTopologyType"),
                 ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
                 ("Topologic.ContractByParameters", "SvContractByParameters"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
@@ -227,8 +219,12 @@ def nodes_index():
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
-                ("Topologic.ColorByValueInRange", "SvColorByValueInRange"),
-                ("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
+                ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
+
+	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
+	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
+                 ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
+	openstudioNodes = [("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
                 ("Topologic.EnergyModelByTopology", "SvEnergyModelByTopology"),
                 ("Topologic.EnergyModelColumnNames", "SvEnergyModelColumnNames"),
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
@@ -243,9 +239,25 @@ def nodes_index():
                 ("Topologic.EnergyModelSqlFile", "SvEnergyModelSqlFile"),
                 ("Topologic.EnergyModelTableNames", "SvEnergyModelTableNames"),
                 ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies"),
-                ("Topologic.EnergyModelUnits", "SvEnergyModelUnits")
-                ]
-                )]
+                ("Topologic.EnergyModelUnits", "SvEnergyModelUnits")]
+
+	try:
+		import ifcopenshell
+		coreNodes = coreNodes+ifcNodes
+	except:
+		print("Topologic - Warning: Could not import ifcopenshell so some related nodes are not available.")
+	try:
+		import ipfshttpclient
+		coreNodes = coreNodes+ipfsNodes
+	except:
+		print("Topologic - Warning: Could not import ipfshttpclient so some related nodes are not available.")
+	try:
+		import openstudio
+		coreNodes = coreNodes+openstudioNodes
+	except:
+		print("Topologic - Warning: Could not import openstudio so some related nodes are not available.")
+
+	return [("Topologic", coreNodes)]
 
 def make_node_list():
     modules = []
@@ -343,6 +355,8 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvEdgeAdjacentEdges'],
+            ['SvEdgeAdjacentFaces'],
+            ['SvEdgeAdjacentWires'],
             ['SvEdgeByStartVertexEndVertex'],
             ['SvEdgeByVertices'],
             ['SvEdgeEndVertex'],
@@ -382,7 +396,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvFaceAddAperture'],
+            ['SvFaceAddFaceAsAperture'],
             ['SvFaceAddInternalBoundary'],
             ['SvFaceAdjacentCells'],
             ['SvFaceAdjacentShells'],
@@ -427,6 +441,7 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvCellAdjacentCells'],
             ['SvCellByFaces'],
+            ['SvCellCone'],
             ['SvCellCylinder'],
             ['SvCellByLoft'],
             ['SvCellByShell'],
@@ -609,9 +624,8 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyTransferDictionaries'],
             ['SvTopologyTranslate'],
             ['SvTopologyTriangulate'],
-            ['SvTopologyTypeAsString'],
+            ['SvTopologyType'],
             ['SvTopologyTypeID'],
-            ['SvContractByParameters'],
         ])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
@@ -653,6 +667,21 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
         ])
 
 make_class('TPSubcategoryEnergyModel', 'Topologic @ EnergyModel')
+
+class NODEVIEW_MT_AddTPSubcategoryBlockchain(bpy.types.Menu):
+    bl_label = "TPSubcategoryBlockchain"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryBlockchain'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvContractByParameters'],
+            ['SvTopologyByImportedIFC'],
+            ['SvTopologyByImportedIPFS'],
+            ['SvTopologyExportToIPFS'],
+        ])
+
+make_class('TPSubcategoryBlockchain', 'Topologic @ Blockchain')
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
     bl_label = 'Topologic'
@@ -674,6 +703,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
 			['@ Dictionary'],
             ['@ Graph'],
             ['@ EnergyModel'],
+            ['@ Blockchain'],
             ['@ About'],
         ])
 
@@ -704,6 +734,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
@@ -738,6 +769,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()
     #icons.unregister()

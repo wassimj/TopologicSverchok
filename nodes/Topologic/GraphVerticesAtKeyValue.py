@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -93,55 +92,50 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
 
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
+def valueAtKey(item, key):
+	try:
+		attr = item.ValueAtKey(key)
+	except:
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 def processItem(item):
 	vertex = item[0]
 	key = item[1]
 	value = item[2]
-	fv = None
 	if isinstance(value, list):
 		value.sort()
 	try:
 		d = vertex.GetDictionary()
-		v = d.ValueAtKey(key).Value()
+		v = valueAtKey(d, key)
+		if isinstance(v, list):
+			v.sort()
 	except:
 		print("Failed to find the Key and Value")
 		return None
-	if (isinstance(v, int) or (isinstance(v, float))):
-		fv = v
-	elif (isinstance(v, cppyy.gbl.std.string)):
-		fv = v.c_str()
-	else:
-		resultList = []
-		for i in v:
-			if isinstance(i.Value(), cppyy.gbl.std.string):
-				resultList.append(i.Value().c_str())
-			else:
-				resultList.append(i.Value())
-		fv = resultList.sort()
-
-	print("Value is: "+str(fv))
-	print("Comparing to: "+str(value))
-	if str(fv) == str(value):
-		print("Success!!")
+	if str(v) == str(value):
 		return vertex
-	else:
-		print("Failure!!")
 	return None
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

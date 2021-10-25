@@ -4,45 +4,28 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 
 def processItem(item, topologyType):
 	subtopologies = []
 	try:
 		if topologyType == "Vertex":
-			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-			_ = item.Vertices(vertices)
-			subtopologies = list(vertices)
+			_ = item.Vertices(subtopologies)
 		elif topologyType == "Edge":
-			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-			_ = item.Edges(edges)
-			subtopologies = list(edges)
+			_ = item.Edges(subtopologies)
 		elif topologyType == "Wire":
-			wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-			_ = item.Wires(wires)
-			subtopologies = list(wires)
+			_ = item.Wires(subtopologies)
 		elif topologyType == "Face":
-			faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-			_ = item.Faces(faces)
-			subtopologies = list(faces)
+			_ = item.Faces(subtopologies)
 		elif topologyType == "Shell":
-			shells = cppyy.gbl.std.list[topologic.Shell.Ptr]()
-			_ = item.Shells(shells)
-			subtopologies = list(shells)
+			_ = item.Shells(subtopologies)
 		elif topologyType == "Cell":
-			cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
-			_ = item.Cells(cells)
-			subtopologies = list(cells)
+			_ = item.Cells(subtopologies)
 		elif topologyType == "CellComplex":
-			cellcomplexes = cppyy.gbl.std.list[topologic.CellComplex.Ptr]()
-			_ = item.CellComplexes(cellcomplexes)
-			subtopologies = list(cellcomplexes)
+			_ = item.CellComplexes(subtopologies)
 		elif topologyType == "Aperture":
-			apertures = cppyy.gbl.std.list[topologic.Aperture.Ptr]()
-			_ = item.Apertures(apertures)
-			subtopologies = list(apertures)
+			_ = item.Apertures(subtopologies)
 	except:
-		subtopologies = []
+		raise Error("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies")
 	return subtopologies
 
 def recur(input, topologyType):

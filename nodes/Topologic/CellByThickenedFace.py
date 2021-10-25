@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,22 +16,6 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	face = item[0]
 	thickness = abs(item[1])
@@ -42,32 +25,23 @@ def processItem(item):
 
 	if reverse == True and bothSides == False:
 		thickness = -thickness
-	print(face)
 	faceNormal = topologic.FaceUtility.NormalAtParameters(face, 0.5, 0.5)
 	if bothSides:
-		bottomFace = fixTopologyClass(topologic.TopologyUtility.Translate(face, -faceNormal.X()*0.5*thickness, -faceNormal.Y()*0.5*thickness, -faceNormal.Z()*0.5*thickness))
-		topFace = fixTopologyClass(topologic.TopologyUtility.Translate(face, faceNormal.X()*0.5*thickness, faceNormal.Y()*0.5*thickness, faceNormal.Z()*0.5*thickness))
+		bottomFace = topologic.TopologyUtility.Translate(face, -faceNormal[0]*0.5*thickness, -faceNormal[1]*0.5*thickness, -faceNormal[2]*0.5*thickness)
+		topFace = topologic.TopologyUtility.Translate(face, faceNormal[0]*0.5*thickness, faceNormal[1]*0.5*thickness, faceNormal[2]*0.5*thickness)
 	else:
 		bottomFace = face
-		topFace = fixTopologyClass(topologic.TopologyUtility.Translate(face, faceNormal.X()*thickness, faceNormal.Y()*thickness, faceNormal.Z()*thickness))
+		topFace = fixTopologyClass(topologic.TopologyUtility.Translate(face, faceNormal[0]*thickness, faceNormal[1]*thickness, faceNormal[2]*thickness))
 
-	cellFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-	cellFaces.push_back(bottomFace)
-	cellFaces.push_back(topFace)
-	bottomEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	cellFaces = [bottomFace, topFace]
+	bottomEdges = []
 	_ = bottomFace.Edges(bottomEdges)
 	for bottomEdge in bottomEdges:
-		topEdge = fixTopologyClass(topologic.TopologyUtility.Translate(bottomEdge, faceNormal.X()*thickness, faceNormal.Y()*thickness, faceNormal.Z()*thickness))
+		topEdge = topologic.TopologyUtility.Translate(bottomEdge, faceNormal[0]*thickness, faceNormal[1]*thickness, faceNormal[2]*thickness)
 		sideEdge1 = topologic.Edge.ByStartVertexEndVertex(bottomEdge.StartVertex(), topEdge.StartVertex())
 		sideEdge2 = topologic.Edge.ByStartVertexEndVertex(bottomEdge.EndVertex(), topEdge.EndVertex())
-		stlEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-		stlEdges.push_back(bottomEdge)
-		stlEdges.push_back(sideEdge1)
-		stlEdges.push_back(topEdge)
-		stlEdges.push_back(sideEdge2)
-		cellWire = topologic.Wire.ByEdges(stlEdges)
-		internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-		cellFaces.push_back(topologic.Face.ByExternalInternalBoundaries(cellWire, internalBoundaries))
+		cellWire = topologic.Wire.ByEdges([bottomEdge, sideEdge1, topEdge, sideEdge2])
+		cellFaces.append(topologic.Face.ByExternalBoundary(cellWire))
 	return topologic.Cell.ByFaces(cellFaces, tolerance)
 
 def matchLengths(list):

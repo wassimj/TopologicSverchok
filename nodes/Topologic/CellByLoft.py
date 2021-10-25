@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,36 +16,15 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	finalCell = None
 	for i in range(len(item)-1):
-		wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
-		w1 = item[i]
-		w2 = item[i+1]
-		wires.push_back(w1)
-		wires.push_back(w2)
-		cell = topologic.CellUtility.ByLoft(wires)
+		cell = topologic.CellUtility.ByLoft([item[i],item[i+1]])
 		if finalCell == None:
 			finalCell = cell
 		else:
 			finalCell = finalCell.Union(cell, False)
-	return fixTopologyClass(finalCell)
+	return finalCell
 
 class SvCellByLoft(bpy.types.Node, SverchCustomTreeNode):
 	"""

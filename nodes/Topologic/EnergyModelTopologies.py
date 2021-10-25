@@ -5,8 +5,10 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
-import openstudio
+try:
+	import openstudio
+except:
+	raise Exception("Error: Could not import openstudio.")
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -19,44 +21,44 @@ def flatten(element):
 	return returnList
 
 def surfaceToFace(surface):
-    surfaceEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-    surfaceIndices = cppyy.gbl.std.list[int]()
+    surfaceEdges = []
     surfaceVertices = surface.vertices()
     for i in range(len(surfaceVertices)-1):
         sv = topologic.Vertex.ByCoordinates(surfaceVertices[i].x(), surfaceVertices[i].y(), surfaceVertices[i].z())
         ev = topologic.Vertex.ByCoordinates(surfaceVertices[i+1].x(), surfaceVertices[i+1].y(), surfaceVertices[i+1].z())
         edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
-        surfaceEdges.push_back(edge)
+        surfaceEdges.append(edge)
     sv = topologic.Vertex.ByCoordinates(surfaceVertices[len(surfaceVertices)-1].x(), surfaceVertices[len(surfaceVertices)-1].y(), surfaceVertices[len(surfaceVertices)-1].z())
     ev = topologic.Vertex.ByCoordinates(surfaceVertices[0].x(), surfaceVertices[0].y(), surfaceVertices[0].z())
     edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
-    surfaceEdges.push_back(edge)
+    surfaceEdges.append(edge)
     surfaceWire = topologic.Wire.ByEdges(surfaceEdges)
-    internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+    internalBoundaries = []
     surfaceFace = topologic.Face.ByExternalInternalBoundaries(surfaceWire, internalBoundaries)
     return surfaceFace
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
+def addApertures(face, apertures):
+	usedFaces = []
+	for aperture in apertures:
+		cen = aperture.CenterOfMass()
+		try:
+			params = face.ParametersAtVertex(cen)
+			u = params[0]
+			v = params[1]
+			w = 0.5
+		except:
+			u = 0.5
+			v = 0.5
+			w = 0.5
+		context = topologic.Context.ByTopologyParameters(face, u, v, w)
+		_ = topologic.Aperture.ByTopologyContext(aperture, context)
+	return face
 
 def processItem(item):
     spaces = item.getSpaces()
     vertexIndex = 0
     cells = []
-    apertures = cppyy.gbl.std.list[topologic.Face.Ptr]()
+    apertures = []
     shadingFaces = []
     shadingSurfaces = item.getShadingSurfaces()
     for aShadingSurface in shadingSurfaces:
@@ -74,50 +76,50 @@ def processItem(item):
         rotation31 = osMatrix[2, 0]
         rotation32 = osMatrix[2, 1]
         rotation33 = osMatrix[2, 2]
-        spaceFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+        spaceFaces = []
         surfaces = aSpace.surfaces()
         for aSurface in surfaces:
             aFace = surfaceToFace(aSurface)
             aFace = topologic.TopologyUtility.Transform(aFace, osTranslation.x(), osTranslation.y(), osTranslation.z(), rotation11, rotation12, rotation13, rotation21, rotation22, rotation23, rotation31, rotation32, rotation33)
-            aFace.__class__ = topologic.Face
+            #aFace.__class__ = topologic.Face
             subSurfaces = aSurface.subSurfaces()
             for aSubSurface in subSurfaces:
                 aperture = surfaceToFace(aSubSurface)
                 aperture = topologic.TopologyUtility.Transform(aperture, osTranslation.x(), osTranslation.y(), osTranslation.z(), rotation11, rotation12, rotation13, rotation21, rotation22, rotation23, rotation31, rotation32, rotation33)
-                aperture.__class__ = topologic.Face
-                apertures.push_back(aperture)
-            aFace.AddApertures(apertures)
-            spaceFaces.push_back(aFace)
+                # aperture.__class__ = topologic.Face
+                apertures.append(aperture)
+            addApertures(aFace, apertures)
+            spaceFaces.append(aFace)
         spaceCell = topologic.Cell.ByFaces(spaceFaces)
         # Set Dictionary for Cell
-        stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-        stl_keys.push_back("id")
-        stl_keys.push_back("name")
-        stl_keys.push_back("type")
-        stl_keys.push_back("color")
-        stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+        stl_keys = []
+        stl_keys.append("id")
+        stl_keys.append("name")
+        stl_keys.append("type")
+        stl_keys.append("color")
+        stl_values = []
         spaceID = str(aSpace.handle()).replace('{','').replace('}','')
-        stl_values.push_back(topologic.StringAttribute(spaceID))
-        stl_values.push_back(topologic.StringAttribute(aSpace.name().get()))
+        stl_values.append(topologic.StringAttribute(spaceID))
+        stl_values.append(topologic.StringAttribute(aSpace.name().get()))
         spaceTypeName = "Unknown"
-        try:
-            spaceTypeName = aSpace.spaceType().get().name().get()
-        except:
-            spaceTypeName = "Unknown"
-        stl_values.push_back(topologic.StringAttribute(spaceTypeName))
-        try:
-            red = aSpace.spaceType().get().renderingColor().get().renderingRedValue()
-            green = aSpace.spaceType().get().renderingColor().get().renderingGreenValue()
-            blue = aSpace.spaceType().get().renderingColor().get().renderingBlueValue()
-        except:
-            red = 255
-            green = 255
-            blue = 255
-        l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-        l.push_back(topologic.IntAttribute(red))
-        l.push_back(topologic.IntAttribute(green))
-        l.push_back(topologic.IntAttribute(blue))
-        stl_values.push_back(topologic.ListAttribute(l))
+        red = 255
+        green = 255
+        blue = 255
+        print("******* Trying to get space name *********")
+        print(aSpace.spaceType())
+        if (aSpace.spaceType().is_initialized()):
+            if(aSpace.spaceType().get().name().is_initialized()):
+                spaceTypeName = aSpace.spaceType().get().name().get()
+            if(aSpace.spaceType().get().renderingColor()):
+                red = aSpace.spaceType().get().renderingColor().get().renderingRedValue()
+                green = aSpace.spaceType().get().renderingColor().get().renderingGreenValue()
+                blue = aSpace.spaceType().get().renderingColor().get().renderingBlueValue()
+        stl_values.append(topologic.StringAttribute(spaceTypeName))
+        l = []
+        l.append(topologic.IntAttribute(red))
+        l.append(topologic.IntAttribute(green))
+        l.append(topologic.IntAttribute(blue))
+        stl_values.append(topologic.ListAttribute(l))
         dict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
         _ = spaceCell.SetDictionary(dict)
         cells.append(spaceCell)

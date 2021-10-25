@@ -5,34 +5,10 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
-	topology = None
-	try:
-		topology = fixTopologyClass(item.Topology())
-	except:
-		print("ERROR: (Topologic>Graph.Topology) operation failed.")
-		topology = None
-	return topology
+	return item.Topology()
 
 class SvGraphTopology(bpy.types.Node, SverchCustomTreeNode):
 	"""

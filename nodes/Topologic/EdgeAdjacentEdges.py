@@ -4,7 +4,23 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
+
+def processItem(item):
+	edges = []
+	_ = item.AdjacentEdges(edges)
+	return edges
+
+def recur(item):
+	output = []
+	if item == None:
+		return []
+	if isinstance(item, list):
+		for anItem in item:
+			output.append(recur(anItem))
+	else:
+		output = processItem(item)
+	return output
+
 class SvEdgeAdjacentEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -20,14 +36,11 @@ class SvEdgeAdjacentEdges(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)[0]
+		inputs = self.inputs['Edge'].sv_get(deepcopy=False)
 		outputs = []
 		for anInput in inputs:
-			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-			_ = anInput.AdjacentEdges(edges)
-			for anEdge in edges:
-				outputs.append(anEdge)
-		self.outputs['Edges'].sv_set([outputs])
+			outputs.append(recur(anInput))
+		self.outputs['Edges'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvEdgeAdjacentEdges)

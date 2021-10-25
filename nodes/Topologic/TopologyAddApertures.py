@@ -5,55 +5,37 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 import time
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
 
 def isInside(aperture, face, tolerance):
 	return (topologic.VertexUtility.Distance(aperture.Topology.Centroid(), face) < tolerance)
 
 def internalVertex(topology, tolerance):
-	topology = fixTopologyClass(topology)
 	vst = None
-	classType = topology.GetType()
+	classType = topology.Type()
 	if classType == 64: #CellComplex
-		tempCells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+		tempCells = []
 		_ = topology.Cells(tempCells)
-		tempCell = tempCells.front()
+		tempCell = tempCells[0]
 		vst = topologic.CellUtility.InternalVertex(tempCell, tolerance)
 	elif classType == 32: #Cell
 		vst = topologic.CellUtility.InternalVertex(topology, tolerance)
 	elif classType == 16: #Shell
-		tempFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+		tempFaces = []
 		_ = topology.Faces(tempFaces)
-		tempFace = tempFaces.front()
+		tempFace = tempFaces[0]
 		vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 	elif classType == 8: #Face
 		vst = topologic.FaceUtility.InternalVertex(topology, tolerance)
 	elif classType == 4: #Wire
 		if topology.IsClosed():
-			internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+			internalBoundaries = []
 			tempFace = topologic.Face.ByExternalInternalBoundaries(topology, internalBoundaries)
 			vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 		else:
-			tempEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			tempEdges = []
 			_ = topology.Edges(tempEdges)
-			vst = topologic.EdgeUtility.PointAtParameter(tempVertex.front(), 0.5)
+			vst = topologic.EdgeUtility.PointAtParameter(tempVertex[0], 0.5)
 	elif classType == 2: #Edge
 		vst = topologic.EdgeUtility.PointAtParameter(topology, 0.5)
 	elif classType == 1: #Vertex
@@ -89,17 +71,11 @@ def processItem(item):
 	subTopologyType = item[4]
 	subTopologies = []
 	if subTopologyType == "Face":
-		faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-		_ = topology.Faces(faces)
-		subTopologies = list(faces)
+		_ = topology.Faces(subTopologies)
 	elif subTopologyType == "Edge":
-		edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-		_ = topology.Edges(edges)
-		subTopologies = list(edges)
+		_ = topology.Edges(subTopologies)
 	elif subTopologyType == "Vertex":
-		vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-		_ = topology.Vertices(vertices)
-		subTopologies = list(vertices)
+		_ = topology.Vertices(subTopologies)
 	processApertures(subTopologies, apertures, exclusive, tolerance)
 	return topology
 

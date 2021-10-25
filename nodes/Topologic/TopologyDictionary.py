@@ -3,8 +3,8 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
-import cppyy
+#from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
+from topologic import Dictionary
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):

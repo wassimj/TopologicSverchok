@@ -5,18 +5,23 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
 def processItem(item):
-	vert = None
-	try:
-		vert = item.Centroid()
-	except:
-		vert = None
-	return vert
+	return item.CenterOfMass()
+
 
 class SvTopologyCentroid(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Create a Vertex that represents the centroid of the Vertices of the input Topology
+	Tooltip: Create a Vertex that represents the centroid of the vertices of the input Topology
 	"""
 	bl_idname = 'SvTopologyCentroid'
 	bl_label = 'Topology.Centroid'
@@ -28,6 +33,7 @@ class SvTopologyCentroid(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
+		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))

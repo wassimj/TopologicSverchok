@@ -5,7 +5,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -95,10 +94,7 @@ def transposeList(l):
 def processItem(item):
 	graph = item[0]
 	sequence = item[1]
-	stl_sequence = cppyy.gbl.std.list[int]()
-	for i in sequence:
-		stl_sequence.push_back(i)
-	return graph.IsErdoesGallai(stl_sequence)
+	return graph.IsErdoesGallai(sequence)
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 

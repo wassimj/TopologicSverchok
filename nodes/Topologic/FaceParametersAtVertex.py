@@ -5,10 +5,9 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary, Aperture
-import cppyy
 import time
-import ctypes
 
+# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
 	if isinstance(element, list) == True:
@@ -18,7 +17,7 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def matchLengths(list):
+def repeat(list):
 	maxLength = len(list[0])
 	for aSubList in list:
 		newLength = len(aSubList)
@@ -33,32 +32,77 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
+# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
+def onestep(cur,y,base):
+    # one step of the iteration
+    if cur is not None:
+        y.append(cur)
+        base.append(cur)
+    else:
+        y.append(base[0])  # append is simplest, for now
+        base = base[1:]+[base[0]]  # rotate
+    return base
 
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
+def iterate(list):
+	maxLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength > maxLength:
+			maxLength = newLength
+	for anItem in list:
+		for i in range(len(anItem), maxLength):
+			anItem.append(None)
+		y=[]
+		base=[]
+		for cur in anItem:
+			base = onestep(cur,y,base)
+		returnList.append(y)
+	return returnList
+
+def trim(list):
+	minLength = len(list[0])
+	returnList = []
+	for aSubList in list:
+		newLength = len(aSubList)
+		if newLength < minLength:
+			minLength = newLength
+	for anItem in list:
+		anItem = anItem[:minLength]
+		returnList.append(anItem)
+	return returnList
+
+# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
+def interlace(ar_list):
+    if not ar_list:
+        yield []
+    else:
+        for a in ar_list[0]:
+            for prod in interlace(ar_list[1:]):
+                yield [a,]+prod
+
+def transposeList(l):
+	length = len(l[0])
+	returnList = []
+	for i in range(length):
+		tempRow = []
+		for j in range(len(l)):
+			tempRow.append(l[j][i])
+		returnList.append(tempRow)
+	return returnList
+
+def processItem(item):
+	face = item[0]
+	tol = item[1]
+	return topologic.FaceUtility.InternalVertex(face, tol)
+
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 def processItem(item):
 	face = item[0]
 	vertex = item[1]
-	u = ctypes.c_double() 
-	v = ctypes.c_double() 
-	print(face)
-	print(vertex)
-	_ = topologic.FaceUtility.ParametersAtVertex(face, vertex, u, v)
-	print([u.value, v.value])
-	return [u.value, v.value]
+	params = topologic.FaceUtility.ParametersAtVertex(face, vertex)
+	return [params[0], params[1]]
 
 class SvFaceParametersAtVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -67,11 +111,15 @@ class SvFaceParametersAtVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceParametersAtVertex'
 	bl_label = 'Face.ParametersAtVertex'
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Vertex')
 		self.outputs.new('SvStringsSocket', 'UV').prop_name = 'U'
+
+	def draw_buttons(self, context, layout):
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -81,12 +129,24 @@ class SvFaceParametersAtVertex(bpy.types.Node, SverchCustomTreeNode):
 			return
 		faceList = self.inputs['Face'].sv_get(deepcopy=False)
 		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-
 		faceList = flatten(faceList)
 		vertexList = flatten(vertexList)
-		matchLengths([faceList, vertexList])
-		inputs = zip(faceList, vertexList)
+		inputs = [faceList, vertexList]
 		outputs = []
+		if ((self.Replication) == "Default"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
 		self.outputs['UV'].sv_set(outputs)

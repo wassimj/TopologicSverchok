@@ -6,7 +6,6 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
-import cppyy
 import time
 from collections import defaultdict
 
@@ -177,33 +176,33 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
 
 def valueAtKey(item, key):
-	fv = None
 	try:
-		v = item.ValueAtKey(key).Value()
+		attr = item.ValueAtKey(key)
 	except:
-		raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
-	if (isinstance(v, int) or (isinstance(v, float))):
-		fv = v
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, ListAttribute):
+		return (listAttributeValues(attr))
 	else:
-		raise Exception("Error: Value is not a float or an int")
-	return float(fv)
+		return None
 
 def vertexIndex(v, vertices, tolerance):
 	i = 0
@@ -218,10 +217,9 @@ def processItem(item):
 	graph = item[0]
 	edgeKey = item[1]
 	tolerance = item[2]
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = graph.Vertices(vertices)
-	pyvertices = list(vertices)
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	_ = graph.Edges(vertices, tolerance, edges)
 	g = Graph(len(vertices))
 	for anEdge in edges:
@@ -240,22 +238,22 @@ def processItem(item):
 
 	graphEdges = g.KruskalMST() # Get the Minimum Spanning Tree
 	# Create an initial Topologic Graph with one Vertex
-	sv = pyvertices[graphEdges[0][0]]
+	sv = vertices[graphEdges[0][0]]
 	finalGraph = topologic.Graph.ByTopology(sv, True, False, False, False, False, False, tolerance)
-	stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-	stl_keys.push_back(edgeKey)
+	stl_keys = []
+	stl_keys.append(edgeKey)
 
-	eedges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	eedges = []
 	for i in range(len(graphEdges)):
-		sv = pyvertices[graphEdges[i][0]]
-		ev = pyvertices[graphEdges[i][1]]
+		sv = vertices[graphEdges[i][0]]
+		ev = vertices[graphEdges[i][1]]
 		tEdge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
 		dictValue = graphEdges[i][2]
-		stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-		stl_values.push_back(topologic.DoubleAttribute(dictValue))
+		stl_values = []
+		stl_values.append(topologic.DoubleAttribute(dictValue))
 		edgeDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
 		_ = tEdge.SetDictionary(edgeDict)
-		eedges.push_back(tEdge)
+		eedges.append(tEdge)
 	finalGraph.AddEdges(eedges, tolerance)
 	return finalGraph
 

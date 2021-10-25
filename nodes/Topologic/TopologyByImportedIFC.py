@@ -7,10 +7,9 @@ try:
 	import ifcopenshell
 	import ifcopenshell.geom
 except:
-	raise Exception("Error: TopologyByImportedIFC: ifcopenshell is not present on your system. Install BlenderBIM to resolve.")
+	raise Exception("Error: TopologyByImportedIFC: ifcopenshell is not present on your system. Install BlenderBIM or ifcopenshell to resolve.")
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-import cppyy
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -21,22 +20,6 @@ def flatten(element):
 	else:
 		returnList = [element]
 	return returnList
-
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-	topology.__class__ = classByType(topology.GetType())
-	return topology
 
 def processItem(item):
 	settings = ifcopenshell.geom.settings()
@@ -51,7 +34,7 @@ def processItem(item):
 		try:
 			cr = ifcopenshell.geom.create_shape(settings, p)
 			brepString = cr.geometry.brep_data
-			output.append(fixTopologyClass(topologic.Topology.ByString(brepString)))
+			output.append(topologic.Topology.ByString(brepString))
 		except:
 			continue
 	return output
@@ -76,6 +59,7 @@ class SvTopologyByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
+		outputs = flatten(outputs)
 		self.outputs['Topology'].sv_set(outputs)
 
 def register():

@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import cppyy
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -96,9 +95,9 @@ def processItem(input):
 	graph = input[0]
 	vertex = input[1]
 
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = graph.Vertices(vertices)
-	nearestVertex = vertices.front()
+	nearestVertex = vertices[0]
 	nearestDistance = topologic.VertexUtility.Distance(vertex, nearestVertex)
 	for aGraphVertex in vertices:
 		newDistance = topologic.VertexUtility.Distance(vertex, aGraphVertex)

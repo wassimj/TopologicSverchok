@@ -3,8 +3,8 @@ from bpy.props import IntProperty, FloatProperty, StringProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
-import cppyy
+#from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
+from topologic import Dictionary, IntAttribute, DoubleAttribute, StringAttribute, ListAttribute
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -16,26 +16,33 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(item, key):
-	fv = None
-	try:
-		v = item.ValueAtKey(key).Value()
-	except:
-		raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
-	if (isinstance(v, int) or (isinstance(v, float))):
-		fv = v
-	elif (isinstance(v, cppyy.gbl.std.string)):
-		fv = v.c_str()
-	else:
-		resultList = []
-		for i in v:
-			if isinstance(i.Value(), cppyy.gbl.std.string):
-				resultList.append(i.Value().c_str())
-			else:
-				resultList.append(i.Value())
-		fv = resultList
-	return fv
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
 
+def processItem(item, key):
+	try:
+		attr = item.ValueAtKey(key)
+	except:
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
