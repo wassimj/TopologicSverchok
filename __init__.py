@@ -182,7 +182,6 @@ def nodes_index():
                 ("Topologic.TopologyTriangulate", "SvTopologyTriangulate"),
                 ("Topologic.TopologyType", "SvTopologyType"),
                 ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
-                ("Topologic.ContractByParameters", "SvContractByParameters"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryByMergedDictionaries", "SvDictionaryByMergedDictionaries"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
@@ -222,6 +221,7 @@ def nodes_index():
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
 
 	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
+	web3Nodes = [("Topologic.ContractByParameters", "SvContractByParameters")]
 	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                  ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
 	openstudioNodes = [("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
@@ -251,6 +251,11 @@ def nodes_index():
 		coreNodes = coreNodes+ipfsNodes
 	except:
 		print("Topologic - Warning: Could not import ipfshttpclient so some related nodes are not available.")
+	try:
+		from web3 import Web3, HTTPProvider
+		coreNodes = coreNodes+web3Nodes
+	except:
+		print("Topologic - Warning: Could not import web3 so some related nodes are not available.")
 	try:
 		import openstudio
 		coreNodes = coreNodes+openstudioNodes
