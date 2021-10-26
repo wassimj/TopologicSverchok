@@ -69,9 +69,6 @@ def nodes_index():
                 ("Topologic.VertexDistance", "SvVertexDistance"),
                 ("Topologic.VertexEnclosingCell", "SvVertexEnclosingCell"),
                 ("Topologic.VertexNearestVertex", "SvVertexNearestVertex"),
-                ("Topologic.VertexAdjacentEdges", "SvVertexAdjacentEdges"),
-                ("Topologic.EdgeAdjacentFaces", "SvEdgeAdjacentFaces"),
-                ("Topologic.EdgeAdjacentWires", "SvEdgeAdjacentWires"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeByVertices", "SvEdgeByVertices"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
@@ -79,10 +76,6 @@ def nodes_index():
                 ("Topologic.EdgeLength", "SvEdgeLength"),
                 ("Topologic.EdgeParameterAtVertex", "SvEdgeParameterAtVertex"),
                 ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
-                ("Topologic.EdgeAdjacentEdges", "SvEdgeAdjacentEdges"),
-                ("Topologic.EdgeSharedVertices", "SvEdgeSharedVertices"),
-                ("Topologic.WireAdjacentCells", "SvWireAdjacentCells"),
-                ("Topologic.WireAdjacentShells", "SvWireAdjacentShells"),
                 ("Topologic.WireByEdges", "SvWireByEdges"),
                 ("Topologic.WireCircle", "SvWireCircle"),
                 ("Topologic.WireCycles", "SvWireCycles"),
@@ -92,8 +85,6 @@ def nodes_index():
                 ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
                 ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
-                ("Topologic.FaceAdjacentCells", "SvFaceAdjacentCells"),
-                ("Topologic.FaceAdjacentShells", "SvFaceAdjacentShells"),
                 ("Topologic.FaceArea", "SvFaceArea"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
@@ -113,7 +104,6 @@ def nodes_index():
                 ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
-                ("Topologic.CellAdjacentCells", "SvCellAdjacentCells"),
                 ("Topologic.CellCone", "SvCellCone"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
@@ -206,9 +196,9 @@ def nodes_index():
                 ("Topologic.GraphIsolatedVertices", "SvGraphIsolatedVertices"),
                 ("Topologic.GraphMaximumDelta", "SvGraphMaximumDelta"),
                 ("Topologic.GraphMinimumDelta", "SvGraphMinimumDelta"),
-				("Topologic.GraphMST", "SvGraphMST"),
-				("Topologic.GraphNearestVertex", "SvGraphNearestVertex"),
-				("Topologic.GraphPath", "SvGraphPath"),
+		("Topologic.GraphMST", "SvGraphMST"),
+		("Topologic.GraphNearestVertex", "SvGraphNearestVertex"),
+		("Topologic.GraphPath", "SvGraphPath"),
                 ("Topologic.GraphRemoveEdge", "SvGraphRemoveEdge"),
                 ("Topologic.GraphRemoveVertex", "SvGraphRemoveVertex"),
                 ("Topologic.GraphShortestPath", "SvGraphShortestPath"),
@@ -342,7 +332,6 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvVertexAdjacentEdges'],
             ['SvVertexByCoordinates'],
             ['SvVertexCoordinates'],
             ['SvVertexDistance'],
@@ -359,15 +348,11 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvEdgeAdjacentEdges'],
-            ['SvEdgeAdjacentFaces'],
-            ['SvEdgeAdjacentWires'],
             ['SvEdgeByStartVertexEndVertex'],
             ['SvEdgeByVertices'],
             ['SvEdgeEndVertex'],
             ['SvEdgeLength'],
             ['SvEdgeParameterAtVertex'],
-            ['SvEdgeSharedVertices'],
             ['SvEdgeStartVertex'],
             ['SvEdgeVertexAtParameter'],
         ])
@@ -381,8 +366,6 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvWireAdjacentCells'],
-            ['SvWireAdjacentShells'],
             ['SvWireByEdges'],
             ['SvWireCircle'],
             ['SvWireCycles'],
@@ -403,8 +386,6 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvFaceAddFaceAsAperture'],
             ['SvFaceAddInternalBoundary'],
-            ['SvFaceAdjacentCells'],
-            ['SvFaceAdjacentShells'],
             ['SvFaceArea'],
             ['SvFaceByEdges'],
             ['SvFaceByVertices'],
@@ -444,7 +425,6 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvCellAdjacentCells'],
             ['SvCellByFaces'],
             ['SvCellCone'],
             ['SvCellCylinder'],
@@ -595,7 +575,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyByImportedIFC'],
             ['SvTopologyByImportedIPFS'],
             ['SvTopologyByOCCTShape'],
-			['SvTopologyByString'],
+            ['SvTopologyByString'],
             ['SvTopologyCenterOfMass'],
             ['SvTopologyCentroid'],
             ['SvTopologyContents'],
@@ -702,10 +682,10 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ CellComplex'],
             ['@ Cluster'],
             ['@ Topology'],
-			['@ Aperture'],
+            ['@ Aperture'],
             ['@ Color'],
             ['@ Context'],
-			['@ Dictionary'],
+            ['@ Dictionary'],
             ['@ Graph'],
             ['@ EnergyModel'],
             ['@ Blockchain'],
