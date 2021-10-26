@@ -97,7 +97,6 @@ def nodes_index():
                 ("Topologic.FaceInternalBoundaries", "SvFaceInternalBoundaries"),
                 ("Topologic.FaceNormalAtParameters", "SvFaceNormalAtParameters"),
                 ("Topologic.FaceParametersAtVertex", "SvFaceParametersAtVertex"),
-                ("Topologic.FaceTriangulate", "SvFaceTriangulate"),
                 ("Topologic.FaceTrimByWire", "SvFaceTrimByWire"),
                 ("Topologic.FaceVertexAtParameters", "SvFaceVertexAtParameters"),
                 ("Topologic.ApertureByTopologyContext", "SvApertureByTopologyContext"),
@@ -398,7 +397,6 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceIsInside'],
             ['SvFaceNormalAtParameters'],
             ['SvFaceParametersAtVertex'],
-            ['SvFaceTriangulate'],
             ['SvFaceTrimByWire'],
             ['SvFaceVertexAtParameters'],
         ])
