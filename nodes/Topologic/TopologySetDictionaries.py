@@ -15,134 +15,200 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
 
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
-def getValueAtKey(dict, key):
-	returnValue = None
+def getValueAtKey(item, key):
 	try:
-		returnValue = str((cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
+		attr = item.ValueAtKey(key)
 	except:
-		returnValue = None
-	return returnValue
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
-def relevantSelector(topology):
+def relevantSelector(topology, tol):
 	returnVertex = None
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		return topology
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		return topologic.EdgeUtility.PointAtParameter(topology, 0.5)
-	elif topology.GetType() == topologic.Face.Type():
+	elif topology.Type() == topologic.Face.Type():
 		return topologic.FaceUtility.InternalVertex(topology)
-	elif topology.GetType() == topologic.Cell.Type():
-		return topologic.CellUtility.InternalVertex(topology)
+	elif topology.Type() == topologic.Cell.Type():
+		return topologic.CellUtility.InternalVertex(topology, tol)
 	else:
 		return topology.Centroid()
 
 def topologyContains(topology, vertex, tol):
 	contains = False
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		try:
 			contains = (topologic.VertexUtility.Distance(topology, vertex) <= tol)
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		try:
 			_ = topologic.EdgeUtility.ParameterAtPoint(topology, vertex)
 			contains = True
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Face.Type():
+	elif topology.Type() == topologic.Face.Type():
 		return topologic.FaceUtility.IsInside(topology, vertex, tol)
-	elif topology.GetType() == topologic.Cell.Type():
+	elif topology.Type() == topologic.Cell.Type():
 		return (topologic.CellUtility.Contains(topology, vertex, tol) == 0)
 	return False
+
+def processKeysValues(keys, values):
+	if len(keys) != len(values):
+		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
+	stl_keys = []
+	stl_values = []
+	for i in range(len(keys)):
+		if isinstance(keys[i], str):
+			stl_keys.append(keys[i])
+		else:
+			stl_keys.append(str(keys[i]))
+		if isinstance(values[i], list) and len(values[i]) == 1:
+			value = values[i][0]
+		else:
+			value = values[i]
+		if isinstance(value, bool):
+			if value == False:
+				stl_values.append(topologic.IntAttribute(0))
+			else:
+				stl_values.append(topologic.IntAttribute(1))
+		elif isinstance(value, int):
+			stl_values.append(topologic.IntAttribute(value))
+		elif isinstance(value, float):
+			stl_values.append(topologic.DoubleAttribute(value))
+		elif isinstance(value, str):
+			stl_values.append(topologic.StringAttribute(value))
+		elif isinstance(value, list):
+			l = []
+			for v in value:
+				if isinstance(v, bool):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, int):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, float):
+					l.append(topologic.DoubleAttribute(v))
+				elif isinstance(v, str):
+					l.append(topologic.StringAttribute(v))
+			stl_values.append(topologic.ListAttribute(l))
+		else:
+			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	return myDict
 
 def transferDictionaries(sources, sinks, tol):
 	for sink in sinks:
 		sinkKeys = []
 		sinkValues = []
-		iv = relevantSelector(sink)
+		iv = relevantSelector(sink, tol)
 		j = 1
 		for source in sources:
 			if topologyContains(source, iv, tol):
 				d = source.GetDictionary()
 				if d == None:
 					continue
-				stl_keys = d.Keys()
-				if len(stl_keys) > 0:
-					copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-					sourceKeys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+				sourceKeys= d.Keys()
+				if len(sourceKeys) > 0:
 					for aSourceKey in sourceKeys:
 						if aSourceKey not in sinkKeys:
 							sinkKeys.append(aSourceKey)
 							sinkValues.append("")
 					for i in range(len(sourceKeys)):
 						index = sinkKeys.index(sourceKeys[i])
-						k = cppyy.gbl.std.string(sourceKeys[i])
-						sourceValue = getValueAtKey(d, k)
+						sourceValue = getValueAtKey(d, sourceKeys[i])
 						if sourceValue != None:
 							if sinkValues[index] != "":
-								sinkValues[index] = sinkValues[index]+","+sourceValue
+								sinkValues[index].append(sourceValue)
 							else:
 								sinkValues[index] = sourceValue
 		if len(sinkKeys) > 0 and len(sinkValues) > 0:
-			stlKeys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-			for aKey in sinkKeys:
-				stlKeys.push_back(aKey)
-			stlValues = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-			for aValue in sinkValues:
-				stlValues.push_back(topologic.StringAttribute(aValue))
-			newDict = topologic.Dictionary.ByKeysValues(stlKeys, stlValues)
+			newDict = processKeysValues(sinkKeys, sinkValues)
+			_ = sink.SetDictionary(newDict)
+
+def transferDictionariesUniversal(sources, sinks, tol):
+	print("Entering transferDictionariesUniversal")
+	for sink in sinks:
+		sinkKeys = []
+		sinkValues = []
+		j = 1
+		for source in sources:
+			d = source.GetDictionary()
+			if d == None:
+				continue
+			sourceKeys= d.Keys()
+			if len(sourceKeys) > 0:
+				for aSourceKey in sourceKeys:
+					if aSourceKey not in sinkKeys:
+						sinkKeys.append(aSourceKey)
+						sinkValues.append("")
+				for i in range(len(sourceKeys)):
+					index = sinkKeys.index(sourceKeys[i])
+					sourceValue = getValueAtKey(d, sourceKeys[i])
+					if sourceValue != None:
+						if sinkValues[index] != "":
+							sinkValues[index].append(sourceValue)
+						else:
+							sinkValues[index] = sourceValue
+		if len(sinkKeys) > 0 and len(sinkValues) > 0:
+			print(sinkValues)
+			newDict = processKeysValues(sinkKeys, sinkValues)
 			_ = sink.SetDictionary(newDict)
 
 def highestDimension(topology):
-	if (topology.GetType() == topologic.Cluster.Type()):
-		cellComplexes = cppyy.gbl.std.list[topologic.CellComplex.Ptr]()
+	if (topology.Type() == topologic.Cluster.Type()):
+		cellComplexes = []
 		_ = topology.CellComplexes(cellComplexes)
 		if len(cellComplexes) > 0:
 			return topologic.CellComplex.Type()
-		cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+		cells = []
 		_ = topology.Cells(cells)
 		if len(cells) > 0:
 			return topologic.Cell.Type()
-		shells = cppyy.gbl.std.list[topologic.Shell.Ptr]()
+		shells = []
 		_ = topology.Shells(shells)
 		if len(shells) > 0:
 			return topologic.Shell.Type()
-		faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+		faces = []
 		_ = topology.Faces(faces)
 		if len(faces) > 0:
 			return topologic.Face.Type()
-		wires = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+		wires = []
 		_ = topology.Wires(wires)
 		if len(wires) > 0:
 			return topologic.Wire.Type()
-		edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		edges = []
 		_ = topology.Edges(edges)
 		if len(edges) > 0:
 			return topologic.Edge.Type()
-		vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		vertices = []
 		_ = topology.Vertices(vertices)
 		if len(vertices) > 0:
 			return topologic.Vertex.Type()
 	else:
-		return(topology.GetType())
+		return(topology.Type())
 
 def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, tolerance):
 	sourceVertices = []
@@ -155,67 +221,51 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 	sinkCells = []
 	hidimSink = highestDimension(sink)
 	if tranVertices == True:
-		stlSinkVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 		if sink.Type() == topologic.Vertex.Type():
-			stlSinkVertices.push_back(sink)
+			sinkVertices.append(sink)
 		elif hidimSink >= topologic.Vertex.Type():
-			sink.Vertices(stlSinkVertices)
-			sinkVertices = list(stlSinkVertices)
+			sink.Vertices(sinkVertices)
 	if tranEdges == True:
-		stlSinkEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
 		if sink.Type() == topologic.Edge.Type():
-			stlSinkEdges.push_back(sink)
+			sinkEdges.append(sink)
 		elif hidimSink >= topologic.Edge.Type():
-			sink.Edges(stlSinkEdges)
-			sinkEdges = list(stlSinkEdges)
+			sink.Edges(sinkEdges)
 	if tranFaces == True:
-		stlSinkFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 		if sink.Type() == topologic.Face.Type():
-			stlSinkFaces.push_back(sink)
+			sinkFaces.append(sink)
 		elif hidimSink >= topologic.Face.Type():
-			sink.Faces(stlSinkFaces)
-			sinkFaces = list(stlSinkFaces)
+			sink.Faces(sinkFaces)
 	if tranCells == True:
-		stlSinkCells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
 		if sink.Type() == topologic.Cell.Type():
-			stlSinkCells.push_back(sink)
+			sinkCells.append(sink)
 		elif hidimSink >= topologic.Cell.Type():
-			sink.Cells(stlSinkCells)
-			sinkCells = list(stlSinkCells)
+			sink.Cells(sinkCells)
 	for source in sources:
-		_ = transferDictionaries([source], [sink], tolerance)
+		_ = transferDictionariesUniversal([source], [sink], tolerance)
 		hidimSource = highestDimension(source)
 		if tranVertices == True:
-			stlSourceVertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
 			if source.Type() == topologic.Vertex.Type():
-				stlSourceVertices.push_back(source)
+				sourceVertices.append(source)
 			elif hidimSource >= topologic.Vertex.Type():
-				source.Vertices(stlSourceVertices)
-				sourceVertices = list(stlSourceVertices)
+				source.Vertices(sourceVertices)
 			_ = transferDictionaries(sourceVertices, sinkVertices, tolerance)
 		if tranEdges == True:
 			if source.Type() == topologic.Edge.Type():
 				sourceEdges.append(source)
 			elif hidimSource >= topologic.Edge.Type():
-				stlSourceEdges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
-				source.Edges(stlSourceEdges)
-				sourceEdges = list(stlSourceEdges)
+				source.Edges(sourceEdges)
 			_ = transferDictionaries(sourceEdges, sinkEdges, tolerance)
 		if tranFaces == True:
 			if source.Type() == topologic.Face.Type():
 				sourceFaces.append(source)
 			elif hidimSource >= topologic.Face.Type():
-				stlSourceFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
-				source.Faces(stlSourceFaces)
-				sourceFaces = list(stlSourceFaces)
+				source.Faces(sourceFaces)
 			_ = transferDictionaries(sourceFaces, sinkFaces, tolerance)
 		if tranCells == True:
 			if source.Type() == topologic.Cell.Type():
 				sourceCells.append(source)
 			elif hidimSource >= topologic.Cell.Type():
-				stlSourceCells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
-				source.Cells(stlSourceCells)
-				sourceCells = list(stlSourceCells)
+				source.Cells(sourceCells)
 			_ = transferDictionaries(sourceCells, sinkCells, tolerance)
 	return sink
 
