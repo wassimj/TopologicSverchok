@@ -20,7 +20,7 @@ def processWire(wire, angTol):
 
 def processItem(topology, angTol, tolerance):
 	returnTopology = topology
-	t = topology.Type()
+	t = topology.GetType()
 	if (t == 1) or (t == 2) or (t == 128): #Vertex or Edge or Cluster, return the original topology
 		return returnTopology
 	elif (t == 4): #wire
@@ -28,9 +28,9 @@ def processItem(topology, angTol, tolerance):
 		return returnTopology
 	elif (t == 8): #Face
 		extBoundary = processWire(topology.ExternalBoundary(), angTol)
-		internalBoundaries = []
+		internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 		_ = topology.InternalBoundaries(internalBoundaries)
-		cleanIB = []
+		cleanIB = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 		for ib in internalBoundaries:
 			cleanIB.push_back(processWire(ib, angTol))
 		try:
@@ -38,17 +38,17 @@ def processItem(topology, angTol, tolerance):
 		except:
 			returnTopology = topology
 		return returnTopology
-	faces = []
+	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	_ = topology.Faces(faces)
-	stl_final_faces = []
+	stl_final_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
 	for aFace in faces:
 		extBoundary = processWire(aFace.ExternalBoundary(), angTol)
-		internalBoundaries = []
+		internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 		_ = aFace.InternalBoundaries(internalBoundaries)
-		cleanIB = []
+		cleanIB = cppyy.gbl.std.list[topologic.Wire.Ptr]()
 		for ib in internalBoundaries:
-			cleanIB.append(processWire(ib, angTol))
-		stl_final_faces.append(topologic.Face.ByExternalInternalBoundaries(extBoundary, cleanIB))
+			cleanIB.push_back(processWire(ib, angTol))
+		stl_final_faces.push_back(topologic.Face.ByExternalInternalBoundaries(extBoundary, cleanIB))
 	returnTopology = topology
 	if t == 16: # Shell
 		try:

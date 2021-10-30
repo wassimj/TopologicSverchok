@@ -87,17 +87,12 @@ def shellToFace(shell):
 	wires = []
 	areas = []
 	for aWire in stl_wires:
-		print("BEFORE")
-		print(aWire)
 		aWire = topologic.WireUtility.RemoveCollinearEdges(aWire, 0.1)
-		print("AFTER")
-		print(aWire)
 		if(aWire):
 			face = topologic.Face.ByExternalBoundary(aWire)
 			wires.append(aWire)
 			areas.append(topologic.FaceUtility.Area(face))
 	wires = [x for _, x in sorted(zip(areas, wires))] #Sort wires according to their areas
-	print(wires)
 	ib = []
 	for internalWire in wires[0:len(wires)-1]:
 		ib.append(internalWire)

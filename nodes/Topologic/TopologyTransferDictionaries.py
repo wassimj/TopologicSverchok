@@ -63,7 +63,7 @@ def listAttributeValues(listAttribute):
 			returnList.append(attr.StringValue())
 	return returnList
 
-def getValueAtKey(item, key):
+def valueAtKey(item, key):
 	try:
 		attr = item.ValueAtKey(key)
 	except:
@@ -141,7 +141,7 @@ def transferDictionaries(sources, sinks, tol):
 							sinkValues.append("")
 					for i in range(len(sourceKeys)):
 						index = sinkKeys.index(sourceKeys[i])
-						sourceValue = getValueAtKey(d, sourceKeys[i])
+						sourceValue = valueAtKey(d, sourceKeys[i])
 						if sourceValue != None:
 							if sinkValues[index] != "":
 								if isinstance(sinkValues[index], list):
@@ -150,38 +150,6 @@ def transferDictionaries(sources, sinks, tol):
 									sinkValues[index] = [sinkValues[index], sourceValue]
 							else:
 								sinkValues[index] = sourceValue
-		if len(sinkKeys) > 0 and len(sinkValues) > 0:
-			newDict = processKeysValues(sinkKeys, sinkValues)
-			_ = sink.SetDictionary(newDict)
-
-def transferDictionariesUniversal(sources, sinks, tol):
-	for sink in sinks:
-		sinkKeys = []
-		sinkValues = []
-		iv = relevantSelector(sink)
-		j = 1
-		for source in sources:
-			d = source.GetDictionary()
-			if d == None:
-				continue
-			stlKeys = d.Keys()
-			if len(stlKeys) > 0:
-				sourceKeys = d.Keys()
-				for aSourceKey in sourceKeys:
-					if aSourceKey not in sinkKeys:
-						sinkKeys.append(aSourceKey)
-						sinkValues.append("")
-				for i in range(len(sourceKeys)):
-					index = sinkKeys.index(sourceKeys[i])
-					sourceValue = getValueAtKey(d, sourceKeys[i])
-					if sourceValue != None:
-						if sinkValues[index] != "":
-							if isinstance(sinkValues[index], list):
-								sinkValues[index].append(sourceValue)
-							else:
-								sinkValues[index] = [sinkValues[index], sourceValue]
-						else:
-							sinkValues[index] = sourceValue
 		if len(sinkKeys) > 0 and len(sinkValues) > 0:
 			newDict = processKeysValues(sinkKeys, sinkValues)
 			_ = sink.SetDictionary(newDict)
@@ -253,8 +221,8 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 			sinkCells.append(sink)
 		elif hidimSink >= topologic.Cell.Type():
 			sink.Cells(sinkCells)
-	_ = transferDictionariesUniversal(sources, [sink], tolerance)
 	for source in sources:
+		_ = transferDictionaries([source], [sink], tolerance)
 		hidimSource = highestDimension(source)
 		if tranVertices == True:
 			sourceVertices = []

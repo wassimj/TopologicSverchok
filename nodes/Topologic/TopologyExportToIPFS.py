@@ -108,7 +108,7 @@ def exportToBREP(topology, filepath, overwrite):
 	except:
 		raise Exception("Error: Could not create a new file at the following location: "+filepath)
 	if (f):
-		topString = str(topology.String())
+		topString = topology.String()
 		f.write(topString)
 		f.close()	
 		return True

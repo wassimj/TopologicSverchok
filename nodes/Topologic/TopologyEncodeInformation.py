@@ -5,56 +5,110 @@ from sverchok.data_structure import updateNode, list_match_func, list_match_mode
 
 import topologic
 
-def dictionaryByKeysValues(keys, values):
-	stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-	stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
-	for aKey in keys:
-		stl_keys.push_back(aKey)
-	for aValue in values:
-		stl_values.push_back(topologic.StringAttribute(aValue))
-	return topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+def processKeysValues(keys, values):
+	if len(keys) != len(values):
+		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
+	stl_keys = []
+	stl_values = []
+	for i in range(len(keys)):
+		if isinstance(keys[i], str):
+			stl_keys.append(keys[i])
+		else:
+			stl_keys.append(str(keys[i]))
+		if isinstance(values[i], list) and len(values[i]) == 1:
+			value = values[i][0]
+		else:
+			value = values[i]
+		if isinstance(value, bool):
+			if value == False:
+				stl_values.append(topologic.IntAttribute(0))
+			else:
+				stl_values.append(topologic.IntAttribute(1))
+		elif isinstance(value, int):
+			stl_values.append(topologic.IntAttribute(value))
+		elif isinstance(value, float):
+			stl_values.append(topologic.DoubleAttribute(value))
+		elif isinstance(value, str):
+			stl_values.append(topologic.StringAttribute(value))
+		elif isinstance(value, list):
+			l = []
+			for v in value:
+				if isinstance(v, bool):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, int):
+					l.append(topologic.IntAttribute(v))
+				elif isinstance(v, float):
+					l.append(topologic.DoubleAttribute(v))
+				elif isinstance(v, str):
+					l.append(topologic.StringAttribute(v))
+			stl_values.append(topologic.ListAttribute(l))
+		else:
+			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	return myDict
+
 
 def topologyContains(topology, vertex, tolerance):
 	contains = False
-	if topology.GetType() == topologic.Vertex.Type():
+	if topology.Type() == topologic.Vertex.Type():
 		try:
 			contains = (topologic.VertexUtility.Distance(topology, vertex) <= tolerance)
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Edge.Type():
+	elif topology.Type() == topologic.Edge.Type():
 		try:
 			_ = topologic.EdgeUtility.ParameterAtPoint(topology, vertex)
 			contains = True
 		except:
 			contains = False
 		return contains
-	elif topology.GetType() == topologic.Face.Type():
+	elif topology.Type() == topologic.Face.Type():
 		return topologic.FaceUtility.IsInside(topology, vertex, tolerance)
-	elif topology.GetType() == topologic.Cell.Type():
+	elif topology.Type() == topologic.Cell.Type():
 		return (topologic.CellUtility.Contains(topology, vertex, tolerance) == 0)
 	return contains
 
-def getValueAtKey(dict, key):
-	returnValue = None
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
+
+def getValueAtKey(item, key):
 	try:
-		returnValue = str((cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
+		attr = item.ValueAtKey(key)
 	except:
-		returnValue = None
-	return returnValue
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 def transferDictionaries(selectors, dictionaries, topologyType, topology, tolerance):
 	if topologyType == topologic.Vertex.Type():
-		sinks = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+		sinks = []
 		_ = topology.Vertices(sinks)
 	elif topologyType == topologic.Edge.Type():
-		sinks = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+		sinks = []
 		_ = topology.Vertices(sinks)
 	elif topologyType == topologic.Face.Type():
-		sinks = cppyy.gbl.std.list[topologic.Face.Ptr]()
+		sinks = []
 		_ = topology.Vertices(sinks)
 	elif topologyType == topologic.Cell.Type():
-		sinks = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+		sinks = []
 		_ = topology.Cells(sinks)
 	else:
 		sinks = []
@@ -65,11 +119,7 @@ def transferDictionaries(selectors, dictionaries, topologyType, topology, tolera
 		d = dictionaries[i]
 		if d == None:
 			continue
-		stl_keys = d.Keys()
-		if len(stl_keys) == 0:
-			continue
-		copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-		sourceKeys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
+		sourceKeys = d.Keys()
 		sinkKeys = []
 		sinkValues = []
 		for sink in sinks:
@@ -80,15 +130,15 @@ def transferDictionaries(selectors, dictionaries, topologyType, topology, tolera
 						sinkValues.append("")
 				for j in range(len(sourceKeys)):
 					index = sinkKeys.index(sourceKeys[j])
-					k = cppyy.gbl.std.string(sourceKeys[j])
-					sourceValue = getValueAtKey(d, k)
+					k = sourceKeys[j]
+					sourceValue = str(getValueAtKey(d, k))
 					if sourceValue != None:
 						if sinkValues[index] != "":
 							sinkValues[index] = sinkValues[index]+","+sourceValue
 						else:
 							sinkValues[index] = sourceValue
 				if len(sinkKeys) > 0 and len(sinkValues) > 0:
-					newDict = dictionaryByKeysValues(sinkKeys, sinkValues)
+					newDict = processKeysValues(sinkKeys, sinkValues)
 					_ = sink.SetDictionary(newDict)
 	return topology
 
@@ -105,15 +155,14 @@ def processItem(topology, csv_string, tolerance):
 		y = float(columns[2])
 		z = float(columns[3])
 		v = topologic.Vertex.ByCoordinates(x,y,z)
-		selectors = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-		selectors.push_back(v)
+		selectors = []
+		selectors.append(v)
 		keys = columns[4].split("|",1024)
 		values = columns[5].split("|",1024)
-		d = dictionaryByKeysValues(keys, values)
-		dictionaries = cppyy.gbl.std.list[topologic.Dictionary]()
-		dictionaries.push_back(d)
-		#topology = topology.SetDictionaries(selectors, dictionaries, topologyType)
-		topology = transferDictionaries(list(selectors), list(dictionaries), topologyType, topology, tolerance)
+		d = processKeysValues(keys, values)
+		dictionaries = []
+		dictionaries.append(d)
+		topology = transferDictionaries(selectors, dictionaries, topologyType, topology, tolerance)
 	return topology
 
 class SvTopologyEncodeInformation(bpy.types.Node, SverchCustomTreeNode):

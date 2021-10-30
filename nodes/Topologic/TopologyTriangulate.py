@@ -16,27 +16,27 @@ def flatten(element):
 	return returnList
 
 def triangulateFace(face):
-	faceTriangles = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faceTriangles = []
 	for i in range(0,5,1):
 		try:
 			_ = topologic.FaceUtility.Triangulate(face, float(i)*0.1, faceTriangles)
 			return faceTriangles
 		except:
 			continue
-	faceTrinagles.push_back(face)
+	faceTrinagles.append(face)
 	return faceTriangles
 
 def processItem(topology, tolerance):
-	t = topology.GetType()
+	t = topology.Type()
 	if (t == 1) or (t == 2) or (t == 4) or (t == 128):
 		return topology
-	topologyFaces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	topologyFaces = []
 	_ = topology.Faces(topologyFaces)
-	faceTriangles = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faceTriangles = []
 	for aFace in topologyFaces:
 		triFaces = triangulateFace(aFace)
 		for triFace in triFaces:
-			faceTriangles.push_back(triFace)
+			faceTriangles.append(triFace)
 	if t == 8 or t == 16: # Face or Shell
 		return topologic.Shell.ByFaces(faceTriangles, tolerance)
 	elif t == 32: # Cell

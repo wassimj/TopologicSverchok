@@ -91,97 +91,83 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
 
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
+def getValueAtKey(item, key):
+	try:
+		attr = item.ValueAtKey(key)
+	except:
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 def getKeysAndValues(item):
-	stl_keys = item.Keys()
-	keys = []
+	keys = item.Keys()
 	values = []
-	copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-	for x in copyKeys:
-		k = x.c_str()
-		keys.append(k)
 	for key in keys:
-		fv = None
-		try:
-			v = item.ValueAtKey(key).Value()
-		except:
-			raise Exception("Error: Could not retrieve a Value at the specified key ("+key+")")
-		if (isinstance(v, int) or (isinstance(v, float))):
-			fv = v
-		elif (isinstance(v, cppyy.gbl.std.string)):
-			fv = v.c_str()
-		else:
-			tempList = []
-			for i in v:
-				if isinstance(i.Value(), cppyy.gbl.std.string):
-					tempList.append(i.Value().c_str())
-				else:
-					tempList.append(i.Value())
-			fv = tempList
-		values.append(fv)
+		value = getValueAtKey(item, key)
+		values.append(value)
 	return [keys, values]
 
 def processKeysValues(keys, values):
 	if len(keys) != len(values):
-		raise Exception("Keys and Values do not have the same length")
-	stl_keys = cppyy.gbl.std.list[cppyy.gbl.std.string]()
-	stl_values = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+		raise Exception("TopologyDivide - Error: Keys and Values do not have the same length")
+	stl_keys = []
+	stl_values = []
 	for i in range(len(keys)):
-		stl_keys.push_back(keys[i])
+		if isinstance(keys[i], str):
+			stl_keys.append(keys[i])
+		else:
+			stl_keys.append(str(keys[i]))
 		if isinstance(values[i], list) and len(values[i]) == 1:
 			value = values[i][0]
 		else:
 			value = values[i]
 		if isinstance(value, bool):
 			if value == False:
-				stl_values.push_back(topologic.IntAttribute(0))
+				stl_values.append(topologic.IntAttribute(0))
 			else:
-				stl_values.push_back(topologic.IntAttribute(1))
+				stl_values.append(topologic.IntAttribute(1))
 		elif isinstance(value, int):
-			stl_values.push_back(topologic.IntAttribute(value))
+			stl_values.append(topologic.IntAttribute(value))
 		elif isinstance(value, float):
-			stl_values.push_back(topologic.DoubleAttribute(value))
+			stl_values.append(topologic.DoubleAttribute(value))
 		elif isinstance(value, str):
-			stl_values.push_back(topologic.StringAttribute(value))
+			stl_values.append(topologic.StringAttribute(value))
 		elif isinstance(value, list):
-			l = cppyy.gbl.std.list[topologic.Attribute.Ptr]()
+			l = []
 			for v in value:
 				if isinstance(v, bool):
-					l.push_back(topologic.IntAttribute(v))
+					l.append(topologic.IntAttribute(v))
 				elif isinstance(v, int):
-					l.push_back(topologic.IntAttribute(v))
+					l.append(topologic.IntAttribute(v))
 				elif isinstance(v, float):
-					l.push_back(topologic.DoubleAttribute(v))
+					l.append(topologic.DoubleAttribute(v))
 				elif isinstance(v, str):
-					l.push_back(topologic.StringAttribute(v))
-			stl_values.push_back(topologic.ListAttribute(l))
+					l.append(topologic.StringAttribute(v))
+			stl_values.append(topologic.ListAttribute(l))
 		else:
-			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
-	return topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
-
-def getContents(item):
-	topologyContents = []
-	contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
-	_ = item.Contents(contents)
-	for aContent in contents:
-		aContent.__class__ = classByType(aContent.GetType())
-		topologyContents.append(aContent)
-	return topologyContents
+			raise Exception("TopologyDivide - Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+	return myDict
 
 def processItem(item):
 	topology = item[0]
@@ -191,7 +177,7 @@ def processItem(item):
 	try:
 		_ = topology.Divide(tool, False) # Don't transfer dictionaries just yet
 	except:
-		raise Exception("Error: Divide operation failed.")
+		raise Exception("TopologyDivide - Error: Divide operation failed.")
 	nestingDepth = "1"
 	keys = ["nesting_depth"]
 	values = [nestingDepth]
@@ -199,18 +185,19 @@ def processItem(item):
 	if not addNestingDepth and not transferDictionary:
 		return topology
 
-	contents = getContents(topology)
+	contents = []
+	_ = topology.Contents(contents)
 	for i in range(len(contents)):
 		if not addNestingDepth and transferDictionary:
 			parentDictionary = topology.GetDictionary()
 			if parentDictionary != None:
-				_ = contents[i].setDictionary(parentDictionary)
+				_ = contents[i].SetDictionary(parentDictionary)
 		if addNestingDepth and transferDictionary:
 			parentDictionary = topology.GetDictionary()
 			if parentDictionary != None:
 				keys, values = getKeysAndValues(parentDictionary)
 				if ("nesting_depth" in keys):
-					nestingDepth = parentDictionary.ValueAtKey(key).Value().c_str
+					nestingDepth = parentDictionary.ValueAtKey("nesting_depth").StringValue()
 				else:
 					keys.append("nesting_depth")
 					values.append(nestingDepth)
@@ -222,13 +209,13 @@ def processItem(item):
 			_ = topology.SetDictionary(parentDictionary)
 			values[keys.index("nesting_depth")] = nestingDepth+"_"+str(i+1)
 			d = processKeysValues(keys, values)
-			_ = contents[i].setDictionary(d)
+			_ = contents[i].SetDictionary(d)
 		if addNestingDepth and  not transferDictionary:
 			parentDictionary = topology.GetDictionary()
 			if parentDictionary != None:
 				keys, values = getKeysAndValues(parentDictionary)
 				if ("nesting_depth" in keys):
-					nestingDepth = parentDictionary.ValueAtKey("nesting_depth").Value().c_str()
+					nestingDepth = parentDictionary.ValueAtKey("nesting_depth").StringValue()
 				else:
 					keys.append("nesting_depth")
 					values.append(nestingDepth)

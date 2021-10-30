@@ -5,13 +5,33 @@ from sverchok.data_structure import updateNode, list_match_func, list_match_mode
 
 import topologic
 
-def getValueAtKey(dict, key):
-	returnValue = "None"
+def listAttributeValues(listAttribute):
+	listAttributes = listAttribute.ListValue()
+	returnList = []
+	for attr in listAttributes:
+		if isinstance(attr, topologic.IntAttribute):
+			returnList.append(attr.IntValue())
+		elif isinstance(attr, topologic.DoubleAttribute):
+			returnList.append(attr.DoubleValue())
+		elif isinstance(attr, topologic.StringAttribute):
+			returnList.append(attr.StringValue())
+	return returnList
+
+def getValueAtKey(item, key):
 	try:
-		returnValue = str((cppyy.bind_object(dict.ValueAtKey(key).Value(), "std::string")))
+		attr = item.ValueAtKey(key)
 	except:
-		returnValue = "None"
-	return returnValue
+		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	if isinstance(attr, topologic.IntAttribute):
+		return (attr.IntValue())
+	elif isinstance(attr, topologic.DoubleAttribute):
+		return (attr.DoubleValue())
+	elif isinstance(attr, topologic.StringAttribute):
+		return (attr.StringValue())
+	elif isinstance(attr, topologic.ListAttribute):
+		return (listAttributeValues(attr))
+	else:
+		return None
 
 def dictionaryString(sources):
 	returnList = []
@@ -27,29 +47,27 @@ def dictionaryString(sources):
 			continue
 		stl_keys = d.Keys()
 		if len(stl_keys) > 0:
-			sourceType = source.GetType()
+			sourceType = source.Type()
 			type = str(sourceType)
 			if sourceType == topologic.Vertex.Type():
 				sourceSelector = source
 			elif sourceType == topologic.Edge.Type():
 				sourceSelector = topologic.EdgeUtility.PointAtParameter(source, 0.5)
 			elif sourceType == topologic.Face.Type():
-				sourceSelector = topologic.FaceUtility.InternalVertex(source)
+				sourceSelector = topologic.FaceUtility.InternalVertex(source, 0.0001)
 			elif sourceType == topologic.Cell.Type():
-				sourceSelector = topologic.CellUtility.InternalVertex(source)
+				sourceSelector = topologic.CellUtility.InternalVertex(source, 0.0001)
 			elif sourceType == topologic.CellComplex.Type():
 				sourceSelector = source.Centroid()
 			x = "{:.4f}".format(sourceSelector.X())
 			y = "{:.4f}".format(sourceSelector.Y())
 			z = "{:.4f}".format(sourceSelector.Z())
-			copyKeys = stl_keys.__class__(stl_keys) #wlav suggested workaround. Make a copy first
-			stl_keys = [str((copyKeys.front(), copyKeys.pop_front())[0]) for x in copyKeys]
 			for aSourceKey in stl_keys:
 				if sourceKeys == "":
 					sourceKeys = aSourceKey
 				else:
 					sourceKeys = sourceKeys+"|"+aSourceKey
-				aSourceValue = getValueAtKey(d, aSourceKey)
+				aSourceValue = str(getValueAtKey(d, aSourceKey))
 				if sourceValues == "":
 					sourceValues = aSourceValue
 				else:
@@ -61,43 +79,43 @@ def dictionaryString(sources):
 def processItem(topology):
 	finalList = []
 	for anItem in topology:
-		itemType = anItem.GetType()
+		itemType = anItem.Type()
 		if itemType == topologic.CellComplex.Type():
 			finalList = finalList + (dictionaryString([anItem]))
-			cells = cppyy.gbl.std.list[topologic.Cell.Ptr]()
+			cells = []
 			_ = anItem.Cells(cells)
 			finalList = finalList + (dictionaryString(cells))
-			faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+			faces = []
 			_ = anItem.Faces(faces)
 			finalList = finalList + (dictionaryString(faces))
-			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			edges = []
 			_ = anItem.Edges(edges)
 			finalList = finalList + (dictionaryString(edges))
-			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			vertices = []
 			_ = anItem.Vertices(vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Cell.Type():
 			finalList = finalList + (dictionaryString([anItem]))
-			faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+			faces = []
 			_ = anItem.Faces(faces)
 			finalList = finalList + (dictionaryString(faces))
-			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			edges = []
 			_ = anItem.Edges(edges)
 			finalList = finalList + (dictionaryString(edges))
-			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			vertices = []
 			_ = anItem.Vertices(vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Face.Type():
 			finalList = finalList + (dictionaryString([anItem]))
-			edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+			edges = []
 			_ = anItem.Edges(edges)
 			finalList = finalList + (dictionaryString(edges))
-			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			vertices = []
 			_ = anItem.Vertices(vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Edge.Type():
 			finalList = finalList + (dictionaryString([anItem]))
-			vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+			vertices = []
 			_ = anItem.Vertices(vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Vertex.Type():
