@@ -6,14 +6,9 @@ from sverchok.data_structure import updateNode
 import topologic
 
 def processItem(vertices):
-	print(vertices)
 	if len(vertices) < 2:
 		return None
-	stl_vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
-	for v in vertices:
-		stl_vertices.push_back(v)
-	edge = topologic.EdgeUtility.ByVertices(stl_vertices)
-	print(edge)
+	edge = topologic.EdgeUtility.ByVertices(vertices)
 	return edge
 
 class SvEdgeByVertices(bpy.types.Node, SverchCustomTreeNode):

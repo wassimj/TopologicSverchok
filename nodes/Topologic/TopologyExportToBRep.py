@@ -30,13 +30,10 @@ def processItem(topologyList, filepath, overwrite):
 		raise Exception("Error: Could not create a new file at the following location: "+filepath)
 	if (f):
 		if len(topologyList) > 1:
-			stl_top = cppyy.gbl.std.list[topologic.Topology.Ptr]()
-			for aTopology in topologyList:
-				stl_top.push_back(aTopology)
-			cluster = topologic.Cluster.ByTopologies(stl_top)
-			topString = str(cluster.String())
+			cluster = topologic.Cluster.ByTopologies(topologyList)
+			topString = cluster.String()
 		else:
-			topString = str(topologyList[0].String())
+			topString = topologyList[0].String()
 		f.write(topString)
 		f.close()	
 		return True

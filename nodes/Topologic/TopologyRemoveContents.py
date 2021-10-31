@@ -51,11 +51,11 @@ class SvTopologyRemoveContents(bpy.types.Node, SverchCustomTreeNode):
 			if isinstance(topologyList[i], list) == False:
 				topologyList[i] = [topologyList[i]]
 			contentList = contentListOfLists[i]
-			contents = cppyy.gbl.std.list[topologic.Topology.Ptr]()
+			contents = []
 			for aContent in contentList:
 				if isinstance(aContent, list) == False:
 					aContent = [aContent]
-				contents.push_back(aContent[0])
+				contents.append(aContent[0])
 			newTopology = topologyList[i][0].RemoveContents(contents)
 			newTopology.__class__ = topologyList[i][0].__class__
 			output.append([newTopology])

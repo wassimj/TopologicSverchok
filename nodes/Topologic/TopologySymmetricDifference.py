@@ -7,29 +7,13 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import time
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
 	topologyA = item[0]
 	topologyB = item[1]
 	tranDict = item[2]
 	topologyC = None
 	try:
-		topologyC = fixTopologyClass(topologyA.XOR(topologyB, tranDict))
+		topologyC = topologyA.XOR(topologyB, tranDict)
 	except:
 		print("ERROR: (Topologic>Topology.SymmetricDifference) operation failed.")
 		topologyC = None

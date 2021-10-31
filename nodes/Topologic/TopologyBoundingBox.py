@@ -7,22 +7,6 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def wireByVertices(vList):
 	edges = []
 	for i in range(len(vList)-1):

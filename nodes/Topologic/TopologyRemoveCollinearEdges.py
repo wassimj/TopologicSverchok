@@ -15,40 +15,92 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
+def toDegrees(ang):
+	import math
+	return ang * 180 / math.pi
+
+# From https://gis.stackexchange.com/questions/387237/deleting-collinear-vertices-from-polygon-feature-class-using-arcpy
+def are_collinear(v2, tolerance=0.5):
+	edges = []
+	_ = v2.Edges(edges)
+	if len(edges) == 2:
+		ang = toDegrees(topologic.EdgeUtility.AngleBetween(edges[0], edges[1]))
+		print(ang)
+		if -tolerance <= ang <= tolerance:
+			return True
+		else:
+			return False
+	else:
+		raise Exception("Topology.RemoveCollinearEdges - Error: This method only applies to manifold closed wires")
+
+#----------------------------------------------------------------------
+def get_redundant_vertices(vertices, angTol):
+    """get redundant vertices from a line shape vertices"""
+    indexes_of_vertices_to_remove = []
+    start_idx, middle_index, end_index = 0, 1, 2
+    for i in range(len(vertices)):
+        v1, v2, v3 = vertices[start_idx:end_index + 1]
+        if are_collinear(v2, angTol):
+            indexes_of_vertices_to_remove.append(middle_index)
+
+        start_idx += 1
+        middle_index += 1
+        end_index += 1
+        if end_index == len(vertices):
+            break
+    return indexes_of_vertices_to_remove
+
 def processWire(wire, angTol):
-	return topologic.WireUtility.RemoveCollinearEdges(wire, angTol) #This is an angle Tolerance
+	vertices = []
+	_ = wire.Vertices(vertices)
+	redundantIndices = get_redundant_vertices(vertices, angTol)
+	# Check if first vertex is also collinear
+	if are_collinear(vertices[0], angTol):
+		redundantIndices.append(0)
+	cleanedVertices = []
+	for i in range(len(vertices)):
+		if (i in redundantIndices) == False:
+			cleanedVertices.append(vertices[i])
+	print("Length of vertices is: "+str(len(vertices)))
+	edges = []
+	for i in range(len(cleanedVertices)-1):
+		edges.append(topologic.Edge.ByStartVertexEndVertex(cleanedVertices[i], cleanedVertices[i+1]))
+	edges.append(topologic.Edge.ByStartVertexEndVertex(cleanedVertices[-1], cleanedVertices[0]))
+	return topologic.Wire.ByEdges(edges)
+	#return topologic.WireUtility.RemoveCollinearEdges(wire, angTol) #This is an angle Tolerance
 
 def processItem(topology, angTol, tolerance):
 	returnTopology = topology
-	t = topology.GetType()
+	t = topology.Type()
 	if (t == 1) or (t == 2) or (t == 128): #Vertex or Edge or Cluster, return the original topology
 		return returnTopology
 	elif (t == 4): #wire
 		returnTopology = processWire(topology, angTol)
+		print(returnTopology)
 		return returnTopology
 	elif (t == 8): #Face
 		extBoundary = processWire(topology.ExternalBoundary(), angTol)
-		internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+		internalBoundaries = []
 		_ = topology.InternalBoundaries(internalBoundaries)
-		cleanIB = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+		cleanIB = []
 		for ib in internalBoundaries:
-			cleanIB.push_back(processWire(ib, angTol))
+			cleanIB.append(processWire(ib, angTol))
 		try:
 			returnTopology = topologic.Face.ByExternalInternalBoundaries(extBoundary, cleanIB)
 		except:
 			returnTopology = topology
 		return returnTopology
-	faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	faces = []
 	_ = topology.Faces(faces)
-	stl_final_faces = cppyy.gbl.std.list[topologic.Face.Ptr]()
+	stl_final_faces = []
 	for aFace in faces:
 		extBoundary = processWire(aFace.ExternalBoundary(), angTol)
-		internalBoundaries = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+		internalBoundaries = []
 		_ = aFace.InternalBoundaries(internalBoundaries)
-		cleanIB = cppyy.gbl.std.list[topologic.Wire.Ptr]()
+		cleanIB = []
 		for ib in internalBoundaries:
-			cleanIB.push_back(processWire(ib, angTol))
-		stl_final_faces.push_back(topologic.Face.ByExternalInternalBoundaries(extBoundary, cleanIB))
+			cleanIB.append(processWire(ib, angTol))
+		stl_final_faces.append(topologic.Face.ByExternalInternalBoundaries(extBoundary, cleanIB))
 	returnTopology = topology
 	if t == 16: # Shell
 		try:

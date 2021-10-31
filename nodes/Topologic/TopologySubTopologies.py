@@ -25,7 +25,7 @@ def processItem(item, topologyType):
 		elif topologyType == "Aperture":
 			_ = item.Apertures(subtopologies)
 	except:
-		raise Error("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies")
+		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies")
 	return subtopologies
 
 def recur(input, topologyType):

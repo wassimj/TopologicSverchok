@@ -91,7 +91,7 @@ def transposeList(l):
 	return returnList
 
 def boundingBox(cell):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = cell.Vertices(vertices)
 	x = []
 	y = []
@@ -103,7 +103,7 @@ def boundingBox(cell):
 	return ([min(x), min(y), min(z), max(x), max(y), max(z)])
 
 def isInside(aperture, face, tolerance):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = aperture.Vertices(vertices)
 	for vertex in vertices:
 		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:

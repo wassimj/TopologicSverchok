@@ -7,28 +7,12 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import time
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = item.Vertices(vertices)
-	edges = cppyy.gbl.std.list[topologic.Edge.Ptr]()
+	edges = []
 	_ = item.Edges(vertices, 0.001, edges)
-	return list(edges)
+	return edges
 
 class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""

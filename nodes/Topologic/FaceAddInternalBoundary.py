@@ -91,7 +91,7 @@ def transposeList(l):
 	return returnList
 
 def isInside(ib, face, tolerance):
-	vertices = cppyy.gbl.std.list[topologic.Vertex.Ptr]()
+	vertices = []
 	_ = ib.Vertices(vertices)
 	for vertex in vertices:
 		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:

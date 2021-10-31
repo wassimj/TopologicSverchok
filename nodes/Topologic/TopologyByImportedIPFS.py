@@ -95,29 +95,13 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def classByType(argument):
-	switcher = {
-		1: Vertex,
-		2: Edge,
-		4: Wire,
-		8: Face,
-		16: Shell,
-		32: Cell,
-		64: CellComplex,
-		128: Cluster }
-	return switcher.get(argument, Topology)
-
-def fixTopologyClass(topology):
-  topology.__class__ = classByType(topology.GetType())
-  return topology
-
 def processItem(item):
     hash, url, port = item
     url = url.replace('http://','')
     url = '/dns/'+url+'/tcp/'+port+'/https'
     client = ipfshttpclient.connect(url)
     brepString = client.cat(hash).decode("utf-8")
-    topology = fixTopologyClass(topologic.Topology.DeepCopy(topologic.Topology.ByString(brepString)))
+    topology = topologic.Topology.DeepCopy(topologic.Topology.ByString(brepString))
     return topology
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

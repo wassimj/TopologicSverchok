@@ -142,7 +142,7 @@ class SvFaceTrimByWire(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
-			outputs = processItem(anInput)
+			outputs.append(processItem(anInput))
 		self.outputs['Face'].sv_set(outputs)
 
 def register():

@@ -99,17 +99,29 @@ def getValueAtKey(item, key):
 
 def transferDictionaries(selectors, dictionaries, topologyType, topology, tolerance):
 	if topologyType == topologic.Vertex.Type():
-		sinks = []
-		_ = topology.Vertices(sinks)
+		if topology.Type() == topologic.Vertex.Type():
+			sinks = [topology]
+		else:
+			sinks = []
+			_ = topology.Vertices(sinks)
 	elif topologyType == topologic.Edge.Type():
-		sinks = []
-		_ = topology.Vertices(sinks)
+		if topology.Type() == topologic.Edge.Type():
+			sinks = [topology]
+		else:
+			sinks = []
+			_ = topology.Edges(sinks)
 	elif topologyType == topologic.Face.Type():
-		sinks = []
-		_ = topology.Vertices(sinks)
+		if topology.Type() == topologic.Face.Type():
+			sinks = [topology]
+		else:
+			sinks = []
+			_ = topology.Faces(sinks)
 	elif topologyType == topologic.Cell.Type():
-		sinks = []
-		_ = topology.Cells(sinks)
+		if topology.Type() == topologic.Cell.Type():
+			sinks = [topology]
+		else:
+			sinks = []
+			_ = topology.Cells(sinks)
 	else:
 		sinks = []
 	for i in range(len(selectors)):
