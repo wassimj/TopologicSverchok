@@ -31,7 +31,7 @@ def processItem(item):
 		topFace = topologic.TopologyUtility.Translate(face, faceNormal[0]*0.5*thickness, faceNormal[1]*0.5*thickness, faceNormal[2]*0.5*thickness)
 	else:
 		bottomFace = face
-		topFace = fixTopologyClass(topologic.TopologyUtility.Translate(face, faceNormal[0]*thickness, faceNormal[1]*thickness, faceNormal[2]*thickness))
+		topFace = topologic.TopologyUtility.Translate(face, faceNormal[0]*thickness, faceNormal[1]*thickness, faceNormal[2]*thickness)
 
 	cellFaces = [bottomFace, topFace]
 	bottomEdges = []
