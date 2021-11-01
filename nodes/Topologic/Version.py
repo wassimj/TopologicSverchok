@@ -18,7 +18,7 @@ class SvTopologicVersion(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Version')
 
 	def process(self):
-		self.outputs['Version'].sv_set("TopologicSverchok version 0_6_0")
+		self.outputs['Version'].sv_set(['0 6 0 1'])
 
 
 def register():

@@ -25,7 +25,6 @@ def are_collinear(v2, tolerance=0.5):
 	_ = v2.Edges(edges)
 	if len(edges) == 2:
 		ang = toDegrees(topologic.EdgeUtility.AngleBetween(edges[0], edges[1]))
-		print(ang)
 		if -tolerance <= ang <= tolerance:
 			return True
 		else:
@@ -63,7 +62,6 @@ def processWire(wire, angTol):
 	for i in range(len(vertices)):
 		if (i in redundantIndices) == False:
 			cleanedVertices.append(vertices[i])
-	print("Length of vertices is: "+str(len(vertices)))
 	edges = []
 	for i in range(len(cleanedVertices)-1):
 		edges.append(topologic.Edge.ByStartVertexEndVertex(cleanedVertices[i], cleanedVertices[i+1]))
@@ -78,7 +76,6 @@ def processItem(topology, angTol, tolerance):
 		return returnTopology
 	elif (t == 4): #wire
 		returnTopology = processWire(topology, angTol)
-		print(returnTopology)
 		return returnTopology
 	elif (t == 8): #Face
 		extBoundary = processWire(topology.ExternalBoundary(), angTol)
