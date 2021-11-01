@@ -107,6 +107,8 @@ def nodes_index():
                 ("Topologic.ApertureByTopologyContext", "SvApertureByTopologyContext"),
                 ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
+                ("Topologic.ShellExternalBoundary", "SvShellExternalBoundary"),
+                ("Topologic.ShellInternalBoundaries", "SvShellInternalBoundaries"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
                 ("Topologic.CellCone", "SvCellCone"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
@@ -430,6 +432,8 @@ class NODEVIEW_MT_AddTPSubcategoryShell(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvShellByFaces'],
+            ['SvShellExternalBoundary'],
+            ['SvShellInternalBoundaries'],
             ['SvShellIsClosed'],
         ])
 

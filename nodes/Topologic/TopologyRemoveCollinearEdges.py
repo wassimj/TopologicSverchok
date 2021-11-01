@@ -48,6 +48,8 @@ def get_redundant_vertices(vertices, angTol):
         end_index += 1
         if end_index == len(vertices):
             break
+    if are_collinear(vertices[0], angTol):
+        indexes_of_vertices_to_remove.append(0)
     return indexes_of_vertices_to_remove
 
 def processWire(wire, angTol):
