@@ -52,6 +52,8 @@ def processKeysValues(keys, values):
 	stl_keys = []
 	stl_values = []
 	for i in range(len(keys)):
+		if keys[i] in '_RNA_UI':
+			continue
 		if isinstance(keys[i], str):
 			stl_keys.append(keys[i])
 		else:
@@ -60,6 +62,8 @@ def processKeysValues(keys, values):
 			value = values[i][0]
 		else:
 			value = values[i]
+		if isinstance(value, idprop.types.IDPropertyArray):
+			value = value.to_list()
 		if isinstance(value, bool):
 			if value == False:
 				stl_values.append(topologic.IntAttribute(0))
