@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 6, 0, 3),
+    "version": (0, 6, 0, 4),
     "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -67,6 +67,7 @@ def nodes_index():
 	coreNodes = [
                 ("Topologic.Version", "SvTopologicVersion"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
+                ("Topologic.VertexByObjectLocation", "SvVertexByObjectLocation"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
                 ("Topologic.VertexDistance", "SvVertexDistance"),
                 ("Topologic.VertexEnclosingCell", "SvVertexEnclosingCell"),
@@ -173,6 +174,7 @@ def nodes_index():
                 ("Topologic.TopologyString", "SvTopologyString"),
                 ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
                 ("Topologic.TopologyTransferDictionaries", "SvTopologyTransferDictionaries"),
+                ("Topologic.TopologyTransferDictionariesBySelectors", "SvTopologyTransferDictionariesBySelectors"),
                 ("Topologic.TopologyTranslate", "SvTopologyTranslate"),
                 ("Topologic.TopologyTriangulate", "SvTopologyTriangulate"),
                 ("Topologic.TopologyType", "SvTopologyType"),
@@ -345,6 +347,7 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvVertexAdjacentEdges'],
             ['SvVertexByCoordinates'],
+            ['SvVertexByObjectLocation'],
             ['SvVertexCoordinates'],
             ['SvVertexDistance'],
             ['SvVertexEnclosingCell'],
@@ -628,6 +631,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyString'],
             ['SvTopologySubTopologies'],
             ['SvTopologyTransferDictionaries'],
+            ['SvTopologyTransferDictionariesBySelectors'],
             ['SvTopologyTranslate'],
             ['SvTopologyTriangulate'],
             ['SvTopologyType'],
