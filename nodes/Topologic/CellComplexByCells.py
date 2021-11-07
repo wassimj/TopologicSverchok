@@ -20,13 +20,17 @@ def flatten(element):
 
 def processItem(cells):
 	cellComplex = cells[0]
+	gc = topologic.GlobalCluster.GetInstance()
+	subTopologies = []
 	for i in range(1,len(cells)):
 		try:
 			cellComplex = cellComplex.Merge(cells[i], False)
+			gc.RemoveTopology(cellComplex)
 		except:
 			raise Exception("Error: CellComplex.ByCells operation failed during processing the input Cells")
 	if cellComplex.Type() != 64: #64 is the type of a CellComplex
 		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
+	gc.AddTopology(cellComplex)
 	return cellComplex
 
 class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):

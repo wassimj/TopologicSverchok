@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+import time
 
 def processItem(item, topologyType):
 	subtopologies = []
@@ -58,6 +59,7 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 		layout.prop(self, "subtopologyType",text="")
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
@@ -68,6 +70,8 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 		if(len(outputs) == 1):
 			outputs = outputs[0]
 		self.outputs['SubTopologies'].sv_set(outputs)
+		end = time.time()
+		print("Topology.SubTopologies ("+self.subtopologyType+") Operation consumed "+str(round((end - start)*1000,0))+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologySubTopologies)

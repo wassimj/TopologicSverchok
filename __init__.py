@@ -216,6 +216,9 @@ def nodes_index():
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
+                ("Topologic.GlobalClusterClear", "SvGlobalClusterClear"),
+                ("Topologic.GlobalClusterRemoveTopology", "SvGlobalClusterRemoveTopology"),
+                ("Topologic.GlobalClusterSubTopologies", "SvGlobalClusterSubTopologies"),
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
 	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
@@ -639,6 +642,20 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
         ])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
+class NODEVIEW_MT_AddTPSubcategoryGlobalCluster(bpy.types.Menu):
+    bl_label = "TPSubcategoryGlobalCluster"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryGlobalCluster'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvGlobalClusterClear'],
+            ['SvGlobalClusterRemoveTopology'],
+            ['SvGlobalClusterSubTopologies'],
+        ])
+
+make_class('TPSubcategoryGlobalCluster', 'Topologic @ GlobalCluster')
+
 class NODEVIEW_MT_AddTPSubcategoryColor(bpy.types.Menu):
     bl_label = "TPSubcategoryColor"
     bl_idname = 'NODEVIEW_MT_AddTPSubcategoryColor'
@@ -723,6 +740,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Context'],
 			['@ Dictionary'],
             ['@ Graph'],
+            ['@ GlobalCluster'],
             ['@ EnergyModel'],
             ['@ IFC'],
             ['@ Blockchain'],
@@ -755,6 +773,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGlobalCluster)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
@@ -791,6 +810,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGlobalCluster)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
