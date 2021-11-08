@@ -111,15 +111,16 @@ class SvGlobalClusterClear(bpy.types.Node, SverchCustomTreeNode):
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Wait For')
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def process(self):
 		start = time.time()
-		try:
-			topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-			topologyList = flatten(topologyList)
-		except:
-			topologyList = []
+		if not any(socket.is_linked for socket in self.inputs):
+			return
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
+		waitForList = self.inputs['Wait For'].sv_get(deepcopy=False)
 		outputs = []
 		if(len(topologyList) > 0):
 			for anInput in topologyList:
