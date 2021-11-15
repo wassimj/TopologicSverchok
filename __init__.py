@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 6, 0, 4),
+    "version": (0, 6, 0, 5),
     "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -87,6 +87,7 @@ def nodes_index():
                 ("Topologic.WireCycles", "SvWireCycles"),
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
                 ("Topologic.WireIsSimilar", "SvWireIsSimilar"),
+                ("Topologic.WireLength", "SvWireLength"),
                 ("Topologic.WireRectangle", "SvWireRectangle"),
                 ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
@@ -225,7 +226,8 @@ def nodes_index():
 	web3Nodes = [("Topologic.ContractByParameters", "SvContractByParameters")]
 	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                  ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
-	openstudioNodes = [("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
+	openstudioNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC"),
+                ("Topologic.EnergyModelByImportedOSM", "SvEnergyModelByImportedOSM"),
                 ("Topologic.EnergyModelByTopology", "SvEnergyModelByTopology"),
                 ("Topologic.EnergyModelColumnNames", "SvEnergyModelColumnNames"),
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
@@ -395,6 +397,7 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvWireCycles'],
             ['SvWireIsClosed'],
             ['SvWireIsSimilar'],
+            ['SvWireLength'],
             ['SvWireRectangle'],
             ['SvWireStar'],
         ])
@@ -675,6 +678,7 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvEnergyModelByImportedIFC'],
             ['SvEnergyModelByImportedOSM'],
             ['SvEnergyModelByTopology'],
             ['SvEnergyModelColumnNames'],

@@ -98,7 +98,6 @@ def processItem(item):
 	vertexB = item[2]
 	vertexKey = item[3]
 	edgeKey = item[4]
-	print(edgeKey)
 	topology = graph.ShortestPath(vertexA, vertexB, vertexKey, edgeKey)
 	return topology
 

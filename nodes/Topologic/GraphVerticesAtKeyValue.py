@@ -109,34 +109,31 @@ def valueAtKey(item, key):
 		attr = item.ValueAtKey(key)
 	except:
 		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
-	if isinstance(attr, IntAttribute):
+	if isinstance(attr, topologic.IntAttribute):
 		return (attr.IntValue())
-	elif isinstance(attr, DoubleAttribute):
+	elif isinstance(attr, topologic.DoubleAttribute):
 		return (attr.DoubleValue())
-	elif isinstance(attr, StringAttribute):
+	elif isinstance(attr, topologic.StringAttribute):
 		return (attr.StringValue())
-	elif isinstance(attr, ListAttribute):
+	elif isinstance(attr, topologic.ListAttribute):
 		return (listAttributeValues(attr))
 	else:
 		return None
 
-def processItem(item):
-	vertex = item[0]
-	key = item[1]
-	value = item[2]
+def processItem(vertexList, item):
+	key = item[0]
+	value = item[1]
 	if isinstance(value, list):
 		value.sort()
-	try:
-		d = vertex.GetDictionary()
+	returnVertices = []
+	for aVertex in vertexList:
+		d = aVertex.GetDictionary()
 		v = valueAtKey(d, key)
 		if isinstance(v, list):
 			v.sort()
-	except:
-		print("Failed to find the Key and Value")
-		return None
-	if str(v) == str(value):
-		return vertex
-	return None
+		if str(v) == str(value):
+			returnVertices.append(aVertex)
+	return returnVertices
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -166,9 +163,12 @@ class SvGraphVerticesAtKeyValue(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		vertexList = self.inputs['Vertices'].sv_get(deepcopy=True)
-		keyList = self.inputs['Key'].sv_get(deepcopy=True)[0]
-		valueList = self.inputs['Value'].sv_get(deepcopy=True)[0]
-		inputs = [vertexList, keyList, valueList]
+		keyList = self.inputs['Key'].sv_get(deepcopy=True)
+		valueList = self.inputs['Value'].sv_get(deepcopy=True)
+		vertexList = flatten(vertexList)
+		keyList = flatten(keyList)
+		valueList = flatten(valueList)
+		inputs = [keyList, valueList]
 		outputs = []
 		if ((self.Replication) == "Default"):
 			inputs = repeat(inputs)
@@ -185,7 +185,7 @@ class SvGraphVerticesAtKeyValue(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
-			output = processItem(anInput)
+			output = processItem(vertexList, anInput)
 			print(output)
 			if output:
 				outputs.append(output)
