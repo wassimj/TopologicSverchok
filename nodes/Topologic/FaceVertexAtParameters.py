@@ -94,7 +94,6 @@ def processItem(item):
 	face = item[0]
 	u = item[1]
 	v = item[2]
-	vertex = None
 	vertex = topologic.FaceUtility.VertexAtParameters(face, u, v)
 	return vertex
 

@@ -15,13 +15,23 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(item):
-	topology = item[0]
-	tolerance = item[1]
+
+def processItem(item, tolerance):
 	vert = None
-	if topology.Type() == topologic.Cell.Type():
-		vert = topologic.CellUtility.InternalVertex(topology, tolerance)
+	if item.Type() == topologic.Cell.Type():
+		vert = topologic.CellUtility.InternalVertex(item, tolerance)
 	return vert
+
+def recur(item, tolerance):
+	output = []
+	if item == None:
+		return []
+	if isinstance(item, list):
+		for subItem in item:
+			output.append(recur(subItem, tolerance))
+	else:
+		output = processItem(item, tolerance)
+	return output
 
 class SvCellInternalVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -40,18 +50,8 @@ class SvCellInternalVertex(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		cells = self.inputs['Cell'].sv_get(deepcopy=False)
-		cells = flatten(cells)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
-		outputs = []
-		maxLength = max([len(cells), len(toleranceList)])
-		for i in range(len(cells), maxLength):
-			cells.append(cells[-1])
-		for i in range(len(toleranceList), maxLength):
-			toleranceList.append(toleranceList[-1])
-		inputs = zip(cells, toleranceList)
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		self.outputs['Vertex'].sv_set(outputs)
+		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=False)[0][0]
+		self.outputs['Vertex'].sv_set(recur(cells, tolerance))
 
 def register():
 	bpy.utils.register_class(SvCellInternalVertex)

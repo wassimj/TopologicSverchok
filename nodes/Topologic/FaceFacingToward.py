@@ -1,11 +1,10 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
+from sverchok.data_structure import updateNode
 
 import topologic
-import faulthandler
-faulthandler.enable()
+import math
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -92,48 +91,60 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
+def unitizeVector(vector):
+	mag = 0
+	for value in vector:
+		mag += value ** 2
+	mag = mag ** 0.5
+	unitVector = []
+	for i in range(len(vector)):
+		unitVector.append(vector[i] / mag)
+	return unitVector
+
 def processItem(item):
-	x = item[0]
-	y = item[1]
-	z = item[2]
-	vert = None
+	face = item[0]
+	direction = item[1]
+	asVertex = item[2]
+
+	faceNormal = topologic.FaceUtility.NormalAtParameters(face,0.5, 0.5)
+	faceCenter = topologic.FaceUtility.VertexAtParameters(face,0.5,0.5)
+	cList = [faceCenter.X(), faceCenter.Y(), faceCenter.Z()]
 	try:
-		vert = topologic.Vertex.ByCoordinates(x, y, z)
+		vList = [direction.X(), direction.Y(), direction.Z()]
 	except:
-		vert = None
-	return vert
-
-def recur(item, tolerance):
-	output = []
-	if item == None:
-		return []
-	if isinstance(item, list):
-		for subItem in item:
-			output.append(recur(subItem, tolerance))
+		try:
+			vList = [direction[0], direction[1], direction[2]]
+		except:
+			raise Exception("Face.FacingToward - Error: Could not get the vector from the input direction")
+	if asVertex:
+		dV = [vList[0]-cList[0], vList[1]-cList[1], vList[2]-cList[2]]
 	else:
-		output = processItem(item, tolerance)
-	return output
+		dV = vList
+	uV = unitizeVector(dV)
+	dot = sum([i*j for (i, j) in zip(uV, faceNormal)])
+	ang = math.degrees(math.acos(dot))
+	if dot < 0:
+		return [False, ang]
+	return [True, ang]
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
-
-class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceFacingToward(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex from the input coordinates   
+	Tooltip: Outputs True if the input Face is facing toward the input Vertex. Outputs False otherwise.  
 	"""
-	bl_idname = 'SvVertexByCoordinates'
-	bl_label = 'Vertex.ByCoordinates'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	bl_idname = 'SvFaceFacingToward'
+	bl_label = 'Face.FacingToward'
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	AsVertexProp: BoolProperty(name="As Vertex", default=True, update=updateNode)
 
 	def sv_init(self, context):
-		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
-		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Face')
+		self.inputs.new('SvStringsSocket', 'Direction')
+		self.inputs.new('SvStringsSocket', 'AsVertex').prop_name = 'AsVertexProp'
+		self.outputs.new('SvStringsSocket', 'Status')
+		self.outputs.new('SvStringsSocket', 'Angle')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
@@ -141,14 +152,22 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [xList, yList, zList]
-		if ((self.Replication) == "Trim"):
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Status'].sv_set([])
+			self.outputs['Angle'].sv_set([])
+			return
+		faceList = self.inputs['Face'].sv_get(deepcopy=False)
+		directionList = self.inputs['Direction'].sv_get(deepcopy=False)
+		asVertexList = self.inputs['AsVertex'].sv_get(deepcopy=True)
+
+		faceList = flatten(faceList)
+		directionList = flatten(directionList)
+		asVertexList = flatten(asVertexList)
+		inputs = [faceList, directionList, asVertexList]
+		if ((self.Replication) == "Default"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -159,26 +178,17 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
-		outputs = []
+		statuses = []
+		angles = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		index = 0
-		if ((self.Replication) == "Interlace"):
-			uList = []
-			for i in range(len(xList)):
-				vList = []
-				for j in range(len(yList)):
-					wList = []
-					for k in range(len(zList)):
-						wList.append(outputs[index])
-						index = index+1
-					vList.append(wList)
-				uList.append(vList)
-			outputs = uList		
-		self.outputs['Vertex'].sv_set(outputs)
+			output = processItem(anInput)
+			statuses.append(output[0])
+			angles.append(output[1])
+		self.outputs['Status'].sv_set(statuses)
+		self.outputs['Angle'].sv_set(angles)
 
 def register():
-    bpy.utils.register_class(SvVertexByCoordinates)
+	bpy.utils.register_class(SvFaceFacingToward)
 
 def unregister():
-    bpy.utils.unregister_class(SvVertexByCoordinates)
+	bpy.utils.unregister_class(SvFaceFacingToward)
