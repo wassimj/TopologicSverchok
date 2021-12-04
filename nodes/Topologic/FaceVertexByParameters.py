@@ -99,13 +99,13 @@ def processItem(item):
 
 lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
 
-class SvFaceVertexAtParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceVertexByParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the vertex of the input Face at the input UV parameters    
+	Tooltip: Creates a Vertex on the input Face at the input UV parameters    
 	"""
-	bl_idname = 'SvFaceVertexAtParameters'
-	bl_label = 'Face.VertexAtParameters'
+	bl_idname = 'SvFaceVertexByParameters'
+	bl_label = 'Face.VertexByParameters'
 	U: FloatProperty(name="U", default=0.5, precision=4, update=updateNode)
 	V: FloatProperty(name="V",  default=0.5, precision=4, update=updateNode)
 	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
@@ -149,7 +149,7 @@ class SvFaceVertexAtParameters(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvFaceVertexAtParameters)
+	bpy.utils.register_class(SvFaceVertexByParameters)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceVertexAtParameters)
+	bpy.utils.unregister_class(SvFaceVertexByParameters)
