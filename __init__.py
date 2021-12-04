@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 6, 0, 5),
+    "version": (0, 6, 0, 6),
     "blender": (2, 93, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -186,9 +186,9 @@ def nodes_index():
                 ("Topologic.TopologyTriangulate", "SvTopologyTriangulate"),
                 ("Topologic.TopologyType", "SvTopologyType"),
                 ("Topologic.TopologyTypeID", "SvTopologyTypeID"),
-                ("Topologic.DictionaryByCustomProperties", "SvDictionaryByCustomProperties"),
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryByMergedDictionaries", "SvDictionaryByMergedDictionaries"),
+                ("Topologic.DictionaryByObjectProperties", "SvDictionaryByObjectProperties"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
                 ("Topologic.DictionaryKeys", "SvDictionaryKeys"),
                 ("Topologic.DictionaryValues", "SvDictionaryValues"),
@@ -579,9 +579,9 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvDictionaryByCustomProperties'],
             ['SvDictionaryByKeysValues'],
             ['SvDictionaryByMergedDictionaries'],
+            ['SvDictionaryByObjectProperties'],
             ['SvDictionaryValueAtKey'],
             ['SvDictionaryKeys'],
             ['SvDictionaryValues'],
@@ -834,12 +834,3 @@ def unregister():
     #sockets.unregister()
     #icons.unregister()
     #settings.unregister()
-
-def flatten(element):
-    returnList = []
-    if isinstance(element, list) == True:
-	    for anItem in element:
-		    returnList = returnList + flatten(anItem)
-    else:
-	    returnList = [element]
-    return returnList
