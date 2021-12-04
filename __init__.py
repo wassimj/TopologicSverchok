@@ -77,11 +77,13 @@ def nodes_index():
                 ("Topologic.EdgeAdjacentWires", "SvEdgeAdjacentWires"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
                 ("Topologic.EdgeByVertices", "SvEdgeByVertices"),
+                ("Topologic.EdgeDirection", "SvEdgeDirection"),
                 ("Topologic.EdgeStartVertex", "SvEdgeStartVertex"),
                 ("Topologic.EdgeEndVertex", "SvEdgeEndVertex"),
                 ("Topologic.EdgeLength", "SvEdgeLength"),
                 ("Topologic.EdgeParameterAtVertex", "SvEdgeParameterAtVertex"),
-                ("Topologic.EdgeVertexAtParameter", "SvEdgeVertexAtParameter"),
+                ("Topologic.EdgeVertexByDistance", "SvEdgeVertexByDistance"),
+                ("Topologic.EdgeVertexByParameter", "SvEdgeVertexByParameter"),
                 ("Topologic.WireByEdges", "SvWireByEdges"),
                 ("Topologic.WireCircle", "SvWireCircle"),
                 ("Topologic.WireCycles", "SvWireCycles"),
@@ -101,7 +103,8 @@ def nodes_index():
                 ("Topologic.FaceCompactness", "SvFaceCompactness"),
                 ("Topologic.FaceExternalBoundary", "SvFaceExternalBoundary"),
                 ("Topologic.FaceFacingToward", "SvFaceFacingToward"),
-                ("Topologic.FaceGrid", "SvFaceGrid"),
+                ("Topologic.FaceGridByDistances", "SvFaceGridByDistances"),
+                ("Topologic.FaceGridByParameters", "SvFaceGridByParameters"),
                 ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
                 ("Topologic.FaceIsInside", "SvFaceIsInside"),
                 ("Topologic.FaceInternalBoundaries", "SvFaceInternalBoundaries"),
@@ -376,12 +379,14 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
             ['SvEdgeAdjacentWires'],
             ['SvEdgeByStartVertexEndVertex'],
             ['SvEdgeByVertices'],
+            ['SvEdgeDirection'],
             ['SvEdgeEndVertex'],
             ['SvEdgeLength'],
             ['SvEdgeParameterAtVertex'],
             ['SvEdgeSharedVertices'],
             ['SvEdgeStartVertex'],
-            ['SvEdgeVertexAtParameter'],
+            ['SvEdgeVertexByDistance'],
+            ['SvEdgeVertexByParameter'],
         ])
 
 make_class('TPSubcategoryEdge', 'Topologic @ Edge')
@@ -427,7 +432,8 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceCompactness'],
             ['SvFaceExternalBoundary'],
             ['SvFaceFacingToward'],
-            ['SvFaceGrid'],
+            ['SvFaceGridByDistances'],
+            ['SvFaceGridByParameters'],
             ['SvFaceInternalBoundaries'],
             ['SvFaceInternalVertex'],
             ['SvFaceIsInside'],
@@ -828,3 +834,12 @@ def unregister():
     #sockets.unregister()
     #icons.unregister()
     #settings.unregister()
+
+def flatten(element):
+    returnList = []
+    if isinstance(element, list) == True:
+	    for anItem in element:
+		    returnList = returnList + flatten(anItem)
+    else:
+	    returnList = [element]
+    return returnList

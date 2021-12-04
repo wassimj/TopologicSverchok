@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+#import Replication
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -54,7 +55,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -154,13 +154,16 @@ def processItem(item):
 	face = item[0]
 	uRange = item[1]
 	vRange = item[2]
+	clip = item[3]
+	if isinstance(clip, list):
+		clip = clip[0]
 	uvWireEdges = []
 	uCluster = None
 	vCluster = None
 	uvWire = None
-	if uRange:
+	if len(uRange) > 0:
 		if (min(uRange) < 0) or (max(uRange) > 1):
-			raise Exception("Face.Grid - Error: uRange input values are outside acceptable range (0,1)")
+			raise Exception("Face.GridByParameters - Error: uRange input values are outside acceptable range (0,1)")
 		uRange.sort()
 		uRangeEdges = []
 		for u in uRange:
@@ -171,10 +174,11 @@ def processItem(item):
 			uvWireEdges.append(e)
 		if len(uRangeEdges) > 0:
 			uCluster = topologic.Cluster.ByTopologies(uRangeEdges)
-			uCluster = uCluster.Intersect(face, False)
-	if vRange:
+			if clip:
+				uCluster = uCluster.Intersect(face, False)
+	if len(vRange) > 0:
 		if (min(vRange) < 0) or (max(vRange) > 1):
-			raise Exception("Face.Grid - Error: vRange input values are outside acceptable range (0,1)")
+			raise Exception("Face.GridByParameters - Error: vRange input values are outside acceptable range (0,1)")
 		vRange.sort()
 		vRangeEdges = []
 		for v in vRange:
@@ -185,8 +189,9 @@ def processItem(item):
 			uvWireEdges.append(e)
 		if len(vRangeEdges) > 0:
 			vCluster = topologic.Cluster.ByTopologies(vRangeEdges)
-			vCluster = vCluster.Intersect(face, False)
-	if len(uvWireEdges) > 0:
+			if clip:
+				vCluster = vCluster.Intersect(face, False)
+	if len(uvWireEdges) > 0 and uCluster and vCluster:
 		uvWire = uCluster.Merge(vCluster)
 	return [uCluster, vCluster, uvWire]
 
@@ -198,14 +203,19 @@ class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvFaceGridByParameters'
 	bl_label = 'Face.GridByParameters'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	Clip: BoolProperty(name="Clip To Face", default=True, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'uRange')
 		self.inputs.new('SvStringsSocket', 'vRange')
+		self.inputs.new('SvStringsSocket', 'Clip').prop_name = 'Clip'
 		self.outputs.new('SvStringsSocket', 'u')
 		self.outputs.new('SvStringsSocket', 'v')
 		self.outputs.new('SvStringsSocket', 'uv')
+
+	def draw_buttons(self, context, layout):
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(outputSocket.is_linked for outputSocket in self.outputs):
@@ -220,15 +230,17 @@ class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
 			return
 		faceList = self.inputs['Face'].sv_get(deepcopy=True)
 		faceList = flatten(faceList)
-		if self.inputs['uRange'].is_linked:
-			uRangeList = self.inputs['uRange'].sv_get(deepcopy=False)
-		else:
+		clipList = self.inputs['Clip'].sv_get(deepcopy=True)
+		clipList = flatten(clipList)
+		if not (self.inputs['uRange'].is_linked):
 			uRangeList = [[]]
-		if self.inputs['vRange'].is_linked:
-			vRangeList = self.inputs['vRange'].sv_get(deepcopy=False)
 		else:
+			uRangeList = self.inputs['uRange'].sv_get(deepcopy=False)
+		if not (self.inputs['vRange'].is_linked):
 			vRangeList = [[]]
-		inputs = [faceList, uRangeList, vRangeList]
+		else:
+			vRangeList = self.inputs['vRange'].sv_get(deepcopy=False)
+		inputs = [faceList, uRangeList, vRangeList, clipList]
 		if ((self.Replication) == "Default"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)

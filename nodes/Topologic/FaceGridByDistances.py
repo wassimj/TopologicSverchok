@@ -54,7 +54,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -150,59 +149,98 @@ def selfMerge(item):
 		return resultingTopologies[0]
 	return item.SelfMerge()
 
+def unitizeVector(vector):
+	mag = 0
+	for value in vector:
+		mag += value ** 2
+	mag = mag ** 0.5
+	unitVector = []
+	for i in range(len(vector)):
+		unitVector.append(vector[i] / mag)
+	return unitVector
+
+def multiplyVector(vector, mag, tol):
+	oldMag = 0
+	for value in vector:
+		oldMag += value ** 2
+	oldMag = oldMag ** 0.5
+	if oldMag < tol:
+		return [0,0,0]
+	newVector = []
+	for i in range(len(vector)):
+		newVector.append(vector[i] * mag / oldMag)
+	return newVector
+
 def processItem(item):
 	face = item[0]
 	uRange = item[1]
 	vRange = item[2]
+	uOrigin = item[3]
+	vOrigin = item[4]
+	clip = item[5]
+	if isinstance(clip, list):
+		clip = clip[0]
 	uvWireEdges = []
 	uCluster = None
 	vCluster = None
 	uvWire = None
-	if uRange:
-		if (min(uRange) < 0) or (max(uRange) > 1):
-			raise Exception("Face.Grid - Error: uRange input values are outside acceptable range (0,1)")
+	v1 = topologic.FaceUtility.VertexAtParameters(face, 0, 0)
+	v2 = topologic.FaceUtility.VertexAtParameters(face, 1, 0)
+	uVector = [v2.X()-v1.X(), v2.Y()-v1.Y(),v2.Z()-v1.Z()]
+	v1 = topologic.FaceUtility.VertexAtParameters(face, 0, 0)
+	v2 = topologic.FaceUtility.VertexAtParameters(face, 0, 1)
+	vVector = [v2.X()-v1.X(), v2.Y()-v1.Y(),v2.Z()-v1.Z()]
+	if len(uRange) > 0:
 		uRange.sort()
 		uRangeEdges = []
+		uuVector = unitizeVector(uVector)
 		for u in uRange:
-			v1 = topologic.FaceUtility.VertexAtParameters(face, u, 0)
-			v2 = topologic.FaceUtility.VertexAtParameters(face, u, 1)
+			tempVec = multiplyVector(uuVector, u, 0.0001)
+			v1 = topologic.Vertex.ByCoordinates(uOrigin.X()+tempVec[0], uOrigin.Y()+tempVec[1], uOrigin.Z()+tempVec[2])
+			v2 = topologic.Vertex.ByCoordinates(v1.X()+vVector[0], v1.Y()+vVector[1], v1.Z()+vVector[2])
 			e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
 			uRangeEdges.append(e)
 			uvWireEdges.append(e)
 		if len(uRangeEdges) > 0:
 			uCluster = topologic.Cluster.ByTopologies(uRangeEdges)
-			uCluster = uCluster.Intersect(face, False)
-	if vRange:
-		if (min(vRange) < 0) or (max(vRange) > 1):
-			raise Exception("Face.Grid - Error: vRange input values are outside acceptable range (0,1)")
+			if clip:
+				uCluster = uCluster.Intersect(face, False)
+	if len(vRange) > 0:
 		vRange.sort()
 		vRangeEdges = []
+		uvVector = unitizeVector(vVector)
 		for v in vRange:
-			v1 = topologic.FaceUtility.VertexAtParameters(face, 0, v)
-			v2 = topologic.FaceUtility.VertexAtParameters(face, 1, v)
+			tempVec = multiplyVector(uvVector, v, 0.0001)
+			v1 = topologic.Vertex.ByCoordinates(vOrigin.X()+tempVec[0], vOrigin.Y()+tempVec[1], vOrigin.Z()+tempVec[2])
+			v2 = topologic.Vertex.ByCoordinates(v1.X()+uVector[0], v1.Y()+uVector[1], v1.Z()+uVector[2])
 			e = topologic.Edge.ByStartVertexEndVertex(v1, v2)
 			vRangeEdges.append(e)
 			uvWireEdges.append(e)
 		if len(vRangeEdges) > 0:
 			vCluster = topologic.Cluster.ByTopologies(vRangeEdges)
-			vCluster = vCluster.Intersect(face, False)
-	if len(uvWireEdges) > 0:
+			if clip:
+				vCluster = vCluster.Intersect(face, False)
+	if len(uvWireEdges) > 0 and uCluster and vCluster:
 		uvWire = uCluster.Merge(vCluster)
 	return [uCluster, vCluster, uvWire]
 
-class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceGridByDistances(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs a grid of edges based on the input face and input parameters    
+	Tooltip: Outputs a grid of edges based on the input face and input distances    
 	"""
-	bl_idname = 'SvFaceGridByParameters'
-	bl_label = 'Face.GridByParameters'
+	bl_idname = 'SvFaceGridByDistances'
+	bl_label = 'Face.GridByDistances'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	Clip: BoolProperty(name="Clip To Face", default=True, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'uRange')
 		self.inputs.new('SvStringsSocket', 'vRange')
+		self.inputs.new('SvStringsSocket', 'uOrigin')
+		self.inputs.new('SvStringsSocket', 'vOrigin')
+		self.inputs.new('SvStringsSocket', 'Clip').prop_name = 'Clip'
 		self.outputs.new('SvStringsSocket', 'u')
 		self.outputs.new('SvStringsSocket', 'v')
 		self.outputs.new('SvStringsSocket', 'uv')
@@ -218,17 +256,34 @@ class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
 			for outputSocket in self.outputs:
 				outputSocket.sv_set([])
 			return
+
 		faceList = self.inputs['Face'].sv_get(deepcopy=True)
 		faceList = flatten(faceList)
+		clipList = self.inputs['Clip'].sv_get(deepcopy=True)
+		clipList = flatten(clipList)
+		if not (self.inputs['uOrigin'].is_linked):
+			uOriginList = []
+			for aFace in faceList:
+				uOriginList.append(topologic.FaceUtility.VertexAtParameters(aFace, 0, 0))
+		else:
+			uOriginList = self.inputs['uOrigin'].sv_get(deepcopy=True)
+			uOriginList = flatten(uOriginList)
+		if not (self.inputs['vOrigin'].is_linked):
+			vOriginList = []
+			for aFace in faceList:
+				vOriginList.append(topologic.FaceUtility.VertexAtParameters(aFace, 0, 0))
+		else:
+			vOriginList = self.inputs['vOrigin'].sv_get(deepcopy=True)
+			vOriginList = flatten(vOriginList)
 		if self.inputs['uRange'].is_linked:
 			uRangeList = self.inputs['uRange'].sv_get(deepcopy=False)
 		else:
-			uRangeList = [[]]
+			uRangeList = []
 		if self.inputs['vRange'].is_linked:
 			vRangeList = self.inputs['vRange'].sv_get(deepcopy=False)
 		else:
-			vRangeList = [[]]
-		inputs = [faceList, uRangeList, vRangeList]
+			vRangeList = []
+		inputs = [faceList, uRangeList, vRangeList, uOriginList, vOriginList, clipList]
 		if ((self.Replication) == "Default"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
@@ -256,7 +311,7 @@ class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['uv'].sv_set(uv)
 
 def register():
-	bpy.utils.register_class(SvFaceGridByParameters)
+	bpy.utils.register_class(SvFaceGridByDistances)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceGridByParameters)
+	bpy.utils.unregister_class(SvFaceGridByDistances)

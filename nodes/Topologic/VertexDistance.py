@@ -32,8 +32,12 @@ def matchLengths(list):
 def processItem(item):
 	v = item[0]
 	t = item[1]
-	dist = topologic.VertexUtility.Distance(v, t)
+	if v and t:
+		dist = topologic.VertexUtility.Distance(v, t)
+	else:
+		dist = None
 	return dist
+
 
 class SvVertexDistance(bpy.types.Node, SverchCustomTreeNode):
 	"""

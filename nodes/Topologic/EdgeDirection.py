@@ -4,7 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -15,11 +14,28 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
+def unitizeVector(vector):
+	mag = 0
+	for value in vector:
+		mag += value ** 2
+	mag = mag ** 0.5
+	unitVector = []
+	for i in range(len(vector)):
+		unitVector.append(vector[i] / mag)
+	return unitVector
+
 def processItem(item, outputType, decimals):
 	coords = None
-	x = round(item.X(), decimals)
-	y = round(item.Y(), decimals)
-	z = round(item.Z(), decimals)
+	print(item)
+	ev = item.EndVertex()
+	sv = item.StartVertex()
+	x = ev.X() - sv.X()
+	y = ev.Y() - sv.Y()
+	z = ev.Z() - sv.Z()
+	uvec = unitizeVector([x,y,z])
+	x = round(uvec[0], decimals)
+	y = round(uvec[1], decimals)
+	z = round(uvec[2], decimals)
 	coords = [x,y,z]
 	if outputType == "XYZ":
 		coords = [x,y,z]
@@ -39,21 +55,21 @@ def processItem(item, outputType, decimals):
 
 outputTypes = [("XYZ", "XYZ", "", 1),("XY", "XY", "", 2),("XZ", "XZ", "", 3),("YZ", "YZ", "", 4),("X", "X", "", 5), ("Y", "Y", "", 6),("Z", "Z", "", 7)]
 
-class SvVertexCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeDirection(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the coordinates of the input Vertex    
+	Tooltip: Outputs the direction vector of the input Edge    
 	"""
-	bl_idname = 'SvVertexCoordinates'
-	bl_label = 'Vertex.Coordinates'
-	Coordinates:StringProperty(name="Coordinates", update=updateNode)
+	bl_idname = 'SvEdgeDirection'
+	bl_label = 'Edge.Direction'
+	Direction:StringProperty(name="Direction", update=updateNode)
 	Decimals: IntProperty(name="Decimals", default=4, min=0, max=8, update=updateNode)
 	outputType: EnumProperty(name="Output Type", description="Specify output type", default="XYZ", items=outputTypes, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Edge')
 		self.inputs.new('SvStringsSocket', 'Decimals').prop_name = 'Decimals'
-		self.outputs.new('SvStringsSocket', 'Coordinates').prop_name="Coordinates"
+		self.outputs.new('SvStringsSocket', 'Direction').prop_name="Direction"
 		self.outputs.new('SvStringsSocket', 'X')
 		self.outputs.new('SvStringsSocket', 'Y')
 		self.outputs.new('SvStringsSocket', 'Z')
@@ -65,28 +81,28 @@ class SvVertexCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Coordinates'].sv_set([])
+			self.outputs['Direction'].sv_set([])
 			return
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		vertexList = flatten(vertexList)
+		edgeList = self.inputs['Edge'].sv_get(deepcopy=False)
+		edgeList = flatten(edgeList)
 		decimals = self.inputs['Decimals'].sv_get(deepcopy=False)[0][0] #Consider only one Decimals value
-		coordinatesList = []
+		directionList = []
 		xList = []
 		yList = []
 		zList = []
-		for aVertex in vertexList:
-			output = processItem(aVertex, self.outputType, decimals)
-			coordinatesList.append(output[0])
+		for anEdge in edgeList:
+			output = processItem(anEdge, self.outputType, decimals)
+			directionList.append(output[0])
 			xList.append(output[1])
 			yList.append(output[2])
 			zList.append(output[3])
-		self.outputs['Coordinates'].sv_set(coordinatesList)
+		self.outputs['Direction'].sv_set(directionList)
 		self.outputs['X'].sv_set(xList)
 		self.outputs['Y'].sv_set(yList)
 		self.outputs['Z'].sv_set(zList)
 
 def register():
-	bpy.utils.register_class(SvVertexCoordinates)
+	bpy.utils.register_class(SvEdgeDirection)
 
 def unregister():
-	bpy.utils.unregister_class(SvVertexCoordinates)
+	bpy.utils.unregister_class(SvEdgeDirection)

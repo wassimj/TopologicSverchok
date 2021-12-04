@@ -90,44 +90,84 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(item):
+def unitizeVector(vector):
+	mag = 0
+	for value in vector:
+		mag += value ** 2
+	mag = mag ** 0.5
+	unitVector = []
+	for i in range(len(vector)):
+		unitVector.append(vector[i] / mag)
+	return unitVector
+
+def multiplyVector(vector, mag, tol):
+	oldMag = 0
+	for value in vector:
+		oldMag += value ** 2
+	oldMag = oldMag ** 0.5
+	if oldMag < tol:
+		return [0,0,0]
+	newVector = []
+	for i in range(len(vector)):
+		newVector.append(vector[i] * mag / oldMag)
+	return newVector
+
+def processItem(item, tol):
 	edge = item[0]
-	parameter = item[1]
-	vertex = None
-	try:
-		vertex = topologic.EdgeUtility.PointAtParameter(edge, parameter)
-	except:
-		vertex = None
-	return vertex
+	vertex = item[1]
+	distance = item[2]
+	rv = None
+	sv = edge.StartVertex()
+	ev = edge.EndVertex()
+	vx = ev.X() - sv.X()
+	vy = ev.Y() - sv.Y()
+	vz = ev.Z() - sv.Z()
+	vector = unitizeVector([vx, vy, vz])
+	vector = multiplyVector(vector, distance, tol)
+	if vertex == None:
+		vertex = sv
+	rv = topologic.Vertex.ByCoordinates(vertex.X()+vector[0], vertex.Y()+vector[1], vertex.Z()+vector[2])
+	return rv
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvEdgeVertexByParameter(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeVertexAtDistance(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Vertex at the parameter value of the input Edge
+	Tooltip: Creates a Vertex at the distance from the start Vertex of the input Edge or an optional Vertex
 	"""
-	bl_idname = 'SvEdgeVertexByParameter'
-	bl_label = 'Edge.VertexByParameter'
-	Parameter: FloatProperty(name="Parameter", default=0.5, precision=4, min=0, max=1, update=updateNode)
+	bl_idname = 'SvEdgeVertexAtDistance'
+	bl_label = 'Edge.VertexAtDistance'
+	Parameter: FloatProperty(name="Distance", default=1.0, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edge')
-		self.inputs.new('SvStringsSocket', 'Parameter').prop_name='Parameter'
+		self.inputs.new('SvStringsSocket', 'Distance').prop_name='Parameter'
+		self.inputs.new('SvStringsSocket', 'Origin')
+		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Vertex')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.outputs):
+		if not self.inputs['Edge'].is_linked:
 			return
-		edgeList = self.inputs['Edge'].sv_get(deepcopy=False)
-		parameterList = self.inputs['Parameter'].sv_get(deepcopy=False)
+		edgeList = self.inputs['Edge'].sv_get(deepcopy=True)
 		edgeList = flatten(edgeList)
-		parameterList = flatten(parameterList)
-		inputs = [edgeList, parameterList]
+		if not (self.inputs['Origin'].is_linked):
+			vertexList = []
+			for anEdge in edgeList:
+				vertexList.append(anEdge.StartVertex())
+		else:
+			vertexList = self.inputs['Origin'].sv_get(deepcopy=True)
+			vertexList = flatten(vertexList)
+		distanceList = self.inputs['Distance'].sv_get(deepcopy=True)
+		distanceList = flatten(distanceList)
+		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
+		inputs = [edgeList, vertexList, distanceList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -141,11 +181,11 @@ class SvEdgeVertexByParameter(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
+			outputs.append(processItem(anInput, tol))
 		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvEdgeVertexByParameter)
+	bpy.utils.register_class(SvEdgeVertexAtDistance)
 
 def unregister():
-	bpy.utils.unregister_class(SvEdgeVertexByParameter)
+	bpy.utils.unregister_class(SvEdgeVertexAtDistance)
