@@ -119,10 +119,11 @@ def valueAtKey(item, key):
 	else:
 		return None
 
-def processItem(topologies, topologyType, item):
+def processItem(topologies, topologyType, searchType, item):
 	key = item[0]
 	value = item[1]
 	filteredTopologies = []
+	otherTopologies = []
 	for aTopology in topologies:
 		if (topologyType == "Any") or (aTopology.GetTypeAsString() == topologyType):
 			if value == "" or key == "":
@@ -136,12 +137,38 @@ def processItem(topologies, topologyType, item):
 				d = aTopology.GetDictionary()
 				v = valueAtKey(d, key)
 				if v != None:
-					if re.search(value, v.lower()):
+					v = v.lower()
+					if searchType == "Equal To":
+						searchResult = (value == v)
+					elif searchType == "Contains":
+						searchResult = (value in v)
+					elif searchType == "Starts With":
+						print("Value from Dictionary: ", v[0: len(value)])
+						print("Search Term: ", value)
+						searchResult = (value == v[0: len(value)])
+					elif searchType == "Ends With":
+						print("Value from Dictionary: ", v[len(v)-len(value):len(v)])
+						print("Search Term: ", value)
+						searchResult = (value == v[len(v)-len(value):len(v)])
+					elif searchType == "Not Equal To":
+						searchResult = not (value == v)
+					elif searchType == "Does Not Contain":
+						searchResult = not (value in v)
+					else:
+						searchResult = False
+					if searchResult:
 						filteredTopologies.append(aTopology)
-	return filteredTopologies
+					else:
+						otherTopologies.append(aTopology)
+				else:
+					otherTopologies.append(aTopology)
+		else:
+			otherTopologies.append(aTopology)
+	return [filteredTopologies, otherTopologies]
 
 topologyTypes = [("Any", "Any", "", 1),("Vertex", "Vertex", "", 2),("Edge", "Edge", "", 3),("Wire", "Wire", "", 4),("Face", "Face", "", 5),("Shell", "Shell", "", 6), ("Cell", "Cell", "", 7),("CellComplex", "CellComplex", "", 8), ("Cluster", "Cluster", "", 9)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+searchType = [("Equal To", "Equal To", "", 1),("Contains", "Contains", "", 2),("Starts With", "Starts With", "", 3),("Ends With", "Ends With", "", 4),("Not Equal To", "Not Equal To", "", 5),("Does Not Contain", "Does Not Contain", "", 6)]
 
 class SvTopologyFilter(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -150,26 +177,31 @@ class SvTopologyFilter(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyFilter'
 	bl_label = 'Topology.Filter'
-	topologyType: EnumProperty(name="Topology Type", description="Specify topology type", default="Any", items=topologyTypes, update=updateNode)
+	TopologyType: EnumProperty(name="Topology Type", description="Specify topology type", default="Any", items=topologyTypes, update=updateNode)
 	Key: StringProperty(name='Key', update=updateNode)
 	Value: StringProperty(name='Value', update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	SearchType: EnumProperty(name="Search Type", description="Search Type", default="Equal To", items=searchType, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topologies')
 		self.inputs.new('SvStringsSocket', 'Key').prop_name='Key'
 		self.inputs.new('SvStringsSocket', 'Value').prop_name='Value'
-		self.outputs.new('SvStringsSocket', 'Topologies')
+		self.outputs.new('SvStringsSocket', 'Filtered Topologies')
+		self.outputs.new('SvStringsSocket', 'Other Topologies')
 	
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "topologyType",text="")
 		layout.prop(self, "Replication",text="")
+		layout.prop(self, "TopologyType",text="")
+		layout.prop(self, "SearchType",text="")
+
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Topologies'].sv_set([])
+			self.outputs['Filtered Topologies'].sv_set([])
+			self.outputs['Other Topologies'].sv_set([])
 			return
 		inputs = self.inputs['Topologies'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)
@@ -180,7 +212,8 @@ class SvTopologyFilter(bpy.types.Node, SverchCustomTreeNode):
 		keyList = flatten(keyList)
 		valueList = flatten(valueList)
 		inputs = [keyList, valueList]
-		outputs = []
+		filteredTopologies = []
+		otherTopologies = []
 		if ((self.Replication) == "Default"):
 			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
@@ -196,10 +229,12 @@ class SvTopologyFilter(bpy.types.Node, SverchCustomTreeNode):
 		elif ((self.Replication) == "Interlace"):
 			inputs = list(interlace(inputs))
 		for anInput in inputs:
-			output = processItem(topologyList, self.topologyType, anInput)
+			output = processItem(topologyList, self.TopologyType, self.SearchType, anInput)
 			if output:
-				outputs.append(output)
-		self.outputs['Topologies'].sv_set(outputs)
+				filteredTopologies.append(output[0])
+				otherTopologies.append(output[1])
+		self.outputs['Filtered Topologies'].sv_set(filteredTopologies)
+		self.outputs['Other Topologies'].sv_set(otherTopologies)
 
 def register():
 	bpy.utils.register_class(SvTopologyFilter)
