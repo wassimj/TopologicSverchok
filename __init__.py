@@ -17,8 +17,8 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 6, 0, 6),
-    "blender": (2, 93, 0),
+    "version": (0, 6, 0, 7),
+    "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
     "description": "Topologic",
@@ -144,6 +144,7 @@ def nodes_index():
                 ("Topologic.ContextTopology", "SvContextTopology"),
                 ("Topologic.TopologyAddApertures", "SvTopologyAddApertures"),
                 ("Topologic.TopologyAddContent", "SvTopologyAddContent"),
+                ("Topologic.TopologyAddDictionary", "SvTopologyAddDictionary"),
                 ("Topologic.TopologyAdjacentTopologies", "SvTopologyAdjacentTopologies"),
                 ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
                 ("Topologic.TopologyApertures", "SvTopologyApertures"),
