@@ -173,10 +173,8 @@ def processItem(item):
 	keys = item[1]
 	dictKeys = []
 	dictValues = []
-	print("Keys: ", keys)
 	for aKey in keys:
 		value = blenderObject[aKey]
-		print("Value: ", value)
 		if value:
 			dictKeys.append(aKey)
 			dictValues.append(value)

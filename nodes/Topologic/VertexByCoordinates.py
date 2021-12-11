@@ -114,7 +114,7 @@ def recur(item, tolerance):
 		output = processItem(item, tolerance)
 	return output
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -126,7 +126,7 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
@@ -151,7 +151,7 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
+		elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Repeat"):
