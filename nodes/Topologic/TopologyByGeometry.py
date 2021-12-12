@@ -64,7 +64,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -130,21 +129,29 @@ def topologyByFaces(faces, tolerance):
 	output = None
 	if len(faces) == 1:
 		return faces[0]
-	try:
-		output = Cell.ByFaces(faces, tolerance)
-	except:
-		try:
-			output = CellComplex.ByFaces(faces, tolerance)
-		except:
-			try:
-				output = Shell.ByFaces(faces, tolerance)
-			except:
-				try:
-					output = Cluster.ByTopologies(faces)
-					output = output.SelfMerge()
-				except:
-					print("ERROR: Could not create any topology from the input faces!")
-					output = None
+	output = Cell.ByFaces(faces, tolerance)
+	if output:
+		f = []
+		_ = output.Faces(f)
+		if len(f) > 0:
+			return output
+	else:
+	output = CellComplex.ByFaces(faces, tolerance)
+	if output:
+		c = []
+		_ = output.Cells(c)
+		if len(c) > 0:
+			return output
+	output = Shell.ByFaces(faces, tolerance)
+	if output:
+		f = []
+		_ = output.Faces(f)
+		if len(f) > 0:
+			return output
+	output = Cluster.ByTopologies(faces)
+	if output:
+		output = output.SelfMerge()
+		if output:
 	return output
 
 def topologyByEdges(edges):
@@ -182,7 +189,6 @@ def processKeysValues(keys, values):
 			value = values[i][0]
 		else:
 			value = values[i]
-		print(value, value.__class__)
 		if isinstance(value, bool):
 			if value == False:
 				stl_values.append(topologic.IntAttribute(0))
@@ -234,7 +240,6 @@ def processItem(item, tol):
 	topEdges = []
 	topFaces = []
 	if len(vertices) > 0:
-		print("Found Vertices!")
 		vertices = [matrix @ vertex.co for vertex in vertices]
 		for aVertex in vertices:
 			v = Vertex.ByCoordinates(aVertex[0], aVertex[1], aVertex[2])
@@ -242,7 +247,6 @@ def processItem(item, tol):
 	else:
 		return None
 	if len(faces) > 0:
-		print("Found Faces!")
 		for aFace in faces:
 			faceEdges = edgesByVertices(aFace, topVerts)
 			faceWire = Wire.ByEdges(faceEdges)
@@ -271,7 +275,6 @@ def processItem(item, tol):
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 mode_items = [("Object", "Object", "", 1),("Vertex/Edge/Face", "Vertex/Edge/Face", "", 2)]
 def update_sockets(self, context):
-	print("Updating Sockets")
 	# hide all input sockets
 	self.inputs['Object'].hide_safe = True
 	self.inputs['Matrix'].hide_safe = True
