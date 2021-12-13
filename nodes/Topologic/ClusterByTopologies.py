@@ -17,13 +17,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	cluster = None
-	topologies = []
-	for aTopology in item:
-		copyTopology = topologic.Topology.DeepCopy(aTopology)
-		topologies.append(copyTopology)
-	cluster = topologic.Cluster.ByTopologies(topologies)
-	return cluster
+	return topologic.Cluster.ByTopologies(item)
 
 def recur(input):
 	output = []
@@ -53,9 +47,10 @@ class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		inputs = self.inputs['Topologies'].sv_get(deepcopy=False)
-		inputs = flatten(inputs)
-		cluster = processItem(inputs)
-		self.outputs['Cluster'].sv_set([cluster])
+		outputs = []
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
+		self.outputs['Cluster'].sv_set(outputs)
 		end = time.time()
 		print("Cluster.ByTopologies Operation consumed "+str(round(end - start,2))+" seconds")
 

@@ -135,7 +135,6 @@ def topologyByFaces(faces, tolerance):
 		_ = output.Faces(f)
 		if len(f) > 0:
 			return output
-	else:
 	output = CellComplex.ByFaces(faces, tolerance)
 	if output:
 		c = []
@@ -152,6 +151,7 @@ def topologyByFaces(faces, tolerance):
 	if output:
 		output = output.SelfMerge()
 		if output:
+			return output
 	return output
 
 def topologyByEdges(edges):
