@@ -213,7 +213,6 @@ def mergeDictionaries(sources):
 								sinkValues[index] = [sinkValues[index], sourceValue]
 						else:
 							sinkValues[index] = sourceValue
-	print(sinkValues)
 	if len(sinkKeys) > 0 and len(sinkValues) > 0:
 		newDict = processKeysValues(sinkKeys, sinkValues)
 		return newDict

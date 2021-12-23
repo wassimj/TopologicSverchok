@@ -253,6 +253,16 @@ def nodes_index():
                 ("Topologic.EnergyModelTableNames", "SvEnergyModelTableNames"),
                 ("Topologic.EnergyModelTopologies", "SvEnergyModelTopologies"),
                 ("Topologic.EnergyModelUnits", "SvEnergyModelUnits")]
+	honeybeeNodes = [("Topologic.HBModelByTopology", "SvHBModelByTopology"),
+                ("Topologic.HBModelExportToHBJSON", "SvHBModelExportToHBJSON"),
+                ("Topologic.HBModelString", "SvHBModelString"),
+                ("Topologic.HBConstructionSetByIdentifier", "SvHBConstructionSetByIdentifier"),
+                ("Topologic.HBConstructionSets", "SvHBConstructionSets"),
+                ("Topologic.HBProgramTypeByIdentifier", "SvHBProgramTypeByIdentifier"),
+                ("Topologic.HBProgramTypes", "SvHBProgramTypes")]
+	neo4jNodes = [("Topologic.Neo4jGraphAddTopologicGraph", "SvNeo4jGraphAddTopologicGraph"),
+                ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
+                ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll")]
 
 	try:
 		import numpy
@@ -279,7 +289,19 @@ def nodes_index():
 		coreNodes = coreNodes+openstudioNodes
 	except:
 		print("Topologic - Warning: Could not import openstudio so some related nodes are not available.")
-
+	try:
+		import honeybee
+		import honeybee_energy
+		import ladybug
+		import json
+		coreNodes = coreNodes+honeybeeNodes
+	except:
+		print("Topologic - Warning: Could not import ladybug/honeybee/json so some related nodes are not available.")
+	try:
+		import py2neo
+		coreNodes = coreNodes+neo4jNodes
+	except:
+		print("Topologic - Warning: Could not import py2neo so some related nodes are not available.")
 	return [("Topologic", coreNodes)]
 
 def make_node_list():
@@ -699,6 +721,8 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelByImportedIFC'],
             ['SvEnergyModelByImportedOSM'],
             ['SvEnergyModelByTopology'],
+            ['SvHBJSONByTopology'],
+            ['SvEnergyModelExportToHBJSON'],
             ['SvEnergyModelColumnNames'],
             ['SvEnergyModelDefaultConstructionSets'],
             ['SvEnergyModelDefaultScheduleSets'],
@@ -715,7 +739,25 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelUnits'],
         ])
 
-make_class('TPSubcategoryEnergyModel', 'Topologic @ EnergyModel')
+make_class('TPSubcategoryEnergyModel', 'Topologic @ Openstudio')
+
+class NODEVIEW_MT_AddTPSubcategoryHBModel(bpy.types.Menu):
+    bl_label = "TPSubcategoryHBModel"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryHBModel'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvHBModelByTopology'],
+            ['SvHBModelExportToHBJSON'],
+            ['SvHBModelString'],
+            ['SvHBConstructionSetByIdentifier'],
+            ['SvHBConstructionSets'],
+            ['SvHBProgramTypeByIdentifier'],
+            ['SvHBProgramTypes']
+        ])
+
+make_class('TPSubcategoryHBModel', 'Topologic @ Honeybee')
 
 class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
     bl_label = "TPSubcategoryIFC"
@@ -742,6 +784,20 @@ class NODEVIEW_MT_AddTPSubcategoryBlockchain(bpy.types.Menu):
         ])
 
 make_class('TPSubcategoryBlockchain', 'Topologic @ Blockchain')
+
+class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
+    bl_label = "TPSubcategoryNeo4j"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryNeo4j'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvNeo4jGraphAddTopologicGraph'],
+            ['SvNeo4jGraphByParameters'],
+            ['SvNeo4jGraphDeleteAll'],
+        ])
+
+make_class('TPSubcategoryNeo4j', 'Topologic @ Neo4j')
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
     bl_label = 'Topologic'
@@ -763,9 +819,11 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
 			['@ Dictionary'],
             ['@ Graph'],
             ['@ GlobalCluster'],
-            ['@ EnergyModel'],
+            ['@ Openstudio'],
+            ['@ Honeybee'],
             ['@ IFC'],
             ['@ Blockchain'],
+            ['@ Neo4j'],
             ['@ About'],
         ])
 
@@ -797,8 +855,10 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGlobalCluster)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
@@ -834,8 +894,10 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGlobalCluster)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()
     #icons.unregister()

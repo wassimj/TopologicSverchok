@@ -143,12 +143,8 @@ def processItem(topologies, topologyType, searchType, item):
 					elif searchType == "Contains":
 						searchResult = (value in v)
 					elif searchType == "Starts With":
-						print("Value from Dictionary: ", v[0: len(value)])
-						print("Search Term: ", value)
 						searchResult = (value == v[0: len(value)])
 					elif searchType == "Ends With":
-						print("Value from Dictionary: ", v[len(v)-len(value):len(v)])
-						print("Search Term: ", value)
 						searchResult = (value == v[len(v)-len(value):len(v)])
 					elif searchType == "Not Equal To":
 						searchResult = not (value == v)

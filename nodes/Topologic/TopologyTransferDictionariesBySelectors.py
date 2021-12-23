@@ -151,16 +151,13 @@ def transferDictionaries(sources, sinks, tol):
 		for j in range(len(sources)):
 			source = sources[j]
 			if usedSources[j] == False:
-				iv = relevantSelector(source)
-				if topologyContains(sink, iv, tol):
-					usedSources[j] = True
-					d = source.GetDictionary()
-					if d == None:
-						continue
-					else:
-						stlKeys = d.Keys()
-						if len(stlKeys) > 0:
-							sourceKeys = d.Keys()
+				d = source.GetDictionary()
+				if d:
+					sourceKeys = d.Keys()
+					if len(sourceKeys) > 0:
+						iv = relevantSelector(source)
+						if topologyContains(sink, iv, tol):
+							usedSources[j] = True
 							for aSourceKey in sourceKeys:
 								if aSourceKey not in sinkKeys:
 									sinkKeys.append(aSourceKey)
@@ -176,11 +173,13 @@ def transferDictionaries(sources, sinks, tol):
 											sinkValues[index] = [sinkValues[index], sourceValue]
 									else:
 										sinkValues[index] = sourceValue
+					else:
+						usedSources[j] = True # Has no keys so not useful to reconsider
+				else:
+					usedSources[j] = True # Has no dictionary so not useful to reconsider
 		if len(sinkKeys) > 0 and len(sinkValues) > 0:
 			newDict = processKeysValues(sinkKeys, sinkValues)
 			_ = sink.SetDictionary(newDict)
-		else:
-			print("**** ERROR ****")
 
 def highestDimension(topology):
 	if (topology.Type() == topologic.Cluster.Type()):
@@ -296,7 +295,7 @@ class SvTopologyTransferDictionariesBySelectors(bpy.types.Node, SverchCustomTree
 		output = processItem(sources, sink, tranVertexDicts, tranEdgeDicts, tranFaceDicts, tranCellDicts, tolerance)
 		self.outputs['Sink'].sv_set([output])
 		end = time.time()
-		print("Topology.TransferDictionaries Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Topology.TransferDictionariesBySelectors Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
     bpy.utils.register_class(SvTopologyTransferDictionariesBySelectors)

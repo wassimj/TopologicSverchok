@@ -1,11 +1,14 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
+from bpy.props import EnumProperty, FloatProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode
+from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import time
+try:
+	import py2neo
+except:
+	raise Exception("Error: Could not import py2neo.")
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -93,46 +96,61 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	gc = topologic.GlobalCluster.GetInstance()
-	subTopologies = []
-	_ = gc.SubTopologies(subTopologies)
-	for aSubTopology in subTopologies:
-		gc.RemoveTopology(aSubTopology)
-	gc.AddTopology(item)
-	return item
+	url, username, password = item
+	return py2neo.Graph(url, auth=(username, password))
 
-class SvGlobalClusterClear(bpy.types.Node, SverchCustomTreeNode):
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
+class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Clears the Global Cluster    
+	Tooltip: Creates a Neo4j Graph from the input parameters   
 	"""
-	bl_idname = 'SvGlobalClusterClear'
-	bl_label = 'GlobalCluster.Clear'
+	bl_idname = 'SvNeo4jGraphByParameters'
+	bl_label = 'Neo4jGraph.ByParameters'
+	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
+	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
+	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Wait For')
-		self.outputs.new('SvStringsSocket', 'Topology')
+		#self.inputs[0].label = 'Auto'
+		self.inputs.new('SvStringsSocket', 'url')
+		self.inputs.new('SvStringsSocket', 'username')
+		self.inputs.new('SvStringsSocket', 'password')
+		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
+
+	def draw_buttons(self, context, layout):
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
-		if not any(socket.is_linked for socket in self.inputs):
+		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		topologyList = flatten(topologyList)
-		waitForList = self.inputs['Wait For'].sv_get(deepcopy=False)
+		urlList = self.inputs['url'].sv_get(deepcopy=True)
+		usernameList = self.inputs['username'].sv_get(deepcopy=True)
+		passwordList = self.inputs['password'].sv_get(deepcopy=True)
+		urlList = flatten(urlList)
+		usernameList = flatten(usernameList)
+		passwordList = flatten(passwordList)
+		inputs = [urlList, usernameList, passwordList]
+		if ((self.Replication) == "Trim"):
+			inputs = trim(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Default") or ((self.Replication) == "Iterate"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = repeat(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace(inputs))
 		outputs = []
-		if(len(topologyList) > 0):
-			for anInput in topologyList:
-				outputs.append(processItem(anInput))
-		else:
-			outputs.append(processItem(None))
-		self.outputs['Topology'].sv_set(outputs)
-		end = time.time()
-		print("GlobalCluster.Clear Operation consumed "+str(round(end - start,2)*1000)+" ms")
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
+		self.outputs['Neo4j Graph'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvGlobalClusterClear)
+    bpy.utils.register_class(SvNeo4jGraphByParameters)
 
 def unregister():
-	bpy.utils.unregister_class(SvGlobalClusterClear)
+    bpy.utils.unregister_class(SvNeo4jGraphByParameters)

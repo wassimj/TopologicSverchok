@@ -163,7 +163,7 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Edges'].sv_set(finalEdgeList)
 		self.outputs['Faces'].sv_set(finalFaceList)
 		end = time.time()
-		print("Topology.Geometry Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Topology.Geometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologyGeometry)

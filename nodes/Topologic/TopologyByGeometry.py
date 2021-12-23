@@ -13,6 +13,7 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph, Dictionary
 from itertools import cycle
 import uuid
+import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -315,6 +316,7 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 		layout.prop(self, "mode", expand=False, text="")
 
 	def process(self):
+		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not (self.inputs['Matrix'].is_linked):
@@ -389,6 +391,8 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			topDict = processKeysValues(keys, values)
 			_ = output.SetDictionary(topDict)
 			self.outputs['Topology'].sv_set([output])
+			end = time.time()
+			print("Topology.ByGeometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologyByGeometry)

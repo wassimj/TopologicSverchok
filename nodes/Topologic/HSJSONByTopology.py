@@ -5,6 +5,57 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+
+from honeybee.model import Model
+from honeybee.room import Room
+from honeybee.face import Face
+from honeybee.shade import Shade
+from honeybee.aperture import Aperture
+from honeybee.door import Door
+from honeybee.boundarycondition import boundary_conditions
+from honeybee.facetype import face_types, Floor, RoofCeiling
+
+from honeybee_energy.constructionset import ConstructionSet
+from honeybee_energy.construction.opaque import OpaqueConstruction
+from honeybee_energy.construction.window import WindowConstruction
+from honeybee_energy.construction.shade import ShadeConstruction
+from honeybee_energy.material.opaque import EnergyMaterial
+from honeybee_energy.schedule.fixedinterval import ScheduleFixedInterval
+from honeybee_energy.schedule.ruleset import ScheduleRuleset
+from honeybee_energy.schedule.day import ScheduleDay
+from honeybee_energy.load.setpoint import Setpoint
+from honeybee_energy.load.hotwater import  ServiceHotWater
+from honeybee_energy.ventcool.opening import VentilationOpening
+from honeybee_energy.ventcool.control import VentilationControl
+from honeybee_energy.ventcool import afn
+from honeybee_energy.ventcool.simulation import VentilationSimulationControl
+from honeybee_energy.hvac.allair.vav import VAV
+from honeybee_energy.hvac.doas.fcu import FCUwithDOAS
+from honeybee_energy.hvac.heatcool.windowac import WindowAC
+
+import honeybee_energy.lib.programtypes as prog_type_lib
+import honeybee_energy.lib.scheduletypelimits as schedule_types
+from honeybee_energy.lib.materials import clear_glass, air_gap, roof_membrane, \
+    wood, insulation
+from honeybee_energy.lib.constructions import generic_exterior_wall, \
+    generic_interior_wall, generic_interior_floor, generic_interior_ceiling, \
+    generic_double_pane
+
+from honeybee_radiance.modifierset import ModifierSet
+from honeybee_radiance.modifier.material import Glass, Plastic, Trans
+from honeybee_radiance.dynamic import RadianceShadeState, RadianceSubFaceState, \
+    StateGeometry
+
+from ladybug.dt import Time
+from ladybug_geometry.geometry3d.pointvector import Point3D, Vector3D
+from ladybug_geometry.geometry3d.plane import Plane
+from ladybug_geometry.geometry3d.face import Face3D
+from ladybug_geometry.geometry3d.polyface import Polyface3D
+
+import os
+import json
+import random
+
 try:
 	import openstudio
 except:
@@ -96,6 +147,17 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
+def processItem(item):
+	x = item[0]
+	y = item[1]
+	z = item[2]
+	vert = None
+	try:
+		vert = topologic.Vertex.ByCoordinates(x, y, z)
+	except:
+		vert = None
+	return vert
+
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
     if subTopologyClass == topologic.Vertex:
@@ -158,161 +220,67 @@ def processItem(item):
     coolingTemp = item[11]
     heatingTemp = item[12]
 
-
-    osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath))
-    if osEPWFile.is_initialized():
-        osEPWFile = osEPWFile.get()
-        openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
-    ddyModel = openstudio.openstudioenergyplus.loadAndTranslateIdf(openstudio.toPath(designDayFilePath))
-    if ddyModel.is_initialized():
-        ddyModel = ddyModel.get()
-        for ddy in ddyModel.getObjectsByType(openstudio.IddObjectType("OS:SizingPeriod:DesignDay")):
-            osModel.addObject(ddy.clone())
-
-    osBuilding = osModel.getBuilding()
-    osBuilding.setStandardsNumberOfStories(len(floorLevels) - 1)
-    osBuilding.setNominalFloortoFloorHeight(max(floorLevels) / osBuilding.standardsNumberOfStories().get())
-    osBuilding.setDefaultConstructionSet(osModel.getDefaultConstructionSets()[0])
-    osBuilding.setDefaultScheduleSet(osModel.getDefaultScheduleSets()[0])
-    osBuilding.setName(buildingName)
-    osBuilding.setStandardsBuildingType(buildingType)
-    osBuilding.setSpaceType(osModel.getSpaceTypeByName(defaultSpaceType).get())
-    for storyNumber in range(osBuilding.standardsNumberOfStories().get()):
-        osBuildingStory = openstudio.model.BuildingStory(osModel)
-        osBuildingStory.setName("STORY_" + str(storyNumber))
-        osBuildingStory.setNominalZCoordinate(floorLevels[storyNumber])
-        osBuildingStory.setNominalFloortoFloorHeight(osBuilding.nominalFloortoFloorHeight().get())
-    osBuilding.setNorthAxis(northAxis)
-
-    heatingScheduleConstant = openstudio.model.ScheduleConstant(osModel)
-    heatingScheduleConstant.setValue(heatingTemp)
-    coolingScheduleConstant = openstudio.model.ScheduleConstant(osModel)
-    coolingScheduleConstant.setValue(coolingTemp)
-    osThermostat = openstudio.model.ThermostatSetpointDualSetpoint(osModel)
-    osThermostat.setHeatingSetpointTemperatureSchedule(heatingScheduleConstant)
-    osThermostat.setCoolingSetpointTemperatureSchedule(coolingScheduleConstant)
-
-    osBuildingStorys = list(osModel.getBuildingStorys())
-    osBuildingStorys.sort(key=lambda x: x.nominalZCoordinate().get())
-    osSpaces = []
-    for spaceNumber, buildingCell in enumerate(getSubTopologies(buildingTopology, topologic.Cell)):
-        osSpace = openstudio.model.Space(osModel)
-        osSpaceZ = buildingCell.CenterOfMass().Z()
-        osBuildingStory = osBuildingStorys[0]
-        for x in osBuildingStorys:
-            osBuildingStoryZ = x.nominalZCoordinate().get()
-            if osBuildingStoryZ + x.nominalFloortoFloorHeight().get() < osSpaceZ:
-                continue
-            if osBuildingStoryZ < osSpaceZ:
-                osBuildingStory = x
-            break
-        osSpace.setBuildingStory(osBuildingStory)
-        #osSpace.setName(osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber)) #default name, can be changed below if custom name exists
+    rooms = []
+    buildingCells = []
+    _ = buildingTopology.Cells(buildingCells)
+    for spaceNumber, buildingCell in enumerate(buildingCells):
         cellDictionary = buildingCell.GetDictionary()
         if cellDictionary:
-            osSpaceTypeName = valueAtKey(cellDictionary,'type')
-            if osSpaceTypeName:
-                sp_ = osModel.getSpaceTypeByName(osSpaceTypeName)
-                if sp_.is_initialized():
-                    osSpace.setSpaceType(sp_.get())
-            osSpaceName = valueAtKey(cellDictionary,'name')
-            if osSpaceName:
-                osSpace.setName(osSpaceName)
-                print("osSpaceName: "+osSpaceName)
-        cellFaces = getSubTopologies(buildingCell, topologic.Face)
+            cellName = valueAtKey(cellDictionary,'name')
+        cellFaces = []
+        _ = buildingCell.Faces(cellFaces)
         if cellFaces:
+            hbRoomFaces = []
             for faceNumber, buildingFace in enumerate(cellFaces):
-                osFacePoints = []
-                for vertex in getSubTopologies(buildingFace.ExternalBoundary(), topologic.Vertex):
-                    osFacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
-                osSurface = openstudio.model.Surface(osFacePoints, osModel)
-                faceNormal = topologic.FaceUtility.NormalAtParameters(buildingFace, 0.5, 0.5)
-                osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
-                osFaceNormal.normalize()
-                if osFaceNormal.dot(osSurface.outwardNormal()) < 1e-6:
-                    osSurface.setVertices(list(reversed(osFacePoints)))
-                if math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175:
-                    osSurface.setSurfaceType("Floor")
+                hbFacePoints = []
+                faceVertices = []
+                _ = buildingFace.ExternalBoundary().Vertices(faceVertices)
+                for vertex in faceVertices:
+                    hbFacePoints.append(Point3d(vertex.X(), vertex.Y(), vertex.Z()))
+                hbFace = openstudio.model.Surface(osFacePoints, osModel)
+                hbRoomFaces.append(Face('osSpaceName'+str(faceNumber), Face3D(hbFacePoints)))
+            room = Room(osSpaceName, hbRoomFaces, 0.01, 1))
+            room_setpoint = room.properties.energy.setpoint.duplicate()
+            room_setpoint.identifier = 'Humidity Controlled Room Setpt'
+            room_setpoint.cooling_setpoint = coolingTemp
+            room_setpoint.heating_setpoint = heatingTemp
+            room_setpoint.humidifying_setpoint = 30
+            room_setpoint.dehumidifying_setpoint = 55
+            room.properties.energy.setpoint = room_setpoint
+            room.properties.energy.program_type = prog_type_lib.office_program
+            rooms.append(room)
+    Room.solve_adjacency(rooms, 0.01)
 
-                osSurface.setSpace(osSpace)
-                osSurface.setName(osSpace.name().get() + "_SURFACE_" + str(faceNumber))
-                faceCells = []
-                _ = topologic.FaceUtility.AdjacentCells(buildingFace, buildingTopology, faceCells)
-                if len(faceCells) == 1:
-                    if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
-                        osSurface.setOutsideBoundaryCondition("Ground")
-                    else:
-                        if glazingRatio > 0: #user wants to use default glazing ratio on all surfaces
-                            print("Setting Glazing Ratio to: "+str(glazingRatio))
-                            osSurface.setWindowToWallRatio(glazingRatio)
-                        else: # See if there is a glazingRatio in the dictionary of the face
-                            faceDictionary = buildingFace.GetDictionary()
-                            usedGlazingRatio = False
-                            if faceDictionary:
-                                # Get the keys
-                                keys = faceDictionary.Keys()
-                                if ('glazing ratio' in keys):
-                                    faceGlazingRatio = valueAtKey(faceDictionary,'glazing ratio')
-                                    if faceGlazingRatio and faceGlazingRatio >= 0:
-                                        osSurface.setWindowToWallRatio(faceGlazingRatio)
-                                        usedGlazingRatio = True
-                            if not usedGlazingRatio: # Look for apertures and use as subsurfaces
-                                apertures = []
-                                _ = buildingFace.Apertures(apertures)
-                                if len(apertures) > 0:
-                                    for aperture in apertures:
-                                        osSubSurfacePoints = []
-                                        apertureFace = getSubTopologies(aperture, topologic.Face)[0]
-                                        for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
-                                            osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
-                                        osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
-                                        apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
-                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal[0], apertureFaceNormal[1], apertureFaceNormal[2])
-                                        osSubSurfaceNormal.normalize()
-                                        if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
-                                            osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
-                                        osSubSurface.setSubSurfaceType("FixedWindow")
-                                        osSubSurface.setSurface(osSurface)
 
-        osThermalZone = openstudio.model.ThermalZone(osModel)
-        osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
-        osThermalZone.setUseIdealAirLoads(True)
-        osThermalZone.setVolume(topologic.CellUtility.Volume(buildingCell))
-        osThermalZone.setThermostatSetpointDualSetpoint(osThermostat)
-        osSpace.setThermalZone(osThermalZone)
-
-        for x in osSpaces:
-            if osSpace.boundingBox().intersects(x.boundingBox()):
-                osSpace.matchSurfaces(x)
-        osSpaces.append(osSpace)
-
-    osShadingGroup = openstudio.model.ShadingSurfaceGroup(osModel)
-    for faceIndex, contextFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
+    hbShades = []
+    _ = shadingSurfaces.Faces(shadingFaces)
+    for faceIndex, shadingFace in enumerate(shadingFaces):
+        faceVertices = []
+        _ = shadingFace.ExternalBoundary().Vertices(faceVertices)
         facePoints = []
-        for aVertex in getSubTopologies(contextFace.ExternalBoundary(), topologic.Vertex):
-            facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
-        aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
-        faceNormal = topologic.FaceUtility.NormalAtParameters(contextFace, 0.5, 0.5)
+        for aVertex in faceVertices:
+            facePoints.append(Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
+        faceNormal = topologic.FaceUtility.NormalAtParameters(shadingFace, 0.5, 0.5)
         osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
         osFaceNormal.normalize()
         if osFaceNormal.dot(aShadingSurface.outwardNormal()) < 0:
-            aShadingSurface.setVertices(list(reversed(facePoints)))
-        aShadingSurface.setName("SHADINGSURFACE_" + str(faceIndex))
-        aShadingSurface.setShadingSurfaceGroup(osShadingGroup)
-
-    osModel.purgeUnusedResourceObjects()
-    #osModel.save(openstudio.toPath("C:/Users/wassi/osmFiles/Hola.osm"), True)
-    return osModel
+            hbShadingFace = Face3D(list(reversed(facePoints), None, [])
+        else:
+            aShadingSurface = Face3D(list(reversed(facePoints), None, [])
+        hbShade = Shade("SHADINGSURFACE_" + str(faceIndex), hbShadingFace)
+        hbShades.append(hbShade)
+    model = Model('TopologicModel', rooms, orphaned_shades=hbShades)
+    return model.to_dict()
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvHSJSONByTopology(bpy.types.Node, SverchCustomTreeNode):
     """
     Triggers: Topologic
-    Tooltip: Returns an Energy Model based on the input Topology and parameters
+    Tooltip: Returns an HSJSON string based on the input Topology and parameters
     """
-    bl_idname = 'SvEnergyModelByTopology'
-    bl_label = 'EnergyModel.ByTopology'
+    bl_idname = 'SvHSJSONByTopology'
+    bl_label = 'EnergyModel.HSJSONByTopology'
     NorthAxis: FloatProperty(name='North Axis', default=0, min=0, max=359.99, precision=2, update=updateNode)
     GlazingRatio: FloatProperty(name='Glazing Ratio', default=0.25, min=0, max=1.0, precision=2, update=updateNode)
     CoolingTemp: FloatProperty(name='Cooling Temperature', default=25, precision=2, update=updateNode)
@@ -333,7 +301,7 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         self.inputs.new('SvStringsSocket', 'Default Glazing Ratio').prop_name='GlazingRatio'
         self.inputs.new('SvStringsSocket', 'Cooling Temperature').prop_name='CoolingTemp'
         self.inputs.new('SvStringsSocket', 'Heating Temperature').prop_name='HeatingTemp'
-        self.outputs.new('SvStringsSocket', 'Energy Model')
+        self.outputs.new('SvStringsSocket', 'HSJSON')
 
     def draw_buttons(self, context, layout):
         layout.prop(self, "Replication",text="")
@@ -387,10 +355,10 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         outputs = []
         for anInput in inputs:
             outputs.append(processItem(anInput))
-        self.outputs['Energy Model'].sv_set(outputs)
+        self.outputs['HSJSON].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvEnergyModelByTopology)
+    bpy.utils.register_class(SvHSJSONByTopology)
 
 def unregister():
-    bpy.utils.unregister_class(SvEnergyModelByTopology)
+    bpy.utils.unregister_class(SvHSJSONByTopology)
