@@ -329,7 +329,7 @@ def processItem(item):
             schedule = ScheduleRuleset('Office Water Use', simple_office, None, schedule_types.fractional) #Todo: Remove hardwired schedule
             shw = ServiceHotWater('Office Hot Water', 0.1, schedule) #Todo: Remove hardwired schedule hot water
             room.properties.energy.program_type = program
-            room.properties.energy.construction_set = constr_set
+            #room.properties.energy.construction_set = constr_set
             room.properties.energy.add_default_ideal_air() #Ideal Air Exchange
             room.properties.energy.setpoint = setpoint #Heating/Cooling/Humidifying/Dehumidifying
             room.properties.energy.service_hot_water = shw #Service Hot Water
@@ -337,6 +337,8 @@ def processItem(item):
                 room.story = tpCellStory
             rooms.append(room)
     Room.solve_adjacency(rooms, 0.01)
+    #for room in rooms:
+        #room.properties.energy.construction_set = constr_set
     #Room.stories_by_floor_height(rooms, min_difference=2.0)
 
     if(tpShadingFacesCluster):
