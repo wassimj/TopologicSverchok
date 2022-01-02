@@ -36,18 +36,19 @@ class SvEnergyModelByImportedOSM(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvEnergyModelByImportedOSM'
 	bl_label = 'EnergyModel.ByImportedOSM'
+	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
+
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'File Path')
+		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
 		self.outputs.new('SvStringsSocket', 'Energy Model')
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.outputs):
-			return
-		if not any(socket.is_linked for socket in self.inputs):
+		try:
+			inputs = self.inputs['File Path'].sv_get(deepcopy=True)
+			inputs = flatten(inputs)
+		except:
 			self.outputs['Eneregy Model'].sv_set([])
 			return
-		inputs = self.inputs['File Path'].sv_get(deepcopy=False)
-		inputs = flatten(inputs)
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))

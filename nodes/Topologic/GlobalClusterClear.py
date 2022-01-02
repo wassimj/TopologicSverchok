@@ -98,7 +98,6 @@ def processItem(item):
 	_ = gc.SubTopologies(subTopologies)
 	for aSubTopology in subTopologies:
 		gc.RemoveTopology(aSubTopology)
-	gc.AddTopology(item)
 	return item
 
 class SvGlobalClusterClear(bpy.types.Node, SverchCustomTreeNode):
@@ -110,24 +109,22 @@ class SvGlobalClusterClear(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'GlobalCluster.Clear'
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Wait For')
-		self.outputs.new('SvStringsSocket', 'Topology')
+		self.outputs.new('SvStringsSocket', 'Pass Through')
 
 	def process(self):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.inputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		topologyList = flatten(topologyList)
-		waitForList = self.inputs['Wait For'].sv_get(deepcopy=False)
+		waitForList = self.inputs['Wait For'].sv_get(deepcopy=True)
+		waitForList = flatten(waitForList)
 		outputs = []
-		if(len(topologyList) > 0):
-			for anInput in topologyList:
+		if(len(waitForList) > 0):
+			for anInput in waitForList:
 				outputs.append(processItem(anInput))
 		else:
 			outputs.append(processItem(None))
-		self.outputs['Topology'].sv_set(outputs)
+		self.outputs['Pass Through'].sv_set(outputs)
 		end = time.time()
 		print("GlobalCluster.Clear Operation consumed "+str(round(end - start,2)*1000)+" ms")
 

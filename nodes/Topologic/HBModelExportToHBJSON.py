@@ -122,10 +122,11 @@ class SvHBModelExportToHBJSON(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'HBModel.ExportToHBJSON'
 	OverwriteProp: BoolProperty(name="Overwrite", default=True, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'HB Model')
-		self.inputs.new('SvStringsSocket', 'File Path')
+		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
 		self.inputs.new('SvStringsSocket', 'Overwrite File').prop_name = 'OverwriteProp'
 		self.outputs.new('SvStringsSocket', 'Status')
 

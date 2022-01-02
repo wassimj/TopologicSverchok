@@ -635,20 +635,24 @@ class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvEnergyModelByImportedIFC'
 	bl_label = 'EnergyModel.ByImportedIFC'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'File Path')
+		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
 		self.outputs.new('SvStringsSocket', 'Energy Model')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.inputs):
+		if not any(socket.is_linked for socket in self.outputs):
+			return
+		try:
+			filePathList = self.inputs['File Path'].sv_get(deepcopy=True)
+			filePathList = flatten(filePathList)
+		except:
 			self.outputs['Energy Model'].sv_set([False])
 			return
-		filePathList = self.inputs['File Path'].sv_get(deepcopy=True)[0]
-		filePathList = flatten(filePathList)
 		outputs = []
 		for anInput in filePathList:
 			outputs.append(processItem(anInput))

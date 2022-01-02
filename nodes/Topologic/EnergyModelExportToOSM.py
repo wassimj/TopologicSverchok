@@ -95,7 +95,7 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(item):
+def processItem(item, overwrite):
     model = item[0]
     filePath = item[1]
 	# Make sure the file extension is .OSM
@@ -104,7 +104,7 @@ def processItem(item):
         filePath = filePath+".osm"
     osCondition = False
     osPath = openstudio.openstudioutilitiescore.toPath(filePath)
-    osCondition = model.save(osPath, True)
+    osCondition = model.save(osPath, Overwrite)
     return osCondition
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
@@ -117,23 +117,28 @@ class SvEnergyModelExportToOSM(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvEnergyModelExportToOSM'
 	bl_label = 'EnergyModel.ExportToOSM'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
+	OverwriteProp: BoolProperty(name="Overwrite", default=True, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Energy Model')
-		self.inputs.new('SvStringsSocket', 'File Path')
+		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
+		self.inputs.new('SvStringsSocket', 'Overwrite File').prop_name = 'OverwriteProp'
 		self.outputs.new('SvStringsSocket', 'Status')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.inputs):
+		try:
+			modelList = self.inputs['Energy Model'].sv_get(deepcopy=True)
+			modelList = flatten(modelList)
+			filePathList = self.inputs['File Path'].sv_get(deepcopy=True)
+			filePathList = flatten(filePathList)
+		except:
 			self.outputs['Status'].sv_set([False])
 			return
-		modelList = self.inputs['Energy Model'].sv_get(deepcopy=True)
-		modelList = flatten(modelList)
-		filePathList = self.inputs['File Path'].sv_get(deepcopy=True)
-		filePathList = flatten(filePathList)
+		overwrite = self.inputs['Overwrite File'].sv_get(deepcopy=False)[0][0] #accept only one overwrite flag
 		inputs = [modelList, filePathList]
 		if ((self.Replication) == "Default"):
 			inputs = iterate(inputs)
@@ -151,7 +156,7 @@ class SvEnergyModelExportToOSM(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
+			outputs.append(processItem(anInput, overwrite))
 		self.outputs['Status'].sv_set(outputs)
 
 def register():

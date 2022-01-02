@@ -46,9 +46,10 @@ class SvTopologyByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyByImportedIFC'
 	bl_label = 'Topology.ByImportedIFC'
+	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'File Path')
+		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
 		self.outputs.new('SvStringsSocket', 'Topology')
 
 	def process(self):

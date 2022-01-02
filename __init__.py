@@ -228,6 +228,7 @@ def nodes_index():
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
+                ("Topologic.GlobalClusterAddTopology", "SvGlobalClusterAddTopology"),
                 ("Topologic.GlobalClusterClear", "SvGlobalClusterClear"),
                 ("Topologic.GlobalClusterRemoveTopology", "SvGlobalClusterRemoveTopology"),
                 ("Topologic.GlobalClusterSubTopologies", "SvGlobalClusterSubTopologies"),
@@ -694,7 +695,9 @@ class NODEVIEW_MT_AddTPSubcategoryGlobalCluster(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvGlobalClusterAddTopology'],
             ['SvGlobalClusterClear'],
+            ['SvGlobalClusterInstance'],
             ['SvGlobalClusterRemoveTopology'],
             ['SvGlobalClusterSubTopologies'],
         ])
