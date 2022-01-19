@@ -7,11 +7,12 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import time
 
-def processItem(item):
+def processItem(graph, tolerance):
+# This is not implemented yet.
 	vertices = []
-	_ = item.Vertices(vertices)
+	_ = graph.Vertices(vertices)
 	edges = []
-	_ = item.Edges(vertices, 0.001, edges)
+	_ = graph.Edges(vertices, tolerance, edges)
 	return edges
 
 class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
@@ -21,8 +22,11 @@ class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvGraphEdges'
 	bl_label = 'Graph.Edges'
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
+
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Graph')
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Edges')
 
 	def process(self):
@@ -33,9 +37,10 @@ class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Edges'].sv_set([])
 			return
 		inputs = self.inputs['Graph'].sv_get(deepcopy=False)
+		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=True)[0][0]
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput))
+			outputs.append(processItem(anInput, tolerance))
 		self.outputs['Edges'].sv_set(outputs)
 		end = time.time()
 		print("Graph.Edges Operation consumed "+str(round(end - start,2))+" seconds")

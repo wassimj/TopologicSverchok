@@ -133,19 +133,19 @@ def topologyByFaces(faces, tolerance):
 	output = Cell.ByFaces(faces, tolerance)
 	if output:
 		f = []
-		_ = output.Faces(f)
+		_ = output.Faces(None, f)
 		if len(f) > 0:
 			return output
 	output = CellComplex.ByFaces(faces, tolerance)
 	if output:
 		c = []
-		_ = output.Cells(c)
+		_ = output.Cells(None, c)
 		if len(c) > 0:
 			return output
 	output = Shell.ByFaces(faces, tolerance)
 	if output:
 		f = []
-		_ = output.Faces(f)
+		_ = output.Faces(None, f)
 		if len(f) > 0:
 			return output
 	output = Cluster.ByTopologies(faces)

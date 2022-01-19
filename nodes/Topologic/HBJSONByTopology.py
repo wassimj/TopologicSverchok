@@ -161,19 +161,19 @@ def processItem(item):
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
     if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(subTopologies)
+        _ = topology.Vertices(None, subTopologies)
     elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(subTopologies)
+        _ = topology.Edges(None, subTopologies)
     elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(subTopologies)
+        _ = topology.Wires(None, subTopologies)
     elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(subTopologies)
+        _ = topology.Faces(None, subTopologies)
     elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(subTopologies)
+        _ = topology.Shells(None, subTopologies)
     elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(subTopologies)
+        _ = topology.Cells(None, subTopologies)
     elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(subTopologies)
+        _ = topology.CellComplexes(None, subTopologies)
     return subTopologies
 
 def listAttributeValues(listAttribute):
@@ -221,7 +221,7 @@ def processItem(item):
 
     rooms = []
     tpCells = []
-    _ = tpBuilding.Cells(tpCells)
+    _ = tpBuilding.Cells(None, tpCells)
     # Sort cells by Z Levels
     tpCells.sort(key=lambda c: c.CenterOfMass().Z(), reverse=False)
     for spaceNumber, tpCell in enumerate(tpCells):
@@ -232,16 +232,21 @@ def processItem(item):
             tpCellName = valueAtKey(tpDictionary,'name')
             tpCellStory = valueAtKey(tpDictionary,'story')            
         tpCellFaces = []
-        _ = tpCell.Faces(tpCellFaces)
+        _ = tpCell.Faces(None, tpCellFaces)
         if tpCellFaces:
             hbRoomFaces = []
             for tpFaceNumber, tpCellFace in enumerate(tpCellFaces):
                 hbRoomFacePoints = []
                 tpFaceVertices = []
-                _ = tpCellFace.ExternalBoundary().Vertices(tpFaceVertices)
+                _ = tpCellFace.ExternalBoundary().Vertices(None, tpFaceVertices)
                 for tpVertex in tpFaceVertices:
                     hbRoomFacePoints.append(Point3D(tpVertex.X(), tpVertex.Y(), tpVertex.Z()))
                 hbRoomFace = Face(tpCellName+'_Face_'+str(tpFaceNumber+1), Face3D(hbRoomFacePoints))
+                faceNormal = topologic.FaceUtility.NormalAtParameters(tpFace, 0.5, 0.5)
+                ang = math.degrees(math.acos(faceNormal.dot([0, 0, 1])))
+                print("HBJSONByTopology: Angle between face normal and UP",ang)
+                if ang > 175:
+                    hbRoomFace.type = "floor"
                 tpFaceApertures = []
                 _ = tpCellFace.Apertures(tpFaceApertures)
                 if tpFaceApertures:
@@ -252,7 +257,7 @@ def processItem(item):
                             tpFaceApertureType = valueAtKey(tpFaceApertureDictionary,'type')
                         hbFaceAperturePoints = []
                         tpFaceApertureVertices = []
-                        _ = apertureTopology.ExternalBoundary().Vertices(tpFaceApertureVertices)
+                        _ = apertureTopology.ExternalBoundary().Vertices(None, tpFaceApertureVertices)
                         for tpFaceApertureVertex in tpFaceApertureVertices:
                             hbFaceAperturePoints.append(Point3D(tpFaceApertureVertex.X(), tpFaceApertureVertex.Y(), tpFaceApertureVertex.Z()))
                         if(tpFaceApertureType):
@@ -287,10 +292,10 @@ def processItem(item):
 
     hbShades = []
     shadingFaces = []
-    _ = tpShadingSurfacesCluster.Faces(shadingFaces)
+    _ = tpShadingSurfacesCluster.Faces(None, shadingFaces)
     for faceIndex, shadingFace in enumerate(shadingFaces):
         faceVertices = []
-        _ = shadingFace.ExternalBoundary().Vertices(faceVertices)
+        _ = shadingFace.ExternalBoundary().Vertices(None, faceVertices)
         facePoints = []
         for aVertex in faceVertices:
             facePoints.append(Point3D(aVertex.X(), aVertex.Y(), aVertex.Z()))

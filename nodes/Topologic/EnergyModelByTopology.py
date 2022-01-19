@@ -99,19 +99,19 @@ def transposeList(l):
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
     if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(subTopologies)
+        _ = topology.Vertices(None, subTopologies)
     elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(subTopologies)
+        _ = topology.Edges(None, subTopologies)
     elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(subTopologies)
+        _ = topology.Wires(None, subTopologies)
     elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(subTopologies)
+        _ = topology.Faces(None, subTopologies)
     elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(subTopologies)
+        _ = topology.Shells(None, subTopologies)
     elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(subTopologies)
+        _ = topology.Cells(None, subTopologies)
     elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(subTopologies)
+        _ = topology.CellComplexes(None, subTopologies)
     return subTopologies
 
 def listAttributeValues(listAttribute):

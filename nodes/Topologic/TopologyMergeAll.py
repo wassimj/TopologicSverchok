@@ -22,7 +22,7 @@ def processItem(item):
 	for i in range(1, len(item)):
 		resultTopology = resultTopology.Union(item[i])
 	cells = []
-	_ = resultTopology.Cells(cells)
+	_ = resultTopology.Cells(None, cells)
 	unused = []
 	for i in range(len(item)):
 		unused.append(True)

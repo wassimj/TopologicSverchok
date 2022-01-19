@@ -31,7 +31,7 @@ def processItem(topology, tolerance):
 	if (t == 1) or (t == 2) or (t == 4) or (t == 128):
 		return topology
 	topologyFaces = []
-	_ = topology.Faces(topologyFaces)
+	_ = topology.Faces(None, topologyFaces)
 	faceTriangles = []
 	for aFace in topologyFaces:
 		triFaces = triangulateFace(aFace)

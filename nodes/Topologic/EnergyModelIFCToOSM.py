@@ -128,19 +128,19 @@ def getSubTopologies(topology, subTopologyClass):
   subtopologies = []
 
   if subTopologyClass == Vertex:
-    _ = topology.Vertices(subtopologies)
+    _ = topology.Vertices(None, subtopologies)
   elif subTopologyClass == Edge:
-    _ = topology.Edges(subtopologies)
+    _ = topology.Edges(None, subtopologies)
   elif subTopologyClass == Wire:
-    _ = topology.Wires(subtopologies)
+    _ = topology.Wires(None, subtopologies)
   elif subTopologyClass == Face:
-    _ = topology.Faces(subtopologies)
+    _ = topology.Faces(None, subtopologies)
   elif subTopologyClass == Shell:
-    _ = topology.Shells(subtopologies)
+    _ = topology.Shells(None, subtopologies)
   elif subTopologyClass == Cell:
-    _ = topology.Cells(subtopologies)
+    _ = topology.Cells(None, subtopologies)
   elif subTopologyClass == CellComplex:
-    _ = topology.CellComplexes(subtopologies)
+    _ = topology.CellComplexes(None, subtopologies)
 
   return subtopologies
 
@@ -193,7 +193,7 @@ def meshData(topology):
   if (topology.Type() == 1): #input is a vertex, just add it and process it
     topVerts.append(topology)
   else:
-    _ = topology.Vertices(topVerts)
+    _ = topology.Vertices(None, topVerts)
   for aVertex in topVerts:
     try:
       vertices.index(tuple([aVertex.X(), aVertex.Y(), aVertex.Z()])) # Vertex already in list
@@ -204,7 +204,7 @@ def meshData(topology):
   if (topology.Type() == 8): # Input is a Face, just add it and process it
     topFaces.append(topology)
   elif (topology.Type() > 8):
-    _ = topology.Faces(topFaces)
+    _ = topology.Faces(None, topFaces)
   for aFace in topFaces:
     wires = []
     ib = []

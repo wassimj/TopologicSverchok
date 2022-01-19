@@ -176,9 +176,9 @@ def processItem(item):
 	tolerance = item[2]
 
 	tEdges = []
-	_ = wire.Edges(tEdges)
+	_ = wire.Edges(None, tEdges)
 	tVertices = []
-	_ = wire.Vertices(tVertices)
+	_ = wire.Vertices(None, tVertices)
 	tVertices = tVertices
 
 	graph = []

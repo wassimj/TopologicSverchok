@@ -17,7 +17,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return topologic.Cluster.ByTopologies(item)
+	return topologic.Cluster.ByTopologies(item, False)
 
 def recur(input):
 	output = []

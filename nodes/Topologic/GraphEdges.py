@@ -8,11 +8,11 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 import time
 
 
-def processItem(item, tolerance):
+def processItem(graph, tolerance):
 	vertices = []
-	_ = item.Vertices(vertices)
+	_ = graph.Vertices(vertices)
 	edges = []
-	_ = item.Edges(vertices, tolerance, edges)
+	_ = graph.Edges(vertices, tolerance, edges)
 	return edges
 
 class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):

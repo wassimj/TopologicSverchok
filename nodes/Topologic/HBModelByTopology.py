@@ -14,6 +14,7 @@ from honeybee.shade import Shade
 from honeybee.aperture import Aperture
 from honeybee.door import Door
 from honeybee.boundarycondition import boundary_conditions
+import honeybee.facetype
 from honeybee.facetype import face_types, Floor, RoofCeiling
 
 from honeybee_energy.constructionset import ConstructionSet
@@ -152,19 +153,19 @@ def transposeList(l):
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
     if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(subTopologies)
+        _ = topology.Vertices(None, subTopologies)
     elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(subTopologies)
+        _ = topology.Edges(None, subTopologies)
     elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(subTopologies)
+        _ = topology.Wires(None, subTopologies)
     elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(subTopologies)
+        _ = topology.Faces(None, subTopologies)
     elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(subTopologies)
+        _ = topology.Shells(None, subTopologies)
     elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(subTopologies)
+        _ = topology.Cells(None, subTopologies)
     elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(subTopologies)
+        _ = topology.CellComplexes(None, subTopologies)
     return subTopologies
 
 def listAttributeValues(listAttribute):
@@ -199,7 +200,7 @@ def valueAtKey(item, key):
 
 def cellFloor(cell):
     faces = []
-    _ = cell.Faces(faces)
+    _ = cell.Faces(None, faces)
     c = [x.CenterOfMass().Z() for x in faces]
     return round(min(c),2)
 
@@ -239,7 +240,7 @@ def processItem(item):
         buildingName = "GENERICBUILDING"
     rooms = []
     tpCells = []
-    _ = tpBuilding.Cells(tpCells)
+    _ = tpBuilding.Cells(None, tpCells)
     # Sort cells by Z Levels
     tpCells.sort(key=lambda c: cellFloor(c), reverse=False)
     fl = floorLevels(tpCells, 2)
@@ -254,7 +255,7 @@ def processItem(item):
             keyName = getKeyName(tpDictionary, 'Name')
             tpCellName = valueAtKey(tpDictionary,keyName)
             if tpCellName:
-                tpCellName = tpCellName.replace(" ","_")
+                tpCellName = tpCellName.replace(" ","_")+(str(spaceNumber+1))
             else:
                 tpCellName = "GENERICROOM_"+(str(spaceNumber+1))
             keyName = getKeyName(tpDictionary, 'Story')
@@ -280,13 +281,14 @@ def processItem(item):
             else:
                 constr_set = constr_set_lib.construction_set_by_identifier("Default Generic Construction Set")
         tpCellFaces = []
-        _ = tpCell.Faces(tpCellFaces)
+        _ = tpCell.Faces(None, tpCellFaces)
         if tpCellFaces:
             hbRoomFaces = []
             for tpFaceNumber, tpCellFace in enumerate(tpCellFaces):
+                tpCellFaceNormal = topologic.FaceUtility.NormalAtParameters(tpCellFace, 0.5, 0.5)
                 hbRoomFacePoints = []
                 tpFaceVertices = []
-                _ = tpCellFace.ExternalBoundary().Vertices(tpFaceVertices)
+                _ = tpCellFace.ExternalBoundary().Vertices(None, tpFaceVertices)
                 for tpVertex in tpFaceVertices:
                     hbRoomFacePoints.append(Point3D(tpVertex.X(), tpVertex.Y(), tpVertex.Z()))
                 hbRoomFace = Face(tpCellName+'_Face_'+str(tpFaceNumber+1), Face3D(hbRoomFacePoints))
@@ -300,7 +302,7 @@ def processItem(item):
                             tpFaceApertureType = valueAtKey(tpFaceApertureDictionary,'type')
                         hbFaceAperturePoints = []
                         tpFaceApertureVertices = []
-                        _ = apertureTopology.ExternalBoundary().Vertices(tpFaceApertureVertices)
+                        _ = apertureTopology.ExternalBoundary().Vertices(None, tpFaceApertureVertices)
                         for tpFaceApertureVertex in tpFaceApertureVertices:
                             hbFaceAperturePoints.append(Point3D(tpFaceApertureVertex.X(), tpFaceApertureVertex.Y(), tpFaceApertureVertex.Z()))
                         if(tpFaceApertureType):
@@ -313,11 +315,12 @@ def processItem(item):
                         hbRoomFace.add_aperture(hbFaceAperture)
                 else:
                     tpFaceDictionary = tpCellFace.GetDictionary()
-                    tpCellFaceNormal = topologic.FaceUtility.NormalAtParameters(tpCellFace, 0.5, 0.5)
                     if (abs(tpCellFaceNormal[2]) < 1e-6) and tpFaceDictionary: #It is a mostly vertical wall and has a dictionary
                         apertureRatio = valueAtKey(tpFaceDictionary,'apertureRatio')
                         if apertureRatio:
                             hbRoomFace.apertures_by_ratio(apertureRatio, tolerance=0.01)
+                fType = honeybee.facetype.get_type_from_normal(Vector3D(tpCellFaceNormal[0],tpCellFaceNormal[1],tpCellFaceNormal[2]), roof_angle=30, floor_angle=150)
+                hbRoomFace.type = fType
                 hbRoomFaces.append(hbRoomFace)
             room = Room(tpCellName, hbRoomFaces, 0.01, 1)
             heat_setpt = ScheduleRuleset.from_constant_value('Room Heating', heatingSetpoint, schedule_types.temperature)
@@ -329,7 +332,7 @@ def processItem(item):
             schedule = ScheduleRuleset('Office Water Use', simple_office, None, schedule_types.fractional) #Todo: Remove hardwired schedule
             shw = ServiceHotWater('Office Hot Water', 0.1, schedule) #Todo: Remove hardwired schedule hot water
             room.properties.energy.program_type = program
-            #room.properties.energy.construction_set = constr_set
+            room.properties.energy.construction_set = constr_set
             room.properties.energy.add_default_ideal_air() #Ideal Air Exchange
             room.properties.energy.setpoint = setpoint #Heating/Cooling/Humidifying/Dehumidifying
             room.properties.energy.service_hot_water = shw #Service Hot Water
@@ -344,10 +347,10 @@ def processItem(item):
     if(tpShadingFacesCluster):
         hbShades = []
         tpShadingFaces = []
-        _ = tpShadingFacesCluster.Faces(tpShadingFaces)
+        _ = tpShadingFacesCluster.Faces(None, tpShadingFaces)
         for faceIndex, tpShadingFace in enumerate(tpShadingFaces):
             faceVertices = []
-            _ = tpShadingFace.ExternalBoundary().Vertices(faceVertices)
+            _ = tpShadingFace.ExternalBoundary().Vertices(None, faceVertices)
             facePoints = []
             for aVertex in faceVertices:
                 facePoints.append(Point3D(aVertex.X(), aVertex.Y(), aVertex.Z()))

@@ -24,11 +24,11 @@ def processItem(item):
 	slabs = []
 
 	faces = []
-	_ = item.Faces(faces)
+	_ = item.Faces(None, faces)
 	for aFace in faces:
 		z = topologic.FaceUtility.NormalAtParameters(aFace, 0.5, 0.5)[2]
 		cells = []
-		_ = aFace.Cells(cells)
+		aFace.Cells(item, cells)
 		n = len(cells)
 		if abs(z) < 0.001:
 			if n == 1:

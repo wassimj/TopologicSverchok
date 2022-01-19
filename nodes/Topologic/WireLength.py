@@ -19,7 +19,7 @@ def processItem(item):
 	totalLength = 0
 	if item:
 		edges = []
-		_ = item.Edges(edges)
+		_ = item.Edges(None, edges)
 		totalLength = 0
 		for anEdge in edges:
 			totalLength = totalLength + topologic.EdgeUtility.Length(anEdge)

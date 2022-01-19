@@ -7,25 +7,26 @@ import topologic
 import time
 
 def processItem(item, topologyType):
+	if item.GetTypeAsString() == topologyType:
+		return [item]
 	subtopologies = []
-	try:
-		if topologyType == "Vertex":
-			_ = item.Vertices(subtopologies)
-		elif topologyType == "Edge":
-			_ = item.Edges(subtopologies)
-		elif topologyType == "Wire":
-			_ = item.Wires(subtopologies)
-		elif topologyType == "Face":
-			_ = item.Faces(subtopologies)
-		elif topologyType == "Shell":
-			_ = item.Shells(subtopologies)
-		elif topologyType == "Cell":
-			_ = item.Cells(subtopologies)
-		elif topologyType == "CellComplex":
-			_ = item.CellComplexes(subtopologies)
-		elif topologyType == "Aperture":
-			_ = item.Apertures(subtopologies)
-	except:
+	if topologyType == "Vertex":
+		_ = item.Vertices(None, subtopologies)
+	elif topologyType == "Edge":
+		_ = item.Edges(None, subtopologies)
+	elif topologyType == "Wire":
+		_ = item.Wires(None, subtopologies)
+	elif topologyType == "Face":
+		_ = item.Faces(None, subtopologies)
+	elif topologyType == "Shell":
+		_ = item.Shells(None, subtopologies)
+	elif topologyType == "Cell":
+		_ = item.Cells(None, subtopologies)
+	elif topologyType == "CellComplex":
+		_ = item.CellComplexes(None, subtopologies)
+	elif topologyType == "Aperture":
+		_ = item.Apertures(None, subtopologies)
+	else:
 		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies")
 	return subtopologies
 

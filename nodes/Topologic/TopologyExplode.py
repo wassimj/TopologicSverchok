@@ -116,7 +116,7 @@ def processItem(item):
 	if topology.__class__ == topologic.Graph:
 		graphTopology = topology.Topology()
 		graphEdges = []
-		_ = graphTopology.Edges(graphEdges)
+		_ = graphTopology.Edges(None, graphEdges)
 		for anEdge in graphEdges:
 			sv = anEdge.StartVertex()
 			oldX = sv.X()
@@ -140,19 +140,19 @@ def processItem(item):
 	else:
 		if typeFilter == "Vertex":
 			topologies = []
-			_ = topology.Vertices(topologies)
+			_ = topology.Vertices(None, topologies)
 		elif typeFilter == "Edge":
 			topologies = []
-			_ = topology.Edges(topologies)
+			_ = topology.Edges(None, topologies)
 		elif typeFilter == "Face":
 			topologies = []
-			_ = topology.Faces(topologies)
+			_ = topology.Faces(None, topologies)
 		elif typeFilter == "Cell":
 			topologies = []
-			_ = topology.Cells(topologies)
+			_ = topology.Cells(None, topologies)
 		else:
 			topologies = []
-			_ = topology.Vertices(topologies)
+			_ = topology.Vertices(None, topologies)
 		for aTopology in topologies:
 			c = relevantSelector(aTopology)
 			oldX = c.X()

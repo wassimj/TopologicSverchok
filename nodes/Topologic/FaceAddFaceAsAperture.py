@@ -92,7 +92,7 @@ def transposeList(l):
 
 def boundingBox(cell):
 	vertices = []
-	_ = cell.Vertices(vertices)
+	_ = cell.Vertices(None, vertices)
 	x = []
 	y = []
 	z = []
@@ -104,7 +104,7 @@ def boundingBox(cell):
 
 def isInside(aperture, face, tolerance):
 	vertices = []
-	_ = aperture.Vertices(vertices)
+	_ = aperture.Vertices(None, vertices)
 	for vertex in vertices:
 		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:
 			return False

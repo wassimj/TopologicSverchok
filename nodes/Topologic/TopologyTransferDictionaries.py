@@ -157,31 +157,31 @@ def transferDictionaries(sources, sinks, tol):
 def highestDimension(topology):
 	if (topology.Type() == topologic.Cluster.Type()):
 		cellComplexes = []
-		_ = topology.CellComplexes(cellComplexes)
+		_ = topology.CellComplexes(None, cellComplexes)
 		if len(cellComplexes) > 0:
 			return topologic.CellComplex.Type()
 		cells = []
-		_ = topology.Cells(cells)
+		_ = topology.Cells(None, cells)
 		if len(cells) > 0:
 			return topologic.Cell.Type()
 		shells = []
-		_ = topology.Shells(shells)
+		_ = topology.Shells(None, shells)
 		if len(shells) > 0:
 			return topologic.Shell.Type()
 		faces = []
-		_ = topology.Faces(faces)
+		_ = topology.Faces(None, faces)
 		if len(faces) > 0:
 			return topologic.Face.Type()
 		wires = []
-		_ = topology.Wires(wires)
+		_ = topology.Wires(None, wires)
 		if len(wires) > 0:
 			return topologic.Wire.Type()
 		edges = []
-		_ = topology.Edges(edges)
+		_ = topology.Edges(None, edges)
 		if len(edges) > 0:
 			return topologic.Edge.Type()
 		vertices = []
-		_ = topology.Vertices(vertices)
+		_ = topology.Vertices(None, vertices)
 		if len(vertices) > 0:
 			return topologic.Vertex.Type()
 	else:
@@ -202,25 +202,25 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 		if sink.Type() == topologic.Vertex.Type():
 			sinkVertices.append(sink)
 		elif hidimSink >= topologic.Vertex.Type():
-			sink.Vertices(sinkVertices)
+			sink.Vertices(None, sinkVertices)
 	if tranEdges == True:
 		sinkEdges = []
 		if sink.Type() == topologic.Edge.Type():
 			sinkEdges.append(sink)
 		elif hidimSink >= topologic.Edge.Type():
-			sink.Edges(sinkEdges)
+			sink.Edges(None, sinkEdges)
 	if tranFaces == True:
 		sinkFaces = []
 		if sink.Type() == topologic.Face.Type():
 			sinkFaces.append(sink)
 		elif hidimSink >= topologic.Face.Type():
-			sink.Faces(sinkFaces)
+			sink.Faces(None, sinkFaces)
 	if tranCells == True:
 		sinkCells = []
 		if sink.Type() == topologic.Cell.Type():
 			sinkCells.append(sink)
 		elif hidimSink >= topologic.Cell.Type():
-			sink.Cells(sinkCells)
+			sink.Cells(None, sinkCells)
 	for source in sources:
 		_ = transferDictionaries([source], [sink], tolerance)
 		hidimSource = highestDimension(source)
@@ -229,28 +229,28 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 			if source.Type() == topologic.Vertex.Type():
 				sourceVertices.append(source)
 			elif hidimSource >= topologic.Vertex.Type():
-				source.Vertices(sourceVertices)
+				source.Vertices(None, sourceVertices)
 			_ = transferDictionaries(sourceVertices, sinkVertices, tolerance)
 		if tranEdges == True:
 			if source.Type() == topologic.Edge.Type():
 				sourceEdges.append(source)
 			elif hidimSource >= topologic.Edge.Type():
 				sourceEdges = []
-				source.Edges(sourceEdges)
+				source.Edges(None, sourceEdges)
 			_ = transferDictionaries(sourceEdges, sinkEdges, tolerance)
 		if tranFaces == True:
 			if source.Type() == topologic.Face.Type():
 				sourceFaces.append(source)
 			elif hidimSource >= topologic.Face.Type():
 				sourceFaces = []
-				source.Faces(sourceFaces)
+				source.Faces(None, sourceFaces)
 			_ = transferDictionaries(sourceFaces, sinkFaces, tolerance)
 		if tranCells == True:
 			if source.Type() == topologic.Cell.Type():
 				sourceCells.append(source)
 			elif hidimSource >= topologic.Cell.Type():
 				sourceCells = []
-				source.Cells(sourceCells)
+				source.Cells(None, sourceCells)
 			_ = transferDictionaries(sourceCells, sinkCells, tolerance)
 	return sink
 

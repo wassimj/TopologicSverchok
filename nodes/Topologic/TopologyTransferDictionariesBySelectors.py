@@ -184,31 +184,31 @@ def transferDictionaries(sources, sinks, tol):
 def highestDimension(topology):
 	if (topology.Type() == topologic.Cluster.Type()):
 		cellComplexes = []
-		_ = topology.CellComplexes(cellComplexes)
+		_ = topology.CellComplexes(None, cellComplexes)
 		if len(cellComplexes) > 0:
 			return topologic.CellComplex.Type()
 		cells = []
-		_ = topology.Cells(cells)
+		_ = topology.Cells(None, cells)
 		if len(cells) > 0:
 			return topologic.Cell.Type()
 		shells = []
-		_ = topology.Shells(shells)
+		_ = topology.Shells(None, shells)
 		if len(shells) > 0:
 			return topologic.Shell.Type()
 		faces = []
-		_ = topology.Faces(faces)
+		_ = topology.Faces(None, faces)
 		if len(faces) > 0:
 			return topologic.Face.Type()
 		wires = []
-		_ = topology.Wires(wires)
+		_ = topology.Wires(None, wires)
 		if len(wires) > 0:
 			return topologic.Wire.Type()
 		edges = []
-		_ = topology.Edges(edges)
+		_ = topology.Edges(None, edges)
 		if len(edges) > 0:
 			return topologic.Edge.Type()
 		vertices = []
-		_ = topology.Vertices(vertices)
+		_ = topology.Vertices(None, vertices)
 		if len(vertices) > 0:
 			return topologic.Vertex.Type()
 	else:
@@ -229,28 +229,28 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 		if sink.Type() == topologic.Vertex.Type():
 			sinkVertices.append(sink)
 		elif hidimSink >= topologic.Vertex.Type():
-			sink.Vertices(sinkVertices)
+			sink.Vertices(None, sinkVertices)
 		_ = transferDictionaries(sources, sinkVertices, tolerance)
 	if tranEdges == True:
 		sinkEdges = []
 		if sink.Type() == topologic.Edge.Type():
 			sinkEdges.append(sink)
 		elif hidimSink >= topologic.Edge.Type():
-			sink.Edges(sinkEdges)
+			sink.Edges(None, sinkEdges)
 			_ = transferDictionaries(sources, sinkEdges, tolerance)
 	if tranFaces == True:
 		sinkFaces = []
 		if sink.Type() == topologic.Face.Type():
 			sinkFaces.append(sink)
 		elif hidimSink >= topologic.Face.Type():
-			sink.Faces(sinkFaces)
+			sink.Faces(None, sinkFaces)
 		_ = transferDictionaries(sources, sinkFaces, tolerance)
 	if tranCells == True:
 		sinkCells = []
 		if sink.Type() == topologic.Cell.Type():
 			sinkCells.append(sink)
 		elif hidimSink >= topologic.Cell.Type():
-			sink.Cells(sinkCells)
+			sink.Cells(None, sinkCells)
 		_ = transferDictionaries(sources, sinkCells, tolerance)
 	return sink
 

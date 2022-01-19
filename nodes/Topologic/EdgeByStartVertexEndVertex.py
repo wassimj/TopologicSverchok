@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty, EnumProperty
+from bpy.props import StringProperty, FloatProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -90,16 +90,19 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
-def processItem(item, tol):
+def processItem(item):
 	sv = item[0]
 	ev = item[1]
+	tranDict = item[2]
+	tol = item[3]
 	edge = None
+	print("Transfer Dictionary", tranDict)
 	if topologic.Topology.IsSame(sv, ev):
 		return None
-	#if topologic.VertexUtility.Distance(sv, ev) < tol:
-		#return None
+	if topologic.VertexUtility.Distance(sv, ev) < tol:
+		return None
 	try:
-		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
+		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev, tranDict)
 	except:
 		edge = None
 	return edge
@@ -115,12 +118,14 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Edge.ByStartVertexEndVertex'
 	startVertex: StringProperty(name="StartVertex", update=updateNode)
 	endVertex: StringProperty(name="EndVertex", update=updateNode)
+	TransferDictionary: BoolProperty(name="Transfer Dictionary", default=False, update=updateNode)
 	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
 	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'StartVertex')
 		self.inputs.new('SvStringsSocket', 'EndVertex')
+		self.inputs.new('SvStringsSocket', 'Transfer Dictionary').prop_name = 'TransferDictionary'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Edge')
 
@@ -135,22 +140,27 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 			return
 		svList = self.inputs['StartVertex'].sv_get(deepcopy=True)
 		evList = self.inputs['EndVertex'].sv_get(deepcopy=True)
-		tolerance = self.inputs['Tolerance'].sv_get(deepcopy=False)[0][0]
-		inputs = []
+		tranDictList = self.inputs['Transfer Dictionary'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
+		svList = flatten(svList)
+		evList = flatten(evList)
+		tranDictList = flatten(tranDictList)
+		toleranceList = flatten(toleranceList)
+		inputs = [svList, evList, tranDictList, toleranceList]
 		if ((self.Lacing) == "Trim"):
-			inputs = trim([svList, evList])
+			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Lacing) == "Iterate"):
-			inputs = iterate([svList, evList])
+			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Lacing) == "Repeat"):
-			inputs = repeat([svList, evList])
+			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Lacing) == "Lace"):
-			inputs = list(lace([svList, evList]))
+			inputs = list(lace(inputs))
 		outputs = []
 		for anInput in inputs:
-			anOutput = processItem(anInput, tolerance)
+			anOutput = processItem(anInput)
 			if anOutput:
 				outputs.append(anOutput)
 		self.outputs['Edge'].sv_set(outputs)

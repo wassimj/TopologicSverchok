@@ -16,7 +16,7 @@ def wireByVertices(vList):
 
 def processItem(item):
 	vertices = []
-	_ = item.Vertices(vertices)
+	_ = item.Vertices(None, vertices)
 	x = []
 	y = []
 	z = []

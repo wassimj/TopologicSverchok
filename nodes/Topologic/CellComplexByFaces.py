@@ -16,7 +16,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item, tol):
-	return topologic.CellComplex.ByFaces(item, tol)
+	return topologic.CellComplex.ByFaces(item, tol, False)
 
 class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""

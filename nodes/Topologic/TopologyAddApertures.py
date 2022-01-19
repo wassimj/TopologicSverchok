@@ -22,7 +22,7 @@ def internalVertex(topology, tolerance):
 		vst = topologic.CellUtility.InternalVertex(topology, tolerance)
 	elif classType == 16: #Shell
 		tempFaces = []
-		_ = topology.Faces(tempFaces)
+		_ = topology.Faces(None, tempFaces)
 		tempFace = tempFaces[0]
 		vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 	elif classType == 8: #Face
@@ -34,7 +34,7 @@ def internalVertex(topology, tolerance):
 			vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 		else:
 			tempEdges = []
-			_ = topology.Edges(tempEdges)
+			_ = topology.Edges(None, tempEdges)
 			vst = topologic.EdgeUtility.PointAtParameter(tempVertex[0], 0.5)
 	elif classType == 2: #Edge
 		vst = topologic.EdgeUtility.PointAtParameter(topology, 0.5)
@@ -71,11 +71,11 @@ def processItem(item):
 	subTopologyType = item[4]
 	subTopologies = []
 	if subTopologyType == "Face":
-		_ = topology.Faces(subTopologies)
+		_ = topology.Faces(None, subTopologies)
 	elif subTopologyType == "Edge":
-		_ = topology.Edges(subTopologies)
+		_ = topology.Edges(None, subTopologies)
 	elif subTopologyType == "Vertex":
-		_ = topology.Vertices(subTopologies)
+		_ = topology.Vertices(None, subTopologies)
 	processApertures(subTopologies, apertures, exclusive, tolerance)
 	return topology
 

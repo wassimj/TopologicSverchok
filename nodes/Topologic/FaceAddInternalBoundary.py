@@ -92,7 +92,7 @@ def transposeList(l):
 
 def isInside(ib, face, tolerance):
 	vertices = []
-	_ = ib.Vertices(vertices)
+	_ = ib.Vertices(None, vertices)
 	for vertex in vertices:
 		if topologic.FaceUtility.IsInside(face, vertex, tolerance) == False:
 			return False

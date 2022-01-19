@@ -19,7 +19,7 @@ def flatten(element):
 def processItem(item):
 	exb = item.ExternalBoundary()
 	edges = []
-	_ = exb.Edges(edges)
+	_ = exb.Edges(None, edges)
 	perimeter = 0.0
 	for anEdge in edges:
 		perimeter = perimeter + abs(topologic.EdgeUtility.Length(anEdge))

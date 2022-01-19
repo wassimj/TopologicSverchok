@@ -21,8 +21,10 @@ def processItem(item):
 	file = open(item)
 	if file:
 		brepString = file.read()
+		print(brepString)
 		topology = topologic.Topology.DeepCopy(Topology.ByString(brepString))
 		file.close()
+		print(topology)
 		return topology
 	return None
 		

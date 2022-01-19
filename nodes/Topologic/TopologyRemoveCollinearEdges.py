@@ -22,7 +22,7 @@ def toDegrees(ang):
 # From https://gis.stackexchange.com/questions/387237/deleting-collinear-vertices-from-polygon-feature-class-using-arcpy
 def are_collinear(v2, tolerance=0.5):
 	edges = []
-	_ = v2.Edges(edges)
+	_ = v2.Edges(None, edges)
 	if len(edges) == 2:
 		ang = toDegrees(topologic.EdgeUtility.AngleBetween(edges[0], edges[1]))
 		if -tolerance <= ang <= tolerance:
@@ -53,7 +53,7 @@ def get_redundant_vertices(vertices, angTol):
 
 def processWire(wire, angTol):
 	vertices = []
-	_ = wire.Vertices(vertices)
+	_ = wire.Vertices(None, vertices)
 	redundantIndices = get_redundant_vertices(vertices, angTol)
 	# Check if first vertex is also collinear
 	if are_collinear(vertices[0], angTol):
@@ -90,7 +90,7 @@ def processItem(topology, angTol, tolerance):
 			returnTopology = topology
 		return returnTopology
 	faces = []
-	_ = topology.Faces(faces)
+	_ = topology.Faces(None, faces)
 	stl_final_faces = []
 	for aFace in faces:
 		extBoundary = processWire(aFace.ExternalBoundary(), angTol)

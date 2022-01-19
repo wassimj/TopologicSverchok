@@ -17,11 +17,11 @@ def flatten(element):
 
 def processItem(item):
 	edges = []
-	_ = item.Edges(edges)
+	_ = item.Edges(None, edges)
 	obEdges = []
 	for anEdge in edges:
 		faces = []
-		_ = anEdge.Faces(faces)
+		_ = anEdge.Faces(item, faces)
 		if len(faces) == 1:
 			obEdges.append(anEdge)
 	return topologic.Wire.ByEdges(obEdges)

@@ -26,23 +26,14 @@ def gcClear(item):
 	return
 
 def processItem(inputCells, superCells, tol):
-	print(superCells)
 	if len(superCells) == 0:
 		cluster = inputCells[0]
-		start = time.time()
 		for i in range(1, len(inputCells)):
 			oldCluster = cluster
 			cluster = cluster.Union(inputCells[i])
 			del oldCluster
-			if i % 50 == 0:
-				end = time.time()
-				print("Operation consumed "+str(round(end - start,2))+" seconds")
-				start = time.time()
-				print(i,"Clearing GlobalCluster")
-				gcClear(cluster)
 		superCells = []
-		_ = cluster.Cells(superCells)
-		print("Done creating SuperCells")
+		_ = cluster.Cells(None, superCells)
 	unused = []
 	for i in range(len(inputCells)):
 		unused.append(True)

@@ -8,7 +8,7 @@ import math
 
 def processItem(item):
 	faces = []
-	_ = item.Faces(faces)
+	_ = item.Faces(None, faces)
 	area = 0.0
 	for aFace in faces:
 		area = area + abs(topologic.FaceUtility.Area(aFace))

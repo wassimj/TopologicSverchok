@@ -96,14 +96,14 @@ def internalVertex(topology, tolerance):
 	classType = topology.Type()
 	if classType == 64: #CellComplex
 		tempCells = []
-		_ = topology.Cells(tempCells)
+		_ = topology.Cells(None,tempCells)
 		tempCell = tempCells.front()
 		vst = topologic.CellUtility.InternalVertex(tempCell, tolerance)
 	elif classType == 32: #Cell
 		vst = topologic.CellUtility.InternalVertex(topology, tolerance)
 	elif classType == 16: #Shell
 		tempFaces = []
-		_ = topology.Faces(tempFaces)
+		_ = topology.Faces(None, tempFaces)
 		tempFace = tempFaces.front()
 		vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 	elif classType == 8: #Face
@@ -115,7 +115,7 @@ def internalVertex(topology, tolerance):
 			vst = topologic.FaceUtility.InternalVertex(tempFace, tolerance)
 		else:
 			tempEdges = []
-			_ = topology.Edges(tempEdges)
+			_ = topology.Edges(None, tempEdges)
 			vst = topologic.EdgeUtility.PointAtParameter(tempVertex.front(), 0.5)
 	elif classType == 2: #Edge
 		vst = topologic.EdgeUtility.PointAtParameter(topology, 0.5)
@@ -311,7 +311,7 @@ def processCellComplex(item):
 	cellmat = []
 	if direct == True:
 		cells = []
-		_ = topology.Cells(cells)
+		_ = topology.Cells(None, cells)
 		# Create a matrix of zeroes
 		for i in range(len(cells)):
 			cellRow = []
@@ -340,7 +340,7 @@ def processCellComplex(item):
 	if directApertures == True:
 		cellmat = []
 		cells = []
-		_ = topology.Cells(cells)
+		_ = topology.Cells(None, cells)
 		# Create a matrix of zeroes
 		for i in range(len(cells)):
 			cellRow = []
@@ -379,7 +379,7 @@ def processCellComplex(item):
 							edges.append(e)
 
 	cells = []
-	_ = topology.Cells(cells)
+	_ = topology.Cells(None, cells)
 	if (viaSharedTopologies == True) or (viaSharedApertures == True) or (toExteriorTopologies == True) or (toExteriorApertures == True):
 		for aCell in cells:
 			if useInternalVertex == True:
@@ -389,14 +389,14 @@ def processCellComplex(item):
 			_ = vCell.SetDictionary(aCell.GetDictionary())
 			vertices.append(vCell)
 			faces = []
-			_ = aCell.Faces(faces)
+			_ = aCell.Faces(None, faces)
 			sharedTopologies = []
 			exteriorTopologies = []
 			sharedApertures = []
 			exteriorApertures = []
 			for aFace in faces:
 				cells = []
-				_ = aFace.Cells(cells)
+				_ = aFace.Cells(topology, cells)
 				if len(cells) > 1:
 					sharedTopologies.append(aFace)
 					apertures = []
@@ -491,7 +491,7 @@ def processCell(item):
 	if (toExteriorTopologies == True) or (toExteriorApertures == True):
 		vertices.append(vCell)
 		faces = []
-		_ = cell.Faces(faces)
+		_ = cell.Faces(None, faces)
 		exteriorTopologies = []
 		exteriorApertures = []
 		for aFace in faces:
@@ -551,7 +551,7 @@ def processShell(item):
 	facemat = []
 	if direct == True:
 		topFaces = []
-		_ = topology.Faces(topFaces)
+		_ = topology.Faces(None, topFaces)
 		# Create a matrix of zeroes
 		for i in range(len(topFaces)):
 			faceRow = []
@@ -580,7 +580,7 @@ def processShell(item):
 	if directApertures == True:
 		facemat = []
 		topFaces = []
-		_ = topology.Faces(topFaces)
+		_ = topology.Faces(None, topFaces)
 		# Create a matrix of zeroes
 		for i in range(len(topFaces)):
 			faceRow = []
@@ -619,7 +619,7 @@ def processShell(item):
 							edges.append(e)
 
 	topFaces = []
-	_ = topology.Faces(topFaces)
+	_ = topology.Faces(None, topFaces)
 	if (viaSharedTopologies == True) or (viaSharedApertures == True) or (toExteriorTopologies == True) or (toExteriorApertures == True):
 		for aFace in topFaces:
 			if useInternalVertex == True:
@@ -629,14 +629,14 @@ def processShell(item):
 			_ = vFace.SetDictionary(aFace.GetDictionary())
 			vertices.append(vFace)
 			fEdges = []
-			_ = aFace.Edges(fEdges)
+			_ = aFace.Edges(None, fEdges)
 			sharedTopologies = []
 			exteriorTopologies = []
 			sharedApertures = []
 			exteriorApertures = []
 			for anEdge in fEdges:
 				faces = []
-				_ = anEdge.Faces(faces)
+				_ = anEdge.Faces(topology, faces)
 				if len(faces) > 1:
 					sharedTopologies.append(anEdge)
 					apertures = []
@@ -732,7 +732,7 @@ def processFace(item):
 	if (toExteriorTopologies == True) or (toExteriorApertures == True):
 		vertices.append(vFace)
 		fEdges = []
-		_ = face.Edges(fEdges)
+		_ = face.Edges(None, fEdges)
 		exteriorTopologies = []
 		exteriorApertures = []
 		for anEdge in fEdges:
@@ -792,7 +792,7 @@ def processWire(item):
 	edgemat = []
 	if direct == True:
 		topEdges = []
-		_ = topology.Edges(topEdges)
+		_ = topology.Edges(None, topEdges)
 		# Create a matrix of zeroes
 		for i in range(len(topEdges)):
 			edgeRow = []
@@ -823,7 +823,7 @@ def processWire(item):
 	if directApertures == True:
 		edgemat = []
 		topEdges = []
-		_ = topology.Edges(topEdges)
+		_ = topology.Edges(None, topEdges)
 		# Create a matrix of zeroes
 		for i in range(len(topEdges)):
 			edgeRow = []
@@ -861,7 +861,7 @@ def processWire(item):
 							edges.append(e)
 
 	topEdges = []
-	_ = topology.Edges(topEdges)
+	_ = topology.Edges(None, topEdges)
 	if (viaSharedTopologies == True) or (viaSharedApertures == True) or (toExteriorTopologies == True) or (toExteriorApertures == True):
 		for anEdge in topEdges:
 			try:
@@ -871,14 +871,14 @@ def processWire(item):
 			_ = vEdge.SetDictionary(anEdge.GetDictionary())
 			vertice.append(vEdge)
 			eVertices = []
-			_ = anEdge.Vertices(eVertices)
+			_ = anEdge.Vertices(None, eVertices)
 			sharedTopologies = []
 			exteriorTopologies = []
 			sharedApertures = []
 			exteriorApertures = []
 			for aVertex in eVertices:
 				edges = []
-				_ = aVertex.Edges(edges)
+				_ = aVertex.Edges(topology, edges)
 				if len(edges) > 1:
 					sharedTopologies.append(aVertex)
 					apertures = []
@@ -967,7 +967,7 @@ def processEdge(item):
 	if (toExteriorTopologies == True) or (toExteriorApertures == True):
 		vertices.append(vEdge)
 		eVertices = []
-		_ = edge.Vertices(eVertices)
+		_ = edge.Vertices(None, eVertices)
 		exteriorTopologies = []
 		exteriorApertures = []
 		for aVertex in eVertices:

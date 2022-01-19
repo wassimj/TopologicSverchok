@@ -161,19 +161,19 @@ def processItem(item):
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
     if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(subTopologies)
+        _ = topology.Vertices(None, subTopologies)
     elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(subTopologies)
+        _ = topology.Edges(None, subTopologies)
     elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(subTopologies)
+        _ = topology.Wires(None, subTopologies)
     elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(subTopologies)
+        _ = topology.Faces(None, subTopologies)
     elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(subTopologies)
+        _ = topology.Shells(None, subTopologies)
     elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(subTopologies)
+        _ = topology.Cells(None, subTopologies)
     elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(subTopologies)
+        _ = topology.CellComplexes(None, subTopologies)
     return subTopologies
 
 def listAttributeValues(listAttribute):
@@ -210,7 +210,7 @@ def processItem(item):
     weatherFilePath = item[1]
     designDayFilePath = item[2]
     buildingTopology = item[3]
-    shadingSurfaces = item[4]
+    shadingSurfacesCluster = item[4]
     floorLevels = item[5]
     buildingName = item[6]
     buildingType = item[7]
@@ -222,19 +222,19 @@ def processItem(item):
 
     rooms = []
     buildingCells = []
-    _ = buildingTopology.Cells(buildingCells)
+    _ = buildingTopology.Cells(None, buildingCells)
     for spaceNumber, buildingCell in enumerate(buildingCells):
         cellDictionary = buildingCell.GetDictionary()
         if cellDictionary:
             cellName = valueAtKey(cellDictionary,'name')
         cellFaces = []
-        _ = buildingCell.Faces(cellFaces)
+        _ = buildingCell.Faces(None, cellFaces)
         if cellFaces:
             hbRoomFaces = []
             for faceNumber, buildingFace in enumerate(cellFaces):
                 hbFacePoints = []
                 faceVertices = []
-                _ = buildingFace.ExternalBoundary().Vertices(faceVertices)
+                _ = buildingFace.ExternalBoundary().Vertices(None, faceVertices)
                 for vertex in faceVertices:
                     hbFacePoints.append(Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                 hbFace = openstudio.model.Surface(osFacePoints, osModel)
@@ -253,10 +253,11 @@ def processItem(item):
 
 
     hbShades = []
-    _ = shadingSurfaces.Faces(shadingFaces)
+    shadingFaces = []
+    _ = shadingSurfacesCluster.Faces(None, shadingFaces)
     for faceIndex, shadingFace in enumerate(shadingFaces):
         faceVertices = []
-        _ = shadingFace.ExternalBoundary().Vertices(faceVertices)
+        _ = shadingFace.ExternalBoundary().Vertices(None, faceVertices)
         facePoints = []
         for aVertex in faceVertices:
             facePoints.append(Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))

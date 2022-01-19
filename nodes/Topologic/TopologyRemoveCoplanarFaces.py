@@ -73,17 +73,17 @@ def removeFace(face, faces):
 def shellToFace(shell):
 	externalEdges = []
 	shellEdges = []
-	_ = shell.Edges(shellEdges)
+	_ = shell.Edges(None, shellEdges)
 	for shellEdge in shellEdges:
 		edgeFaces = []
-		_ = shellEdge.Faces(edgeFaces)
+		_ = shellEdge.Faces(shell, edgeFaces)
 		if len(edgeFaces) < 2:
 			externalEdges.append(shellEdge)
 	cluster = topologic.Cluster.ByTopologies(externalEdges)
 	cluster = cluster.SelfMerge()
 	# This cluster could be made of more than 1 wire
 	stl_wires = []
-	_ = cluster.Wires(stl_wires)
+	_ = cluster.Wires(None, stl_wires)
 	wires = []
 	areas = []
 	for aWire in stl_wires:
@@ -131,7 +131,7 @@ def processItem(topology, angTol, tolerance):
 		return topology
 	# Get the faces of the Topology
 	faces = []
-	_ = topology.Faces(faces)
+	_ = topology.Faces(None, faces)
 	finalFaces = faces.copy()
 	for faceA in faces:
 		matchedFaces = [faceA]

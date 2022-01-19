@@ -163,9 +163,9 @@ def processItem(item):
 	if (wireB.IsClosed() == False):
 		raise Exception("Error: Wire.IsSimilar - Wire B is not closed.")
 	edgesA = []
-	_ = wireA.Edges(edgesA)
+	_ = wireA.Edges(None, edgesA)
 	edgesB = []
-	_ = wireB.Edges(edgesB)
+	_ = wireB.Edges(None, edgesB)
 	if len(edgesA) != len(edgesB):
 		return False
 	lengthTolerance = item[2]

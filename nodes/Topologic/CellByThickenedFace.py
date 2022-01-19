@@ -35,7 +35,7 @@ def processItem(item):
 
 	cellFaces = [bottomFace, topFace]
 	bottomEdges = []
-	_ = bottomFace.Edges(bottomEdges)
+	_ = bottomFace.Edges(None, bottomEdges)
 	for bottomEdge in bottomEdges:
 		topEdge = topologic.TopologyUtility.Translate(bottomEdge, faceNormal[0]*thickness, faceNormal[1]*thickness, faceNormal[2]*thickness)
 		sideEdge1 = topologic.Edge.ByStartVertexEndVertex(bottomEdge.StartVertex(), topEdge.StartVertex())

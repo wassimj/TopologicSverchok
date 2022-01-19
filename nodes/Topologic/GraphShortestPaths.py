@@ -57,7 +57,7 @@ def processItem(item):
 			wireVertices = []
 			flag = False
 			try:
-				_ = wire.Vertices(wireVertices)
+				_ = wire.Vertices(None, wireVertices)
 				flag = True
 			except:
 				flag = False

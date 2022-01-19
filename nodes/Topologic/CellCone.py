@@ -128,7 +128,7 @@ def createCone(baseWire, topWire, baseVertex, topVertex, tol):
 		return topologic.CellUtility.ByLoft([baseWire, topWire])
 
 	vertices = []
-	_ = wire.Vertices(vertices)
+	_ = wire.Vertices(None,vertices)
 	faces = [topologic.Face.ByExternalBoundary(wire)]
 	for i in range(0, len(vertices)-1):
 		w = wireByVertices([apex, vertices[i], vertices[i+1]])

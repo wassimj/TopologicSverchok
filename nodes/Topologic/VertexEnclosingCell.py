@@ -23,7 +23,7 @@ def matchLengths(list):
 
 def boundingBox(cell):
 	vertices = []
-	_ = cell.Vertices(vertices)
+	_ = cell.Vertices(None, vertices)
 	x = []
 	y = []
 	z = []

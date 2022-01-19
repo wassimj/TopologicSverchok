@@ -103,25 +103,25 @@ def transferDictionaries(selectors, dictionaries, topologyType, topology, tolera
 			sinks = [topology]
 		else:
 			sinks = []
-			_ = topology.Vertices(sinks)
+			_ = topology.Vertices(None, sinks)
 	elif topologyType == topologic.Edge.Type():
 		if topology.Type() == topologic.Edge.Type():
 			sinks = [topology]
 		else:
 			sinks = []
-			_ = topology.Edges(sinks)
+			_ = topology.Edges(None, sinks)
 	elif topologyType == topologic.Face.Type():
 		if topology.Type() == topologic.Face.Type():
 			sinks = [topology]
 		else:
 			sinks = []
-			_ = topology.Faces(sinks)
+			_ = topology.Faces(None, sinks)
 	elif topologyType == topologic.Cell.Type():
 		if topology.Type() == topologic.Cell.Type():
 			sinks = [topology]
 		else:
 			sinks = []
-			_ = topology.Cells(sinks)
+			_ = topology.Cells(None, sinks)
 	else:
 		sinks = []
 	for i in range(len(selectors)):

@@ -7,11 +7,11 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph
 import time
 
-def processItem(item):
+def processItem(graph):
 	vertices = []
-	if item:
+	if graph:
 		try:
-			_ = item.Vertices(vertices)
+			_ = graph.Vertices(vertices)
 		except:
 			print("ERROR: (Topologic>Graph.Vertices) operation failed.")
 			vertices = None

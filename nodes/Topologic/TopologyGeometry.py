@@ -25,19 +25,19 @@ def flatten(element):
 def getSubTopologies(topology, subTopologyClass):
 	topologies = []
 	if subTopologyClass == Vertex:
-		_ = topology.Vertices(topologies)
+		_ = topology.Vertices(None, topologies)
 	elif subTopologyClass == Edge:
-		_ = topology.Edges(topologies)
+		_ = topology.Edges(None, topologies)
 	elif subTopologyClass == Wire:
-		_ = topology.Wires(topologies)
+		_ = topology.Wires(None, topologies)
 	elif subTopologyClass == Face:
-		_ = topology.Faces(topologies)
+		_ = topology.Faces(None, topologies)
 	elif subTopologyClass == Shell:
-		_ = topology.Shells(topologies)
+		_ = topology.Shells(None, topologies)
 	elif subTopologyClass == Cell:
-		_ = topology.Cells(topologies)
+		_ = topology.Cells(None, topologies)
 	elif subTopologyClass == CellComplex:
-		_ = topology.CellComplexes(topologies)
+		_ = topology.CellComplexes(None, topologies)
 	return topologies
 
 def triangulate(faces):
@@ -89,7 +89,7 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 			if (anInput.Type() == 1): #input is a vertex, just add it and process it
 				topVerts.append(anInput)
 			else:
-				_ = anInput.Vertices(topVerts)
+				_ = anInput.Vertices(None, topVerts)
 			for aVertex in topVerts:
 				try:
 					vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
@@ -99,7 +99,7 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 			if (anInput.Type() == 2): #Input is an Edge, just add it and process it
 				topEdges.append(anInput)
 			elif (anInput.Type() > 2):
-				_ = anInput.Edges(topEdges)
+				_ = anInput.Edges(None, topEdges)
 			for anEdge in topEdges:
 				e = []
 				sv = anEdge.StartVertex()
@@ -122,7 +122,7 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 			if (anInput.Type() == 8): # Input is a Face, just add it and process it
 				topFaces.append(anInput)
 			elif (anInput.Type() > 8):
-				_ = anInput.Faces(topFaces)
+				_ = anInput.Faces(None, topFaces)
 			for aFace in topFaces:
 				ib = []
 				_ = aFace.InternalBoundaries(ib)

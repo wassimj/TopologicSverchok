@@ -9,53 +9,53 @@ import time
 def processItem(item):
 	resultingTopologies = []
 	topCC = []
-	_ = item.CellComplexes(topCC)
+	_ = item.CellComplexes(None, topCC)
 	topCells = []
-	_ = item.Cells(topCells)
+	_ = item.Cells(None, topCells)
 	topShells = []
-	_ = item.Shells(topShells)
+	_ = item.Shells(None, topShells)
 	topFaces = []
-	_ = item.Faces(topFaces)
+	_ = item.Faces(None, topFaces)
 	topWires = []
-	_ = item.Wires(topWires)
+	_ = item.Wires(None, topWires)
 	topEdges = []
-	_ = item.Edges(topEdges)
+	_ = item.Edges(None, topEdges)
 	topVertices = []
-	_ = item.Vertices(topVertices)
+	_ = item.Vertices(None, topVertices)
 	if len(topCC) == 1:
 		cc = topCC[0]
 		ccVertices = []
-		_ = cc.Vertices(ccVertices)
+		_ = cc.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cc)
 	if len(topCC) == 0 and len(topCells) == 1:
 		cell = topCells[0]
 		ccVertices = []
-		_ = cell.Vertices(ccVertices)
+		_ = cell.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 1:
 		shell = topShells[0]
 		ccVertices = []
-		_ = shell.Vertices(ccVertices)
+		_ = shell.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(shell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 1:
 		face = topFaces[0]
 		ccVertices = []
-		_ = face.Vertices(ccVertices)
+		_ = face.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(face)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 1:
 		wire = topWires[0]
 		ccVertices = []
-		_ = wire.Vertices(ccVertices)
+		_ = wire.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(wire)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
 		edge = topEdges[0]
 		ccVertices = []
-		_ = wire.Vertices(ccVertices)
+		_ = wire.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:

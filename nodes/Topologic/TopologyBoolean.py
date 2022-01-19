@@ -219,31 +219,31 @@ def transferDictionaries(sources, sinks, tol):
 def highestDimension(topology):
 	if (topology.Type() == topologic.Cluster.Type()):
 		cellComplexes = []
-		_ = topology.CellComplexes(cellComplexes)
+		_ = topology.CellComplexes(None, cellComplexes)
 		if len(cellComplexes) > 0:
 			return topologic.CellComplex.Type()
 		cells = []
-		_ = topology.Cells(cells)
+		_ = topology.Cells(None, cells)
 		if len(cells) > 0:
 			return topologic.Cell.Type()
 		shells = []
-		_ = topology.Shells(shells)
+		_ = topology.Shells(None, shells)
 		if len(shells) > 0:
 			return topologic.Shell.Type()
 		faces = []
-		_ = topology.Faces(faces)
+		_ = topology.Faces(None, faces)
 		if len(faces) > 0:
 			return topologic.Face.Type()
 		wires = []
-		_ = topology.Wires(wires)
+		_ = topology.Wires(None, wires)
 		if len(wires) > 0:
 			return topologic.Wire.Type()
 		edges = []
-		_ = topology.Edges(edges)
+		_ = topology.Edges(None, edges)
 		if len(edges) > 0:
 			return topologic.Edge.Type()
 		vertices = []
-		_ = topology.Vertices(vertices)
+		_ = topology.Vertices(None, vertices)
 		if len(vertices) > 0:
 			return topologic.Vertex.Type()
 	else:
@@ -252,53 +252,53 @@ def highestDimension(topology):
 def promote(item): #Fix Clusters with single entities
 	resultingTopologies = []
 	topCC = []
-	_ = item.CellComplexes(topCC)
+	_ = item.CellComplexes(None, topCC)
 	topCells = []
-	_ = item.Cells(topCells)
+	_ = item.Cells(None, topCells)
 	topShells = []
-	_ = item.Shells(topShells)
+	_ = item.Shells(None, topShells)
 	topFaces = []
-	_ = item.Faces(topFaces)
+	_ = item.Faces(None, topFaces)
 	topWires = []
-	_ = item.Wires(topWires)
+	_ = item.Wires(None, topWires)
 	topEdges = []
-	_ = item.Edges(topEdges)
+	_ = item.Edges(None, topEdges)
 	topVertices = []
-	_ = item.Vertices(topVertices)
+	_ = item.Vertices(None, topVertices)
 	if len(topCC) == 1:
 		cc = topCC[0]
 		ccVertices = []
-		_ = cc.Vertices(ccVertices)
+		_ = cc.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cc)
 	if len(topCC) == 0 and len(topCells) == 1:
 		cell = topCells[0]
 		ccVertices = []
-		_ = cell.Vertices(ccVertices)
+		_ = cell.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(cell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 1:
 		shell = topShells[0]
 		ccVertices = []
-		_ = shell.Vertices(ccVertices)
+		_ = shell.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(shell)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 1:
 		face = topFaces[0]
 		ccVertices = []
-		_ = face.Vertices(ccVertices)
+		_ = face.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(face)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 1:
 		wire = topWires[0]
 		ccVertices = []
-		_ = wire.Vertices(ccVertices)
+		_ = wire.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(wire)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
 		edge = topEdges[0]
 		ccVertices = []
-		_ = wire.Vertices(ccVertices)
+		_ = wire.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:
@@ -350,41 +350,41 @@ def processItem(item):
 		if topologyA.Type() == topologic.Vertex.Type():
 			verticesA.append(topologyA)
 		elif hidimA >= topologic.Vertex.Type():
-			_ = topologyA.Vertices(verticesA)
+			_ = topologyA.Vertices(None, verticesA)
 			for aVertex in verticesA:
 				sourceVertices.append(aVertex)
 		verticesB = []
 		if topologyB.Type() == topologic.Vertex.Type():
 			verticesB.append(topologyB)
 		elif hidimB >= topologic.Vertex.Type():
-			_ = topologyB.Vertices(verticesB)
+			_ = topologyB.Vertices(None, verticesB)
 			for aVertex in verticesB:
 				sourceVertices.append(aVertex)
 		sinkVertices = []
 		if topologyC.Type() == topologic.Vertex.Type():
 			sinkVertices.append(topologyC)
 		elif hidimC >= topologic.Vertex.Type():
-			_ = topologyC.Vertices(sinkVertices)
+			_ = topologyC.Vertices(None, sinkVertices)
 		_ = transferDictionaries(sourceVertices, sinkVertices, tolerance)
 		if topologyA.Type() == topologic.Edge.Type():
 			sourceEdges.append(topologyA)
 		elif hidimA >= topologic.Edge.Type():
 			edgesA = []
-			_ = topologyA.Edges(edgesA)
+			_ = topologyA.Edges(None, edgesA)
 			for anEdge in edgesA:
 				sourceEdges.append(anEdge)
 		if topologyB.Type() == topologic.Edge.Type():
 			sourceEdges.append(topologyB)
 		elif hidimB >= topologic.Edge.Type():
 			edgesB = []
-			_ = topologyB.Edges(edgesB)
+			_ = topologyB.Edges(None, edgesB)
 			for anEdge in edgesB:
 				sourceEdges.append(anEdge)
 		sinkEdges = []
 		if topologyC.Type() == topologic.Edge.Type():
 			sinkEdges.append(topologyC)
 		elif hidimC >= topologic.Edge.Type():
-			_ = topologyC.Edges(sinkEdges)
+			_ = topologyC.Edges(None, sinkEdges)
 		_ = transferDictionaries(sourceEdges, sinkEdges, tolerance)
 
 		if topologyA.Type() == topologic.Face.Type():
@@ -411,14 +411,14 @@ def processItem(item):
 			sourceCells.append(topologyA)
 		elif hidimA >= topologic.Cell.Type():
 			cellsA = []
-			_ = topologyA.Cells(cellsA)
+			_ = topologyA.Cells(None, cellsA)
 			for aCell in cellsA:
 				sourceCells.append(aCell)
 		if topologyB.Type() == topologic.Cell.Type():
 			sourceCells.append(topologyB)
 		elif hidimB >= topologic.Cell.Type():
 			cellsB = []
-			_ = topologyB.Cells(cellsB)
+			_ = topologyB.Cells(None, cellsB)
 			for aCell in cellsB:
 				sourceCells.append(aCell)
 		sinkCells = []

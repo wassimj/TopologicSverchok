@@ -55,7 +55,7 @@ def processItem(item, originLocation):
 		yList.append(y)
 		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
 
-	baseWire = wireByVertices(baseV)
+	baseWire = wireByVertices(baseV[::-1]) #reversing the list so that the normal points up in Blender
 
 	if originLocation == "LowerLeft":
 		xmin = min(xList)

@@ -83,40 +83,40 @@ def processItem(topology):
 		if itemType == topologic.CellComplex.Type():
 			finalList = finalList + (dictionaryString([anItem]))
 			cells = []
-			_ = anItem.Cells(cells)
+			_ = anItem.Cells(None, cells)
 			finalList = finalList + (dictionaryString(cells))
 			faces = []
-			_ = anItem.Faces(faces)
+			_ = anItem.Faces(None, faces)
 			finalList = finalList + (dictionaryString(faces))
 			edges = []
-			_ = anItem.Edges(edges)
+			_ = anItem.Edges(None, edges)
 			finalList = finalList + (dictionaryString(edges))
 			vertices = []
-			_ = anItem.Vertices(vertices)
+			_ = anItem.Vertices(None, vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Cell.Type():
 			finalList = finalList + (dictionaryString([anItem]))
 			faces = []
-			_ = anItem.Faces(faces)
+			_ = anItem.Faces(None, faces)
 			finalList = finalList + (dictionaryString(faces))
 			edges = []
-			_ = anItem.Edges(edges)
+			_ = anItem.Edges(None, edges)
 			finalList = finalList + (dictionaryString(edges))
 			vertices = []
-			_ = anItem.Vertices(vertices)
+			_ = anItem.Vertices(None, vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Face.Type():
 			finalList = finalList + (dictionaryString([anItem]))
 			edges = []
-			_ = anItem.Edges(edges)
+			_ = anItem.Edges(None, edges)
 			finalList = finalList + (dictionaryString(edges))
 			vertices = []
-			_ = anItem.Vertices(vertices)
+			_ = anItem.Vertices(None, vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Edge.Type():
 			finalList = finalList + (dictionaryString([anItem]))
 			vertices = []
-			_ = anItem.Vertices(vertices)
+			_ = anItem.Vertices(None, vertices)
 			finalList = finalList + (dictionaryString(vertices))
 		if itemType == topologic.Vertex.Type():
 			finalList = finalList + (dictionaryString([anItem]))
