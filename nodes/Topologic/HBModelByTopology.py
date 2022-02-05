@@ -224,6 +224,14 @@ def getKeyName(d, keyName):
             return key
     return None
 
+def createUniqueName(name, nameList, number):
+    if not (name in nameList):
+        return name
+    elif not ((name+"_"+str(number)) in nameList):
+        return name+"_"+str(number)
+    else:
+        return createUniqueName(name,nameList, number+1)
+
 def processItem(item):
     tpBuilding = item[0]
     tpShadingFacesCluster = item[1]
@@ -234,6 +242,8 @@ def processItem(item):
     heatingSetpoint = item[6]
     humidifyingSetpoint = item[7]
     dehumidifyingSetpoint = item[8]
+    roomNameKey = item[9]
+    roomTypeKey = item[10]
     if buildingName:
         buildingName = buildingName.replace(" ","_")
     else:
@@ -244,6 +254,7 @@ def processItem(item):
     # Sort cells by Z Levels
     tpCells.sort(key=lambda c: cellFloor(c), reverse=False)
     fl = floorLevels(tpCells, 2)
+    spaceNames = []
     for spaceNumber, tpCell in enumerate(tpCells):
         tpDictionary = tpCell.GetDictionary()
         tpCellName = None
@@ -252,19 +263,25 @@ def processItem(item):
         tpCellConstructionSetIdentifier = None
         tpCellConditioned = True
         if tpDictionary:
-            keyName = getKeyName(tpDictionary, 'Name')
-            tpCellName = valueAtKey(tpDictionary,keyName)
-            if tpCellName:
-                tpCellName = tpCellName.replace(" ","_")+(str(spaceNumber+1))
-            else:
-                tpCellName = "GENERICROOM_"+(str(spaceNumber+1))
             keyName = getKeyName(tpDictionary, 'Story')
             tpCellStory = valueAtKey(tpDictionary, keyName)
             if tpCellStory:
                 tpCellStory = tpCellStory.replace(" ","_")
             else:
                 tpCellStory = fl[spaceNumber]
-            keyName = getKeyName(tpDictionary, 'Program')
+            if roomNameKey:
+                keyName = getKeyName(tpDictionary, roomNameKey)
+            else:
+                keyName = getKeyName(tpDictionary, 'Name')
+            tpCellName = valueAtKey(tpDictionary,keyName)
+            if tpCellName:
+                tpCellName = createUniqueName(tpCellName.replace(" ","_"), spaceNames, 1)
+            else:
+                tpCellName = tpCellStory+"_SPACE_"+(str(spaceNumber+1))
+            if roomTypeKey:
+                keyName = getKeyName(tpDictionary, roomTypeKey)
+            else:
+                keyName = getKeyName(tpDictionary, 'Program')
             tpCellProgramIdentifier = valueAtKey(tpDictionary, keyName)
             if tpCellProgramIdentifier:
                 program = prog_type_lib.program_type_by_identifier(tpCellProgramIdentifier)
@@ -280,6 +297,13 @@ def processItem(item):
                 constr_set = constr_set_lib.construction_set_by_identifier(defaultConstructionSetIdentifier)
             else:
                 constr_set = constr_set_lib.construction_set_by_identifier("Default Generic Construction Set")
+        else:
+            tpCellStory = fl[spaceNumber]
+            tpCellName = tpCellStory+"_SPACE_"+(str(spaceNumber+1))
+            program = prog_type_lib.office_program
+            constr_set = constr_set_lib.construction_set_by_identifier("Default Generic Construction Set")
+        spaceNames.append(tpCellName)
+
         tpCellFaces = []
         _ = tpCell.Faces(None, tpCellFaces)
         if tpCellFaces:
@@ -376,6 +400,10 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
     BuildingName: StringProperty(name='Building Name', default="Generic_Building", update=updateNode)
     DefaultProgramIdentifier: StringProperty(name='Default Program Identifier', default="Generic Office Program", update=updateNode)
     DefaultConstructionSet: StringProperty(name='Default Construction Set', default="Default Generic Construction Set", update=updateNode)
+    RoomNameKey: StringProperty(name='Room Name Key', default="Name", update=updateNode)
+    RoomTypeKey: StringProperty(name='Room Type Key', default="Type", update=updateNode)
+
+
     Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
     def sv_init(self, context):
@@ -388,6 +416,9 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         self.inputs.new('SvStringsSocket', 'Heating Setpoint').prop_name='HeatingSetpoint'
         self.inputs.new('SvStringsSocket', 'Humidifying Setpoint').prop_name='HumidifyingSetpoint'
         self.inputs.new('SvStringsSocket', 'Dehumidifying Setpoint').prop_name='DehumidifyingSetpoint'
+        self.inputs.new('SvStringsSocket', 'Room Name Key').prop_name='RoomNameKey'
+        self.inputs.new('SvStringsSocket', 'Room Type Key').prop_name='RoomTypeKey'
+
         self.outputs.new('SvStringsSocket', 'HB Model')
 
     def draw_buttons(self, context, layout):
@@ -410,6 +441,8 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         heatingSetpointList = self.inputs['Heating Setpoint'].sv_get(deepcopy=True)
         humidifyingSetpointList = self.inputs['Humidifying Setpoint'].sv_get(deepcopy=True)
         dehumidifyingSetpointList = self.inputs['Dehumidifying Setpoint'].sv_get(deepcopy=True)
+        roomNameKeyList = self.inputs['Room Name Key'].sv_get(deepcopy=True)
+        roomTypeKeyList = self.inputs['Room Type Key'].sv_get(deepcopy=True)
 
         buildingTopologyList = flatten(buildingTopologyList)
         buildingNameList = flatten(buildingNameList)
@@ -419,8 +452,10 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         heatingSetpointList = flatten(heatingSetpointList)
         humidifyingSetpointList = flatten(humidifyingSetpointList)
         dehumidifyingSetpointList = flatten(dehumidifyingSetpointList)
+        roomNameKeyList = flatten(roomNameKeyList)
+        roomTypeKeyList = flatten(roomTypeKeyList)
 
-        inputs = [buildingTopologyList, shadingList, buildingNameList, defaultProgramIdentifierList, defaultConstructionSetIdentifierList, coolingSetpointList, heatingSetpointList, humidifyingSetpointList, dehumidifyingSetpointList]
+        inputs = [buildingTopologyList, shadingList, buildingNameList, defaultProgramIdentifierList, defaultConstructionSetIdentifierList, coolingSetpointList, heatingSetpointList, humidifyingSetpointList, dehumidifyingSetpointList, roomNameKeyList, roomTypeKeyList]
         if ((self.Replication) == "Default"):
             inputs = iterate(inputs)
             inputs = transposeList(inputs)

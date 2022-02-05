@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
@@ -9,6 +9,9 @@ try:
 	import py2neo
 except:
 	raise Exception("Error: Could not import py2neo.")
+
+from py2neo import Node,Relationship,Graph,Path,Subgraph
+from py2neo import NodeMatcher,RelationshipMatcher
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -127,14 +130,15 @@ def getKeysAndValues(item):
 			returnList.append("")
 	return [keys,returnList]
 
-def vertexIndex(v, vertexList):
+def vertexIndex(v, vertexList, tolerance):
 	for i in range(len(vertexList)):
-		if topologic.Topology.IsSame(v, vertexList[i]):
+		d = topologic.VertexUtility.Distance(v, vertexList[i])
+		if d < tolerance:
 			return i
 	return None
 
 def processItem(item):
-	neo4jGraph, topologicGraph = item
+	neo4jGraph, topologicGraph, categoryKey, tolerance = item
 	vertices = []
 	_ = topologicGraph.Vertices(vertices)
 	edges = []
@@ -153,15 +157,20 @@ def processItem(item):
 		values.append(vertices[i].Z())
 		zip_iterator = zip(keys, values)
 		pydict = dict(zip_iterator)
-		n = py2neo.Node("TopologicGraphVertex", **pydict)
+		if categoryKey == 'None':
+			nodeName = "TopologicGraphVertex"
+		else:
+			nodeName = str(values[keys.index(categoryKey)])
+		n = py2neo.Node(nodeName, **pydict)
+		print(n.keys())
 		tx.create(n)
 		nodes.append(n)
 	for i in range(len(edges)):
 		e = edges[i]
 		sv = e.StartVertex()
 		ev = e.EndVertex()
-		sn = nodes[vertexIndex(sv, vertices)]
-		en = nodes[vertexIndex(ev, vertices)]
+		sn = nodes[vertexIndex(sv, vertices, tolerance)]
+		en = nodes[vertexIndex(ev, vertices, tolerance)]
 		snen = py2neo.Relationship(sn, "CONNECTEDTO", en)
 		tx.create(snen)
 		snen = py2neo.Relationship(en, "CONNECTEDTO", sn)
@@ -181,12 +190,16 @@ class SvNeo4jGraphAddTopologicGraph(bpy.types.Node, SverchCustomTreeNode):
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	categoryKey: StringProperty(name="Key", default="None", update=updateNode)
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'Neo4j Graph')
 		self.inputs.new('SvStringsSocket', 'Topologic Graph')
+		self.inputs.new('SvStringsSocket', 'Categorize By Key').prop_name='categoryKey'
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
 
 	def draw_buttons(self, context, layout):
@@ -197,9 +210,13 @@ class SvNeo4jGraphAddTopologicGraph(bpy.types.Node, SverchCustomTreeNode):
 			return
 		neo4jGraphList = self.inputs['Neo4j Graph'].sv_get(deepcopy=True)
 		topologicGraphList = self.inputs['Topologic Graph'].sv_get(deepcopy=True)
+		categoryKeyList = self.inputs['Categorize By Key'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 		neo4jGraphList = flatten(neo4jGraphList)
 		topologicGraphList = flatten(topologicGraphList)
-		inputs = [neo4jGraphList, topologicGraphList]
+		categoryKeyList = flatten(categoryKeyList)
+		toleranceList = flatten(toleranceList)
+		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, toleranceList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

@@ -53,15 +53,22 @@ def processItem(item, originLocation):
 		z = origin.Z()
 		xList.append(x)
 		yList.append(y)
-		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
-
-	baseWire = wireByVertices(baseV[::-1]) #reversing the list so that the normal points up in Blender
+		baseV.append([x,y])
 
 	if originLocation == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
-		baseWire = topologic.TopologyUtility.Translate(baseWire, -xmin, -ymin, 0)
-
+		xOffset = origin.X() - xmin
+		yOffset = origin.Y() - ymin
+	else:
+		xOffset = 0
+		yOffset = 0
+	tranBase = []
+	for coord in baseV:
+		tranBase.append(topologic.Vertex.ByCoordinates(coord[0]+xOffset, coord[1]+yOffset, origin.Z()))
+	
+	baseWire = wireByVertices(tranBase[::-1]) #reversing the list so that the normal points up in Blender
+	
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -79,6 +86,7 @@ def processItem(item, originLocation):
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Y-Axis
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 1, 0, theta)
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
+	centroid = baseWire.Centroid()
 	return baseWire
 
 def matchLengths(list):
@@ -143,6 +151,7 @@ class SvWireStar(bpy.types.Node, SverchCustomTreeNode):
 		newInputs = zip(originList, radiusAList, radiusBList, raysList, dirXList, dirYList, dirZList)
 		outputs = []
 		for anInput in newInputs:
+			print(anInput)
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Wire'].sv_set(outputs)
 

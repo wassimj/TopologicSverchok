@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 7, 0, 0),
+    "version": (0, 7, 0, 1),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -85,6 +85,7 @@ def nodes_index():
                 ("Topologic.WireCircle", "SvWireCircle"),
                 ("Topologic.WireCycles", "SvWireCycles"),
                 ("Topologic.WireIsClosed", "SvWireIsClosed"),
+                ("Topologic.WireIsovist", "SvWireIsovist"),
                 ("Topologic.WireIsSimilar", "SvWireIsSimilar"),
                 ("Topologic.WireLength", "SvWireLength"),
                 ("Topologic.WireRectangle", "SvWireRectangle"),
@@ -200,6 +201,7 @@ def nodes_index():
                 ("Topologic.GraphAdjacentVertices", "SvGraphAdjacentVertices"),
                 ("Topologic.GraphAllPaths", "SvGraphAllPaths"),
                 ("Topologic.GraphByTopology", "SvGraphByTopology"),
+                ("Topologic.GraphByVerticesEdges", "SvGraphByVerticesEdges"),
                 ("Topologic.GraphConnect", "SvGraphConnect"),
                 ("Topologic.GraphContainsEdge", "SvGraphContainsEdge"),
                 ("Topologic.GraphContainsVertex", "SvGraphContainsVertex"),
@@ -227,8 +229,16 @@ def nodes_index():
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
+    visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
-	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
+	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
+                ("Topologic.IFCReadFile", "SvIFCReadFile"),
+                ("Topologic.IFCBuildingElements", "SvIFCBuildingElements"),
+                ("Topologic.IFCClashDetection", "SvIFCClashDetection"),
+                ("Topologic.IFCConnectBuildingElements", "SvIFCConnectBuildingElements"),
+                ("Topologic.IFCCreateSpaces", "SvIFCCreateSpaces"),
+                ("Topologic.IFCAdd2ndLevelBoundaries", "SvIFCAdd2ndLevelBoundaries"),
+                ("Topologic.IFCWriteFile", "SvIFCWriteFile")]
 	web3Nodes = [("Topologic.ContractByParameters", "SvContractByParameters")]
 	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                  ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
@@ -255,7 +265,8 @@ def nodes_index():
                 ("Topologic.HBConstructionSets", "SvHBConstructionSets"),
                 ("Topologic.HBProgramTypeByIdentifier", "SvHBProgramTypeByIdentifier"),
                 ("Topologic.HBProgramTypes", "SvHBProgramTypes")]
-	neo4jNodes = [("Topologic.Neo4jGraphAddTopologicGraph", "SvNeo4jGraphAddTopologicGraph"),
+	neo4jNodes = [("Topologic.GraphByNeo4jGraph", "SvGraphByNeo4jGraph"),
+                ("Topologic.Neo4jGraphAddTopologicGraph", "SvNeo4jGraphAddTopologicGraph"),
                 ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
                 ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
@@ -266,12 +277,18 @@ def nodes_index():
 		coreNodes = coreNodes+numpyNodes
 	except:
 		print("Topologic - Warning: Could not import numpy so some related nodes are not available.")
+    try:
+		import pyvisgraph
+		coreNodes = coreNodes+visgraphNodes
+	except:
+		print("Topologic - Warning: Could not import pyvisgraph so some related nodes are not available.")
 	try:
 		import ifcopenshell
+		import scipy
 		coreNodes = coreNodes+ifcNodes
 		osifc = osifc + 1
 	except:
-		print("Topologic - Warning: Could not import ifcopenshell so some related nodes are not available.")
+		print("Topologic - Warning: Could not import ifcopenshell and/or scipy so some related IFC nodes are not available.")
 	try:
 		import ipfshttpclient
 		coreNodes = coreNodes+ipfsNodes
@@ -427,6 +444,7 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvWireByEdges'],
             ['SvWireCircle'],
             ['SvWireCycles'],
+            ['SvWireIsovist'],
             ['SvWireIsClosed'],
             ['SvWireIsSimilar'],
             ['SvWireLength'],
@@ -565,6 +583,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphAdjacentVertices'],
             ['SvGraphAllPaths'],
             ['SvGraphByTopology'],
+            ['SvGraphByVerticesEdges'],
             ['SvGraphConnect'],
             ['SvGraphContainsEdge'],
             ['SvGraphContainsVertex'],
@@ -591,6 +610,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphVertexDegree'],
             ['SvGraphVertices'],
             ['SvGraphVerticesAtKeyValue'],
+            ['SvGraphVisibilityGraph'],
         ])
 
 make_class('TPSubcategoryGraph', 'Topologic @ Graph')
@@ -752,6 +772,13 @@ class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvEnergyModelByImportedIFC'],
             ['SvTopologyByImportedIFC'],
+            ['SvIFCReadFile'],
+            ['SvIFCBuildingElements'],
+            ['SvIFCClashDetection'],
+            ['SvIFCConnectBuildingElements'],
+            ['SvIFCCreateSpaces'],
+            ['SvIFCAdd2ndLevelBoundaries'],
+            ['SvIFCWriteFile']
         ])
 
 make_class('TPSubcategoryIFC', 'Topologic @ IFC')
@@ -777,6 +804,7 @@ class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvGraphByNeo4jGraph'],
             ['SvNeo4jGraphAddTopologicGraph'],
             ['SvNeo4jGraphByParameters'],
             ['SvNeo4jGraphDeleteAll'],

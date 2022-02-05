@@ -142,6 +142,21 @@ def valueAtKey(item, key):
 	else:
 		return None
 
+def getKeyName(d, keyName):
+    keys = d.Keys()
+    for key in keys:
+        if key.lower() == keyName.lower():
+            return key
+    return None
+
+def createUniqueName(name, nameList, number):
+    if not (name in nameList):
+        return name
+    elif not ((name+"_"+str(number)) in nameList):
+        return name+"_"+str(number)
+    else:
+        return createUniqueName(name,nameList, number+1)
+
 def processItem(item):
 
     osModel = item[0]
@@ -157,6 +172,8 @@ def processItem(item):
     glazingRatio = item[10]
     coolingTemp = item[11]
     heatingTemp = item[12]
+    roomNameKey = item[13]
+    roomTypeKey = item[14]
 
 
     osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath))
@@ -195,6 +212,7 @@ def processItem(item):
     osBuildingStorys = list(osModel.getBuildingStorys())
     osBuildingStorys.sort(key=lambda x: x.nominalZCoordinate().get())
     osSpaces = []
+    spaceNames = []
     for spaceNumber, buildingCell in enumerate(getSubTopologies(buildingTopology, topologic.Cell)):
         osSpace = openstudio.model.Space(osModel)
         osSpaceZ = buildingCell.CenterOfMass().Z()
@@ -207,18 +225,31 @@ def processItem(item):
                 osBuildingStory = x
             break
         osSpace.setBuildingStory(osBuildingStory)
-        #osSpace.setName(osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber)) #default name, can be changed below if custom name exists
         cellDictionary = buildingCell.GetDictionary()
         if cellDictionary:
-            osSpaceTypeName = valueAtKey(cellDictionary,'type')
+            if roomTypeKey:
+                keyType = getKeyName(cellDictionary, roomTypeKey)
+            else:
+                keyType = getKeyName(cellDictionary, 'type')
+            osSpaceTypeName = valueAtKey(cellDictionary,keyType)
             if osSpaceTypeName:
                 sp_ = osModel.getSpaceTypeByName(osSpaceTypeName)
                 if sp_.is_initialized():
                     osSpace.setSpaceType(sp_.get())
-            osSpaceName = valueAtKey(cellDictionary,'name')
+            if roomNameKey:
+                keyName = getKeyName(cellDictionary, roomNameKey)
+            else:
+                keyName = getKeyName(cellDictionary, 'name')
+            osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
             if osSpaceName:
                 osSpace.setName(osSpaceName)
-                print("osSpaceName: "+osSpaceName)
+        else:
+            osSpaceName = osBuildingStory.name().get() + "_SPACE_" + str(spaceNumber)
+            osSpace.setName(osSpaceName)
+            sp_ = osModel.getSpaceTypeByName(defaultSpaceType)
+            if sp_.is_initialized():
+                osSpace.setSpaceType(sp_.get())
+        spaceNames.append(osSpaceName)
         cellFaces = getSubTopologies(buildingCell, topologic.Face)
         if cellFaces:
             for faceNumber, buildingFace in enumerate(cellFaces):
@@ -317,6 +348,9 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
     GlazingRatio: FloatProperty(name='Glazing Ratio', default=0.25, min=0, max=1.0, precision=2, update=updateNode)
     CoolingTemp: FloatProperty(name='Cooling Temperature', default=25, precision=2, update=updateNode)
     HeatingTemp: FloatProperty(name='Heating Temperature', default=20, precision=2, update=updateNode)
+    RoomNameKey: StringProperty(name='Room Name Key', default="Name", update=updateNode)
+    RoomTypeKey: StringProperty(name='Room Type Key', default="Type", update=updateNode)
+
     Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
     def sv_init(self, context):
@@ -333,6 +367,8 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         self.inputs.new('SvStringsSocket', 'Default Glazing Ratio').prop_name='GlazingRatio'
         self.inputs.new('SvStringsSocket', 'Cooling Temperature').prop_name='CoolingTemp'
         self.inputs.new('SvStringsSocket', 'Heating Temperature').prop_name='HeatingTemp'
+        self.inputs.new('SvStringsSocket', 'Room Name Key').prop_name='RoomNameKey'
+        self.inputs.new('SvStringsSocket', 'Room Type Key').prop_name='RoomTypeKey'
         self.outputs.new('SvStringsSocket', 'Energy Model')
 
     def draw_buttons(self, context, layout):
@@ -354,6 +390,9 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         glazingRatioList = self.inputs['Default Glazing Ratio'].sv_get(deepcopy=True)
         coolingTempList = self.inputs['Cooling Temperature'].sv_get(deepcopy=True)
         heatingTempList = self.inputs['Heating Temperature'].sv_get(deepcopy=True)
+        roomNameKeyList = self.inputs['Room Name Key'].sv_get(deepcopy=True)
+        roomTypeKeyList = self.inputs['Room Type Key'].sv_get(deepcopy=True)
+
 
 
         modelList = flatten(modelList)
@@ -369,7 +408,9 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         glazingRatioList = flatten(glazingRatioList)
         coolingTempList = flatten(coolingTempList)
         heatingTempList = flatten(heatingTempList)
-        inputs = [modelList, weatherFileList, ddyFileList, buildingTopologyList, shadingList, floorLevelsList, buildingNameList, buildingTypeList, defaultSpaceList, northAxisList, glazingRatioList, coolingTempList, heatingTempList]
+        roomNameKeyList = flatten(roomNameKeyList)
+        roomTypeKeyList = flatten(roomTypeKeyList)
+        inputs = [modelList, weatherFileList, ddyFileList, buildingTopologyList, shadingList, floorLevelsList, buildingNameList, buildingTypeList, defaultSpaceList, northAxisList, glazingRatioList, coolingTempList, heatingTempList, roomNameKeyList, roomTypeKeyList]
         if ((self.Replication) == "Default"):
             inputs = iterate(inputs)
             inputs = transposeList(inputs)

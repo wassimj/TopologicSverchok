@@ -1,9 +1,10 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty, BoolProperty, EnumProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from topologic import Dictionary, IntAttribute, DoubleAttribute, StringAttribute, ListAttribute
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -55,7 +56,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -72,12 +72,12 @@ def trim(list):
 	return returnList
 
 # Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def lace(ar_list):
+def interlace(ar_list):
     if not ar_list:
         yield []
     else:
         for a in ar_list[0]:
-            for prod in lace(ar_list[1:]):
+            for prod in interlace(ar_list[1:]):
                 yield [a,]+prod
 
 def transposeList(l):
@@ -91,76 +91,65 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	sv = item[0]
-	ev = item[1]
-	tol = item[2]
-	edge = None
-	if topologic.Topology.IsSame(sv, ev):
-		return None
-	if topologic.VertexUtility.Distance(sv, ev) < tol:
-		return None
-	try:
-		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
-	except:
-		edge = None
-	return edge
+	vertices = item[0]
+	edges = item[1]
+	if isinstance(vertices, list) == False:
+		vertices = [vertices]
+	if isinstance(edges, list) == False:
+		edges = [edges]
+	return topologic.Graph.ByVerticesEdges(vertices, edges)
 
-lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphByVerticesEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates an Edge from the input Vertices
+	Tooltip: Creates a Graph from a list of vertices and edges   
 	"""
-	bl_idname = 'SvEdgeByStartVertexEndVertex'
-	bl_label = 'Edge.ByStartVertexEndVertex'
-	startVertex: StringProperty(name="StartVertex", update=updateNode)
-	endVertex: StringProperty(name="EndVertex", update=updateNode)
-	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
-	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
+	bl_idname = 'SvGraphByVerticesEdges'
+	bl_label = 'Graph.ByVerticesEdges'
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'StartVertex')
-		self.inputs.new('SvStringsSocket', 'EndVertex')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
-		self.outputs.new('SvStringsSocket', 'Edge')
+		self.inputs.new('SvStringsSocket', 'Vertices')
+		self.inputs.new('SvStringsSocket', 'Edges')
+		self.outputs.new('SvStringsSocket', 'Graph')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Lacing",text="")
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Edge'].sv_set([])
+		vertexList = self.inputs['Vertices'].sv_get(deepcopy=True)
+		edgeList = self.inputs['Edges'].sv_get(deepcopy=True)
+		if len(vertexList) == 1:
+			vertexList = flatten(vertexList)
+		if len(edgeList) == 1:
+			edgeList = flatten(edgeList)
+		inputs = [vertexList, edgeList]
+		outputs = []
+		if ((self.Replication) == "Default"):
+			outputs.append(processItem([vertexList, edgeList]))
+			self.outputs['Graph'].sv_set(outputs)
 			return
-		svList = self.inputs['StartVertex'].sv_get(deepcopy=True)
-		evList = self.inputs['EndVertex'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		svList = flatten(svList)
-		evList = flatten(evList)
-		toleranceList = flatten(toleranceList)
-		inputs = [svList, evList, toleranceList]
-		if ((self.Lacing) == "Trim"):
+		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Iterate"):
+		elif ((self.Replication) == "Iterate"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Repeat"):
+		elif ((self.Replication) == "Repeat"):
 			inputs = repeat(inputs)
 			inputs = transposeList(inputs)
-		elif ((self.Lacing) == "Lace"):
-			inputs = list(lace(inputs))
-		outputs = []
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(interlace(inputs))
 		for anInput in inputs:
-			anOutput = processItem(anInput)
-			if anOutput:
-				outputs.append(anOutput)
-		self.outputs['Edge'].sv_set(outputs)
+			outputs.append(processItem(anInput))
+		self.outputs['Graph'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvEdgeByStartVertexEndVertex)
+	bpy.utils.register_class(SvGraphByVerticesEdges)
 
 def unregister():
-    bpy.utils.unregister_class(SvEdgeByStartVertexEndVertex)
+	bpy.utils.unregister_class(SvGraphByVerticesEdges)

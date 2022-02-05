@@ -36,12 +36,17 @@ class SvNeo4jGraphDeleteAll(bpy.types.Node, SverchCustomTreeNode):
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'Neo4j Graph')
+		self.inputs.new('SvStringsSocket', 'Wait For')
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		neo4jGraphList = self.inputs['Neo4j Graph'].sv_get(deepcopy=True)
+		if not (self.inputs['Wait For'].is_linked):
+			waitForList = []
+		else:
+			waitForList = self.inputs['Wait For'].sv_get(deepcopy=True)
 		neo4jGraphList = flatten(neo4jGraphList)
 		outputs = []
 		for anInput in neo4jGraphList:

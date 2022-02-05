@@ -430,7 +430,7 @@ def processItem(item):
 	return topologyC
 
 booleanOps = [("Union", "Union", "", 1),("Difference", "Difference", "", 2),("Intersect", "Intersect", "", 3),("SymDif", "SymDif", "", 4),("Merge", "Merge", "", 5), ("Slice", "Slice", "", 6),("Impose", "Impose", "", 7), ("Imprint", "Imprint", "", 8)]
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 
@@ -474,7 +474,10 @@ class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 		tranDictList = flatten(tranDictList)
 		toleranceList = flatten(toleranceList)
 		inputs = [topologyAList, topologyBList, booleanOpList, tranDictList, toleranceList]
-		if ((self.Replication) == "Trim"):
+		if ((self.Replication) == "Default"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -490,7 +493,7 @@ class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
 			outputs.append(processItem(anInput))
 		self.outputs['Topology'].sv_set(outputs)
 		end = time.time()
-		print("Topology.Boolean Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Topology.Boolean Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
     bpy.utils.register_class(SvTopologyBoolean)

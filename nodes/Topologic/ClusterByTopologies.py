@@ -19,16 +19,6 @@ def flatten(element):
 def processItem(item):
 	return topologic.Cluster.ByTopologies(item, False)
 
-def recur(input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input[0], list):
-		for anItem in input:
-			output.append(recur(anItem))
-	else:
-		output = processItem(input)
-	return output
 
 class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -46,13 +36,13 @@ class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Topologies'].sv_get(deepcopy=False)
+		topologyList = self.inputs['Topologies'].sv_get(deepcopy=False)
+		topologyList = flatten(topologyList)
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
+		outputs.append(processItem(topologyList))
 		self.outputs['Cluster'].sv_set(outputs)
 		end = time.time()
-		print("Cluster.ByTopologies Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Cluster.ByTopologies Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
     bpy.utils.register_class(SvClusterByTopologies)

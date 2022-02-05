@@ -44,9 +44,6 @@ class SvTopologyByImportedBRep(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Topology'].sv_set([])
-			return
 		inputs = self.inputs['File Path'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)
 		outputs = []

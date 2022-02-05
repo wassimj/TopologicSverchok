@@ -30,9 +30,6 @@ def topologyTypeID(topologyType):
 	return typeID
 
 def processItem(item, hostTopology, topologyType):
-	print("Item is:",item)
-	print("HostTopology is",hostTopology)
-	print("Requested Topology Type is:",topologyType)
 	superTopologies = []
 	typeID = topologyTypeID(topologyType)
 	if item.Type() >= typeID:
@@ -55,7 +52,6 @@ def processItem(item, hostTopology, topologyType):
 		item.Cluster(hostTopology, superTopologies)
 	else:
 		raise Exception("TopologySuperTopologies - Error: the requested Topology Type (" + topologyType + ") could not be found.")
-	print("Returned SuperTopologies are:",superTopologies)
 	return superTopologies
 
 
