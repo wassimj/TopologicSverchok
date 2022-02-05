@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
@@ -96,7 +96,9 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	url, username, password = item
+	url, username, password, run = item
+	if not (run):
+		return None
 	return py2neo.Graph(url, auth=(username, password))
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
@@ -108,16 +110,18 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvNeo4jGraphByParameters'
 	bl_label = 'Neo4jGraph.ByParameters'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
+	URL: StringProperty(name="URL", default="bolt://", update=updateNode)
+	UserName: StringProperty(name="User Name", default="neo4j", update=updateNode)
+	Password: StringProperty(name="Password", default="", update=updateNode)
+	Run: BoolProperty(name="Run", default=True, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		#self.inputs[0].label = 'Auto'
-		self.inputs.new('SvStringsSocket', 'url')
-		self.inputs.new('SvStringsSocket', 'username')
-		self.inputs.new('SvStringsSocket', 'password')
+		self.inputs.new('SvStringsSocket', 'url').prop_name='URL'
+		self.inputs.new('SvStringsSocket', 'username').prop_name='UserName'
+		self.inputs.new('SvStringsSocket', 'password').prop_name='Password'
+		self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
 
 	def draw_buttons(self, context, layout):
@@ -129,10 +133,12 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 		urlList = self.inputs['url'].sv_get(deepcopy=True)
 		usernameList = self.inputs['username'].sv_get(deepcopy=True)
 		passwordList = self.inputs['password'].sv_get(deepcopy=True)
+		runList = self.inputs['Run'].sv_get(deepcopy=True)
 		urlList = flatten(urlList)
 		usernameList = flatten(usernameList)
 		passwordList = flatten(passwordList)
-		inputs = [urlList, usernameList, passwordList]
+		runList = flatten(runList)
+		inputs = [urlList, usernameList, passwordList, runList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

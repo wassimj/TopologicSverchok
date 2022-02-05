@@ -229,7 +229,7 @@ def nodes_index():
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
                 ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
-    visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
+	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
 	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
                 ("Topologic.IFCReadFile", "SvIFCReadFile"),
@@ -266,7 +266,7 @@ def nodes_index():
                 ("Topologic.HBProgramTypeByIdentifier", "SvHBProgramTypeByIdentifier"),
                 ("Topologic.HBProgramTypes", "SvHBProgramTypes")]
 	neo4jNodes = [("Topologic.GraphByNeo4jGraph", "SvGraphByNeo4jGraph"),
-                ("Topologic.Neo4jGraphAddTopologicGraph", "SvNeo4jGraphAddTopologicGraph"),
+                ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph"),
                 ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
                 ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
@@ -277,7 +277,7 @@ def nodes_index():
 		coreNodes = coreNodes+numpyNodes
 	except:
 		print("Topologic - Warning: Could not import numpy so some related nodes are not available.")
-    try:
+	try:
 		import pyvisgraph
 		coreNodes = coreNodes+visgraphNodes
 	except:
@@ -805,7 +805,7 @@ class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvGraphByNeo4jGraph'],
-            ['SvNeo4jGraphAddTopologicGraph'],
+            ['SvNeo4jGraphSetGraph'],
             ['SvNeo4jGraphByParameters'],
             ['SvNeo4jGraphDeleteAll'],
         ])

@@ -139,10 +139,13 @@ def vertexIndex(v, vertexList, tolerance):
 	return None
 
 def processItem(item):
+	neo4jGraph, topologicGraph, categoryKey, tolerance, run = item
+	if not (run):
+		return None
 	import time
 	gmt = time.gmtime()
 	timestamp =  str(gmt.tm_zone)+"_"+str(gmt.tm_year)+"_"+str(gmt.tm_mon)+"_"+str(gmt.tm_wday)+"_"+str(gmt.tm_hour)+"_"+str(gmt.tm_min)+"_"+str(gmt.tm_sec)
-	neo4jGraph, topologicGraph, categoryKey, tolerance = item
+
 	vertices = []
 	_ = topologicGraph.Vertices(vertices)
 	edges = []
@@ -182,23 +185,25 @@ def processItem(item):
 		tx.create(snen)
 		snen = py2neo.Relationship(en, "CONNECTEDTO", sn)
 		tx.create(snen)
+	neo4jGraph.delete_all()
 	neo4jGraph.commit(tx)
 	return neo4jGraph
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvNeo4jGraphAddTopologicGraph(bpy.types.Node, SverchCustomTreeNode):
+class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Adds the input Topologic Graph to the input Neo4j Graph   
+	Tooltip: Sets the input Topologic Graph to the input Neo4j Graph. This will delete all previous remote graphs. 
 	"""
-	bl_idname = 'SvNeo4jGraphAddTopologicGraph'
-	bl_label = 'Neo4jGraph.AddTopologicGraph'
+	bl_idname = 'SvNeo4jGraphSetGraph'
+	bl_label = 'Neo4jGraph.SetGraph'
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	categoryKey: StringProperty(name="Key", default="None", update=updateNode)
+	categoryKey: StringProperty(name="Categorize By Key", default="None", update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
+	Run: BoolProperty(name="Run", default=True, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
@@ -207,23 +212,28 @@ class SvNeo4jGraphAddTopologicGraph(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Topologic Graph')
 		self.inputs.new('SvStringsSocket', 'Categorize By Key').prop_name='categoryKey'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
+		self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.outputs):
+		if not (self.inputs['Neo4j Graph'].is_linked):
+			return
+		if not (self.inputs['Topologic Graph'].is_linked):
 			return
 		neo4jGraphList = self.inputs['Neo4j Graph'].sv_get(deepcopy=True)
 		topologicGraphList = self.inputs['Topologic Graph'].sv_get(deepcopy=True)
 		categoryKeyList = self.inputs['Categorize By Key'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
+		runList = self.inputs['Run'].sv_get(deepcopy=True)
 		neo4jGraphList = flatten(neo4jGraphList)
 		topologicGraphList = flatten(topologicGraphList)
 		categoryKeyList = flatten(categoryKeyList)
 		toleranceList = flatten(toleranceList)
-		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, toleranceList]
+		runList = flatten(runList)
+		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, toleranceList, runList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -241,7 +251,7 @@ class SvNeo4jGraphAddTopologicGraph(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Neo4j Graph'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvNeo4jGraphAddTopologicGraph)
+    bpy.utils.register_class(SvNeo4jGraphSetGraph)
 
 def unregister():
-    bpy.utils.unregister_class(SvNeo4jGraphAddTopologicGraph)
+    bpy.utils.unregister_class(SvNeo4jGraphSetGraph)
