@@ -11,7 +11,7 @@ TopologicSverchok requires these modules to be installed for it to function prop
 2. numpy
 
 Optional python modules:
-The installation of these optional python modules will activate additional TopologicSverchok nodes
+The installation of these optional python modules will activate additional TopologicSverchok nodes. These python modules can be installed in the site-packages folder inside the topologicsverchok folder. Familiarity with python module installation is needed.
 1. ifcopenshell
 2. ipfshttpclient
 3. web3
@@ -21,6 +21,7 @@ The installation of these optional python modules will activate additional Topol
 7. ladybug
 8. json
 9. py2neo
+10. pyvisgraph
 
 Download the latest Release binaries from the Releases link found on the right side of this page (https://github.com/wassimj/TopologicSverchok/releases).
 1. After you download the ZIP file, do NOT unzip.
