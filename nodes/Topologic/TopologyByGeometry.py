@@ -126,31 +126,31 @@ def vertexIndex(v, vertices, tolerance):
         i = i+1
     return index
 
-def topologyByFaces(faces, tolerance):
+def topologyByFaces(faces, tolerance, outputMode):
 	output = None
 	if len(faces) == 1:
 		return faces[0]
-	output = Cell.ByFaces(faces, tolerance)
-	if output:
-		f = []
-		_ = output.Faces(None, f)
-		if len(f) > 0:
+	if outputMode == "Cell":
+		output = Cell.ByFaces(faces, tolerance)
+		if output:
 			return output
-	output = CellComplex.ByFaces(faces, tolerance)
-	if output:
-		c = []
-		_ = output.Cells(None, c)
-		if len(c) > 0:
+		else:
+			raise Exception("Error: Could not create a Cell.")
+	if outputMode == "CellComplex":
+		output = CellComplex.ByFaces(faces, tolerance)
+		if output:
 			return output
-	output = Shell.ByFaces(faces, tolerance)
-	if output:
-		f = []
-		_ = output.Faces(None, f)
-		if len(f) > 0:
+		else:
+			raise Exception("Error: Could not create a CellComplex.")
+	if outputMode == "Shell":
+		output = Shell.ByFaces(faces, tolerance)
+		if output:
 			return output
-	output = Cluster.ByTopologies(faces)
+		else:
+			raise Exception("Error: Could not create a Shell.")
+	if outputMode == "Default":
+		output = Cluster.ByTopologies(faces)
 	if output:
-		output = output.SelfMerge()
 		if output:
 			return output
 	return output
@@ -227,7 +227,7 @@ def convertFaces(faces):
 		returnList.append(tempFace)
 	return returnList
 	
-def processItem(item, tol):
+def processItem(item, tol, outputMode):
 	returnTopology = None
 	bObject = item[0]
 	matrix = item[1]
@@ -253,7 +253,7 @@ def processItem(item, tol):
 			faceWire = Wire.ByEdges(faceEdges)
 			topFace = Face.ByExternalBoundary(faceWire)
 			topFaces.append(topFace)
-		returnTopology = topologyByFaces(topFaces, tol)
+		returnTopology = topologyByFaces(topFaces, tol, outputMode)
 	elif len(edges) > 0:
 		for anEdge in edges:
 			topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
@@ -273,8 +273,49 @@ def processItem(item, tol):
 		_ = returnTopology.SetDictionary(topDict)
 	return returnTopology
 
+def processVEF(item, tol, outputMode):
+	vertices, edges, faces = item
+	returnTopology = None
+	if len(vertices) > 0:
+		topVerts = []
+		for aVertex in vertices:
+			v = Vertex.ByCoordinates(aVertex[0], aVertex[1], aVertex[2])
+			topVerts.append(v)
+	else:
+		return None
+	if len(faces) > 0:
+		topFaces = []
+		for aFace in faces:
+			faceEdges = edgesByVertices(aFace, topVerts)
+			faceWire = Wire.ByEdges(faceEdges)
+			topFace = Face.ByExternalBoundary(faceWire)
+			topFaces.append(topFace)
+		returnTopology = topologyByFaces(topFaces, tol, outputMode)
+	elif len(edges) > 0:
+		topEdges = []
+		for anEdge in edges:
+			topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
+			topEdges.append(topEdge)
+		returnTopology = topologyByEdges(topEdges)
+	else:
+		returnTopology = Cluster.ByTopologies(topVerts)
+	if returnTopology:
+		keys = []
+		values = []
+		keys.append("name")
+		keys.append("uuid")
+		keys.append("color")
+		values.append(returnTopology.GetTypeAsString())
+		values.append(str(uuid.uuid4()))
+		values.append([1.0,1.0,1.0,1.0])
+		topDict = processKeysValues(keys, values)
+		_ = returnTopology.SetDictionary(topDict)
+	return returnTopology
+
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
-mode_items = [("Object", "Object", "", 1),("Vertex/Edge/Face", "Vertex/Edge/Face", "", 2)]
+input_items = [("Object", "Object", "", 1),("Vertex/Edge/Face", "Vertex/Edge/Face", "", 2)]
+output_items = [("Default", "Default", "", 1),("CellComplex", "CellComplex", "", 2),("Cell", "Cell", "", 3), ("Shell", "Shell", "", 4)]
+
 def update_sockets(self, context):
 	# hide all input sockets
 	self.inputs['Object'].hide_safe = True
@@ -282,7 +323,7 @@ def update_sockets(self, context):
 	self.inputs['Vertices'].hide_safe = True
 	self.inputs['Edges'].hide_safe = True
 	self.inputs['Faces'].hide_safe = True
-	if self.mode == "Object":
+	if self.inputMode == "Object":
 		self.inputs['Object'].hide_safe = False
 		self.inputs['Matrix'].hide_safe = False
 	else:
@@ -299,7 +340,8 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvTopologyByGeometry'
 	bl_label = 'Topology.ByGeometry'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
-	mode : EnumProperty(name='Mode', description='The input component format of the data', items=mode_items, default="Object", update=update_sockets)
+	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Object", update=update_sockets)
+	outputMode : EnumProperty(name='Output Mode', description='The desired output format', items=output_items, default="Default", update=updateNode)
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
@@ -313,7 +355,9 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 		update_sockets(self, context)
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
-		layout.prop(self, "mode", expand=False, text="")
+		layout.prop(self, "inputMode", expand=False, text="")
+		layout.prop(self, "outputMode", expand=False, text="")
+
 
 	def process(self):
 		start = time.time()
@@ -326,7 +370,7 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			matrixList = flatten(matrixList)
 
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
-		if self.mode == "Object":
+		if self.inputMode == "Object":
 			objectList = self.inputs['Object'].sv_get(deepcopy=True)
 			objectList = flatten(objectList)
 			inputs = [objectList, matrixList]
@@ -343,56 +387,29 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 				inputs = list(interlace(inputs))
 			outputs = []
 			for anInput in inputs:
-				outputs.append(processItem(anInput, tol))
-			self.outputs['Topology'].sv_set(outputs)
+				outputs.append(processItem(anInput, tol, self.outputMode))
 		else:
-			vertices = []
-			edges = []
-			faces = []
-			if (self.inputs['Vertices'].is_linked):
-				vertices = self.inputs['Vertices'].sv_get(deepcopy=False, default=[])[0]
-			if (self.inputs['Edges'].is_linked):
-				edges = self.inputs['Edges'].sv_get(deepcopy=False, default=[])[0]
-			if (self.inputs['Faces'].is_linked):
-				faces = self.inputs['Faces'].sv_get(deepcopy=False, default=[])[0]
-			if len(vertices) > 0:
-				topVerts = []
-				for aVertex in vertices:
-					v = Vertex.ByCoordinates(aVertex[0], aVertex[1], aVertex[2])
-					topVerts.append(v)
-			else:
-				self.outputs['Topology'].sv_set([])
-				return
-
-			if len(faces) > 0:
-				topFaces = []
-				for aFace in faces:
-					faceEdges = edgesByVertices(aFace, topVerts)
-					faceWire = Wire.ByEdges(faceEdges)
-					topFace = Face.ByExternalBoundary(faceWire)
-					topFaces.append(topFace)
-				output = topologyByFaces(topFaces, tol)
-			elif len(edges) > 0:
-				topEdges = []
-				for anEdge in edges:
-					topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
-					topEdges.append(topEdge)
-				output = topologyByEdges(topEdges)
-			else:
-				output = Cluster.ByTopologies(topVerts)
-			keys = []
-			values = []
-			keys.append("name")
-			keys.append("uuid")
-			keys.append("color")
-			values.append("TopologicObject")
-			values.append(str(uuid.uuid4()))
-			values.append([1.0,1.0,1.0,1.0])
-			topDict = processKeysValues(keys, values)
-			_ = output.SetDictionary(topDict)
-			self.outputs['Topology'].sv_set([output])
-			end = time.time()
-			print("Topology.ByGeometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
+			verticesList = self.inputs['Vertices'].sv_get(deepcopy=False, default=[[]])
+			edgesList = self.inputs['Edges'].sv_get(deepcopy=False, default=[[]])
+			facesList = self.inputs['Faces'].sv_get(deepcopy=False, default=[[]])
+			inputs = [verticesList, edgesList, facesList]
+			if ((self.Replication) == "Trim"):
+				inputs = trim(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
+				inputs = iterate(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Repeat"):
+				inputs = repeat(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Interlace"):
+				inputs = list(interlace(inputs))
+			outputs = []
+			for anInput in inputs:
+				outputs.append(processVEF(anInput, tol, self.outputMode))
+		self.outputs['Topology'].sv_set(outputs)
+		end = time.time()
+		print("Topology.ByGeometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologyByGeometry)
