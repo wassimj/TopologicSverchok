@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 7, 0, 2),
+    "version": (0, 7, 0, 3),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -124,6 +124,7 @@ def nodes_index():
                 ("Topologic.CellByThickenedFace", "SvCellByThickenedFace"),
                 ("Topologic.CellCompactness", "SvCellCompactness"),
                 ("Topologic.CellExternalBoundary", "SvCellExternalBoundary"),
+                ("Topologic.CellHyperboloid", "SvCellHyperboloid"),
                 ("Topologic.CellInternalBoundaries", "SvCellInternalBoundaries"),
                 ("Topologic.CellInternalVertex", "SvCellInternalVertex"),
                 ("Topologic.CellIsInside", "SvCellIsInside"),
@@ -152,6 +153,7 @@ def nodes_index():
                 ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
+                ("Topologic.TopologyByImportedJSON", "SvTopologyByImportedJSON"),
                 ("Topologic.TopologyByOCCTShape", "SvTopologyByOCCTShape"),
                 ("Topologic.TopologyByString", "SvTopologyByString"),
                 ("Topologic.TopologyCenterOfMass", "SvTopologyCenterOfMass"),
@@ -166,6 +168,7 @@ def nodes_index():
                 ("Topologic.TopologyEncodeInformation", "SvTopologyEncodeInformation"),
                 ("Topologic.TopologyExplode", "SvTopologyExplode"),
                 ("Topologic.TopologyExportToBRep", "SvTopologyExportToBRep"),
+                ("Topologic.TopologyExportToJSON", "SvTopologyExportToJSON"),
                 ("Topologic.TopologyFilter", "SvTopologyFilter"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
                 ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
@@ -228,7 +231,13 @@ def nodes_index():
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
-                ("Topologic.ColorByValueInRange", "SvColorByValueInRange")]
+                ("Topologic.ColorByObjectColor", "SvColorByObjectColor"),
+                ("Topologic.ColorByValueInRange", "SvColorByValueInRange"),
+                ("Topologic.MatrixByRotation", "SvMatrixByRotation"),
+                ("Topologic.MatrixByScaling", "SvMatrixByScaling"),
+                ("Topologic.MatrixByTranslation", "SvMatrixByTranslation"),
+                ("Topologic.MatrixMultiply", "SvMatrixMultiply")]
+
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
 	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
@@ -266,9 +275,10 @@ def nodes_index():
                 ("Topologic.HBProgramTypeByIdentifier", "SvHBProgramTypeByIdentifier"),
                 ("Topologic.HBProgramTypes", "SvHBProgramTypes")]
 	neo4jNodes = [("Topologic.GraphByNeo4jGraph", "SvGraphByNeo4jGraph"),
-                ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph"),
                 ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
-                ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll")]
+                ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll"),
+                ("Topologic.Neo4jGraphNodeLabels", "SvNeo4jGraphNodelLabels"),
+                ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph"),]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
 	osifc = 0
 
@@ -516,6 +526,7 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellByThickenedFace'],
             ['SvCellCompactness'],
             ['SvCellExternalBoundary'],
+            ['SvCellHyperboloid'],
             ['SvCellInternalBoundaries'],
             ['SvCellInternalVertex'],
             ['SvCellIsInside'],
@@ -645,6 +656,22 @@ class NODEVIEW_MT_AddTPSubcategoryContext(bpy.types.Menu):
 
 make_class('TPSubcategoryContext', 'Topologic @ Context')
 
+class NODEVIEW_MT_AddTPSubcategoryMatrix(bpy.types.Menu):
+    bl_label = "TPSubcategoryMatrix"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryMatrix'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvMatrixByRotation'],
+            ['SvMatrixByScaling'],
+            ['SvMatrixByTranslation'],
+            ['SvMatrixMultiply'],
+
+        ])
+
+make_class('TPSubcategoryMatrix', 'Topologic @ Matrix')
+
 class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
     bl_label = "TPSubcategoryTopology"
     bl_idname = 'NODEVIEW_MT_AddTPSubcategoryTopology'
@@ -661,6 +688,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyBoundingBox'],
             ['SvTopologyByGeometry'],
             ['SvTopologyByImportedBRep'],
+            ['SvTopologyByImportedJSON'],
             ['SvTopologyByOCCTShape'],
 			['SvTopologyByString'],
             ['SvTopologyCenterOfMass'],
@@ -675,6 +703,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyEncodeInformation'],
             ['SvTopologyExplode'],
             ['SvTopologyExportToBRep'],
+            ['SvTopologyExportToJSON'],
             ['SvTopologyFilter'],
             ['SvTopologyGeometry'],
             ['SvTopologyIsSame'],
@@ -710,6 +739,7 @@ class NODEVIEW_MT_AddTPSubcategoryColor(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
+            ['SvColorByObjectColor'],
             ['SvColorByValueInRange'],
         ])
 
@@ -805,9 +835,11 @@ class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvGraphByNeo4jGraph'],
-            ['SvNeo4jGraphSetGraph'],
             ['SvNeo4jGraphByParameters'],
             ['SvNeo4jGraphDeleteAll'],
+            ['SvNeo4jGraphNodelLabels'],
+            ['SvNeo4jGraphSetGraph'],
+
         ])
 
 make_class('TPSubcategoryNeo4j', 'Topologic @ Neo4j')
@@ -829,8 +861,9 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
 			['@ Aperture'],
             ['@ Color'],
             ['@ Context'],
-			['@ Dictionary'],
+            ['@ Dictionary'],
             ['@ Graph'],
+            ['@ Matrix'],
             ['@ Openstudio'],
             ['@ Honeybee'],
             ['@ IFC'],
@@ -863,6 +896,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAperture)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryColor)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
@@ -901,6 +935,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAperture)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryColor)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)

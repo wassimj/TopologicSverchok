@@ -110,14 +110,16 @@ def processItem(item):
 	relationship_matcher = RelationshipMatcher(neo4jGraph)
 	vertices = []
 	edges = []
+	nodes = []
 	for node_label in node_labels:
-		nodes = list(node_matcher.match(node_label))
+		nodes = nodes + (list(node_matcher.match(node_label)))
+	print(nodes)
 	for node in nodes:
 		#Check if they have X, Y, Z coordinates
-		if ('X' in node.keys()) and ('Y' in node.keys()) and ('Z' in node.keys()):
-			x = node['X']
-			y = node['Y']
-			z = node['Z']
+		if ('x' in node.keys()) and ('y' in node.keys()) and ('z' in node.keys()) or ('X' in node.keys()) and ('Y' in node.keys()) and ('Z' in node.keys()):
+			x = node['x']
+			y = node['y']
+			z = node['z']
 			vertex = topologic.Vertex.ByCoordinates(x, y, z)
 		else:
 			vertex = randomVertex(vertices, 1)

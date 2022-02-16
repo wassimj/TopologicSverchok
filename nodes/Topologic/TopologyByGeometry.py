@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import BoolProperty, FloatProperty, EnumProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, FloatVectorProperty, EnumProperty
 from mathutils import Matrix
 
 from sverchok.node_tree import SverchCustomTreeNode
@@ -229,7 +229,7 @@ def convertFaces(faces):
 	
 def processItem(item, tol, outputMode):
 	returnTopology = None
-	bObject = item[0]
+	bObject, matrix, color, id, name  = item
 	matrix = item[1]
 	if matrix == "":
 		matrix = bObject.matrix_world
@@ -262,19 +262,41 @@ def processItem(item, tol, outputMode):
 	else:
 		returnTopology = Cluster.ByTopologies(topVerts)
 	if returnTopology:
-		keys, values = getObjectKeysValues(bObject)
-		keys.append("name")
-		keys.append("uuid")
+		keys = []
+		values = []
 		keys.append("color")
-		values.append(bObject.name)
-		values.append(str(uuid.uuid4()))
-		values.append(list(bObject.color))
+		keys.append("id")
+		keys.append("name")
+		keys.append("type")
+		if color:
+			if isinstance(color, tuple):
+				color = list(color)
+			elif isinstance(color, list):
+				if isinstance(color[0], tuple):
+					color = list(color[0])
+			print(color)
+			values.append(color)
+		else:
+			values.append(list(bObject.color))
+		if id:
+			values.append(id)
+		else:
+			values.append(str(uuid.uuid4()))
+		print("Name", name)
+		print("bObject.name", bObject.name)
+		if name != "":
+			values.append(name)
+		elif bObject.name != "":
+			values.append(bObject.name)
+		else:
+			values.append("None")
+		values.append(returnTopology.GetTypeAsString())
 		topDict = processKeysValues(keys, values)
 		_ = returnTopology.SetDictionary(topDict)
 	return returnTopology
 
 def processVEF(item, tol, outputMode):
-	vertices, edges, faces = item
+	vertices, edges, faces, color, id, name = item
 	returnTopology = None
 	if len(vertices) > 0:
 		topVerts = []
@@ -302,12 +324,29 @@ def processVEF(item, tol, outputMode):
 	if returnTopology:
 		keys = []
 		values = []
-		keys.append("name")
-		keys.append("uuid")
 		keys.append("color")
+		keys.append("id")
+		keys.append("name")
+		keys.append("type")
+		if color:
+			if isinstance(color, tuple):
+				color = list(color)
+			elif isinstance(color, list):
+				if isinstance(color[0], tuple):
+					color = list(color[0])
+			print(color)
+			values.append(color)
+		else:
+			values.append([1.0,1.0,1.0,1.0])
+		if id:
+			values.append(id)
+		else:
+			values.append(str(uuid.uuid4()))
+		if name:
+			values.append(name)
+		else:
+			values.append("None")
 		values.append(returnTopology.GetTypeAsString())
-		values.append(str(uuid.uuid4()))
-		values.append([1.0,1.0,1.0,1.0])
 		topDict = processKeysValues(keys, values)
 		_ = returnTopology.SetDictionary(topDict)
 	return returnTopology
@@ -323,6 +362,10 @@ def update_sockets(self, context):
 	self.inputs['Vertices'].hide_safe = True
 	self.inputs['Edges'].hide_safe = True
 	self.inputs['Faces'].hide_safe = True
+	self.inputs['Name'].hide_safe = False
+	self.inputs['Color'].hide_safe = False
+	self.inputs['ID'].hide_safe = False
+
 	if self.inputMode == "Object":
 		self.inputs['Object'].hide_safe = False
 		self.inputs['Matrix'].hide_safe = False
@@ -332,6 +375,7 @@ def update_sockets(self, context):
 		self.inputs['Faces'].hide_safe = False
 	updateNode(self, context)
 
+defaultID = str(uuid.uuid4())
 class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -342,6 +386,9 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Object", update=update_sockets)
 	outputMode : EnumProperty(name='Output Mode', description='The desired output format', items=output_items, default="Default", update=updateNode)
+	Name: StringProperty(name="Name", default='None', update=updateNode)
+	ID: StringProperty(name="ID", default=defaultID, update=updateNode)
+	Color: FloatVectorProperty(update=updateNode, name='Color', default=(1.0, 1.0, 1.0, 1.0), size=4, min=0.0, max=1.0, subtype='COLOR')
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
@@ -349,7 +396,10 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Vertices')
 		self.inputs.new('SvStringsSocket', 'Edges')
 		self.inputs.new('SvStringsSocket', 'Faces')
-		self.inputs.new('SvStringsSocket', 'Matrix')
+		self.inputs.new('SvMatrixSocket', 'Matrix')
+		self.inputs.new('SvStringsSocket', 'Name').prop_name='Name'
+		self.inputs.new('SvColorSocket', 'ID').prop_name='ID'
+		self.inputs.new('SvColorSocket', 'Color').prop_name='Color'
 		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Topology')
 		update_sockets(self, context)
@@ -373,7 +423,12 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 		if self.inputMode == "Object":
 			objectList = self.inputs['Object'].sv_get(deepcopy=True)
 			objectList = flatten(objectList)
-			inputs = [objectList, matrixList]
+			colorList = self.inputs['Color'].sv_get(deepcopy=False)
+			idList = self.inputs['ID'].sv_get(deepcopy=False)
+			idList = flatten(idList)
+			nameList = self.inputs['Name'].sv_get(deepcopy=False)
+			nameList = flatten(nameList)
+			inputs = [objectList, matrixList, colorList, idList, nameList]
 			if ((self.Replication) == "Trim"):
 				inputs = trim(inputs)
 				inputs = transposeList(inputs)
@@ -392,7 +447,12 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			verticesList = self.inputs['Vertices'].sv_get(deepcopy=False, default=[[]])
 			edgesList = self.inputs['Edges'].sv_get(deepcopy=False, default=[[]])
 			facesList = self.inputs['Faces'].sv_get(deepcopy=False, default=[[]])
-			inputs = [verticesList, edgesList, facesList]
+			nameList = self.inputs['Name'].sv_get(deepcopy=False)
+			colorList = self.inputs['Color'].sv_get(deepcopy=False)
+			idList = self.inputs['ID'].sv_get(deepcopy=False)
+			idList = flatten(idList)
+			nameList = flatten(nameList)
+			inputs = [verticesList, edgesList, facesList, colorList, idList, nameList]
 			if ((self.Replication) == "Trim"):
 				inputs = trim(inputs)
 				inputs = transposeList(inputs)

@@ -17,16 +17,16 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def relevantSelector(topology):
+def relevantSelector(topology, tol):
 	returnVertex = None
 	if topology.Type() == topologic.Vertex.Type():
 		return topology
 	elif topology.Type() == topologic.Edge.Type():
 		return topologic.EdgeUtility.PointAtParameter(topology, 0.5)
 	elif topology.Type() == topologic.Face.Type():
-		return topologic.FaceUtility.InternalVertex(topology, 0.0001)
+		return topologic.FaceUtility.InternalVertex(topology, tol)
 	elif topology.Type() == topologic.Cell.Type():
-		return topologic.CellUtility.InternalVertex(topology, 0.0001)
+		return topologic.CellUtility.InternalVertex(topology, tol)
 	else:
 		return topology.CenterOfMass()
 
@@ -34,14 +34,13 @@ def topologyContains(topology, vertex, tol):
 	contains = False
 	if topology.Type() == topologic.Vertex.Type():
 		try:
-			contains = (topologic.VertexUtility.Distance(topology, vertex) <= tol)
+			contains = (topologic.VertexUtility.Distance(vertex, topology) <= tol)
 		except:
 			contains = False
 		return contains
 	elif topology.Type() == topologic.Edge.Type():
 		try:
-			_ = topologic.EdgeUtility.ParameterAtPoint(topology, vertex)
-			contains = True
+			contains = (topologic.VertexUtility.Distance(vertex, topology) <= tol)
 		except:
 			contains = False
 		return contains
@@ -121,26 +120,6 @@ def processKeysValues(keys, values):
 	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
 	return myDict
 
-def transferDictionariesOld(sources, sinks, tol):
-	usedSources = []
-	for i in range(len(sources)):
-		usedSources.append(False)
-	print(usedSources)
-	for i in range(len(sinks)):
-		print("sink")
-		for j in range(len(sources)):
-			print("  "+ str(j))
-			source = sources[j]
-			if usedSources[j] == False:
-				iv = relevantSelector(sources[j])
-				if topologyContains(sinks[i], iv, tol):
-					usedSources[j] = True
-					d = sources[j].GetDictionary()
-					if d == None:
-						continue
-					else:
-						_ = sinks[i].SetDictionary(d)
-
 def transferDictionaries(sources, sinks, tol):
 	usedSources = []
 	for i in range(len(sources)):
@@ -155,7 +134,7 @@ def transferDictionaries(sources, sinks, tol):
 				if d:
 					sourceKeys = d.Keys()
 					if len(sourceKeys) > 0:
-						iv = relevantSelector(source)
+						iv = relevantSelector(source, tol)
 						if topologyContains(sink, iv, tol):
 							usedSources[j] = True
 							for aSourceKey in sourceKeys:

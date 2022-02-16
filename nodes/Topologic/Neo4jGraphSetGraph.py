@@ -139,7 +139,7 @@ def vertexIndex(v, vertexList, tolerance):
 	return None
 
 def processItem(item):
-	neo4jGraph, topologicGraph, categoryKey, tolerance, run = item
+	neo4jGraph, topologicGraph, categoryKey, bidirectional, deleteAll, tolerance, run = item
 	if not (run):
 		return None
 	import time
@@ -183,9 +183,11 @@ def processItem(item):
 		en = nodes[vertexIndex(ev, vertices, tolerance)]
 		snen = py2neo.Relationship(sn, "CONNECTEDTO", en)
 		tx.create(snen)
-		snen = py2neo.Relationship(en, "CONNECTEDTO", sn)
-		tx.create(snen)
-	neo4jGraph.delete_all()
+		if bidirectional:
+			snen = py2neo.Relationship(en, "CONNECTEDTO", sn)
+			tx.create(snen)
+	if deleteAll:
+		neo4jGraph.delete_all()
 	neo4jGraph.commit(tx)
 	return neo4jGraph
 
@@ -204,6 +206,9 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 	categoryKey: StringProperty(name="Categorize By Key", default="None", update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
 	Run: BoolProperty(name="Run", default=True, update=updateNode)
+	Bidirectional: BoolProperty(name="Bidirectional", default=True, update=updateNode)
+	DeleteAll: BoolProperty(name="Delete Previous Graphs", default=True, update=updateNode)
+
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
@@ -211,6 +216,8 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Neo4j Graph')
 		self.inputs.new('SvStringsSocket', 'Topologic Graph')
 		self.inputs.new('SvStringsSocket', 'Categorize By Key').prop_name='categoryKey'
+		self.inputs.new('SvStringsSocket', 'Bidirectional').prop_name = 'Bidirectional'
+		self.inputs.new('SvStringsSocket', 'DeleteAll').prop_name = 'DeleteAll'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
@@ -226,14 +233,18 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 		neo4jGraphList = self.inputs['Neo4j Graph'].sv_get(deepcopy=True)
 		topologicGraphList = self.inputs['Topologic Graph'].sv_get(deepcopy=True)
 		categoryKeyList = self.inputs['Categorize By Key'].sv_get(deepcopy=True)
+		bidirectionalList = self.inputs['Bidirectional'].sv_get(deepcopy=True)
+		deleteAllList = self.inputs['DeleteAll'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 		runList = self.inputs['Run'].sv_get(deepcopy=True)
 		neo4jGraphList = flatten(neo4jGraphList)
 		topologicGraphList = flatten(topologicGraphList)
 		categoryKeyList = flatten(categoryKeyList)
+		bidirectionalList = flatten(bidirectionalList)
+		deleteAllList = flatten(deleteAllList)
 		toleranceList = flatten(toleranceList)
 		runList = flatten(runList)
-		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, toleranceList, runList]
+		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, bidirectionalList, deleteAllList, toleranceList, runList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

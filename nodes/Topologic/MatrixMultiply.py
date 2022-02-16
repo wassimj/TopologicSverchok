@@ -1,10 +1,11 @@
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty, BoolProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import time
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+from mathutils import Matrix
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -91,40 +92,56 @@ def transposeList(l):
 		returnList.append(tempRow)
 	return returnList
 
+"""
 def processItem(item):
-	vertex = item[0]
-	parent = item[1]
-	edges = []
-	_ = topologic.VertexUtility.AdjacentEdges(vertex, parent, edges)
-	return edges
+	matA, matB = item
+	returnMat = []
+	for i in range(len(matA)):
+		row = []
+		for j in range(len(matB[0])):
+			row.append(0)
+		returnMat.append(row)
+
+	# iterate through rows of matA
+	for i in range(len(matA)):
+		# iterate through columns of matB
+		for j in range(len(matB[0])):
+			# iterate through rows of matB
+			for k in range(len(matB)):
+				returnMat[i][j] += matA[i][k] * matB[k][j]
+
+	return Matrix(returnMat)
+"""
+def processItem(item):
+	matA, matB = item
+	return matA @ matB
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
-
-class SvVertexAdjacentEdges(bpy.types.Node, SverchCustomTreeNode):
+		
+class SvMatrixMultiply(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the adjacent Edges of the input Vertex
+	Tooltip: Outputs a Matrix based on the multiplication of the input matrices    
 	"""
-	bl_idname = 'SvVertexAdjacentEdges'
-	bl_label = 'Vertex.AdjacentEdges'
+	bl_idname = 'SvMatrixMultiply'
+	bl_label = 'Matrix.Multiply'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Parent Topology')
-		self.outputs.new('SvStringsSocket', 'Edges')
+		self.inputs.new('SvMatrixSocket', 'Matrix A')
+		self.inputs.new('SvMatrixSocket', 'Matrix B')
+		self.outputs.new('SvMatrixSocket', 'Matrix')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
+		layout.separator()
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		vertexList = flatten(vertexList)
-		parentList = self.inputs['Parent Topology'].sv_get(deepcopy=False)
-		parentList = flatten(parentList)
-		inputs = [vertexList, parentList]
+		matrixAList = self.inputs['Matrix A'].sv_get(deepcopy=True)
+		matrixBList = self.inputs['Matrix B'].sv_get(deepcopy=True)
+		inputs = [matrixAList, matrixBList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -139,10 +156,10 @@ class SvVertexAdjacentEdges(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Edges'].sv_set(outputs)
+		self.outputs['Matrix'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvVertexAdjacentEdges)
+	bpy.utils.register_class(SvMatrixMultiply)
 
 def unregister():
-	bpy.utils.unregister_class(SvVertexAdjacentEdges)
+	bpy.utils.unregister_class(SvMatrixMultiply)

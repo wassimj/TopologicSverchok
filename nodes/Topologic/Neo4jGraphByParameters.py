@@ -110,7 +110,7 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvNeo4jGraphByParameters'
 	bl_label = 'Neo4jGraph.ByParameters'
-	URL: StringProperty(name="URL", default="bolt://", update=updateNode)
+	URL: StringProperty(name="URL", default="bolt://localhost:7687", update=updateNode)
 	UserName: StringProperty(name="User Name", default="neo4j", update=updateNode)
 	Password: StringProperty(name="Password", default="", update=updateNode)
 	Run: BoolProperty(name="Run", default=True, update=updateNode)
