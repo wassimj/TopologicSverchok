@@ -24,7 +24,13 @@ def processItem(item):
 		_ = anEdge.Faces(item, faces)
 		if len(faces) == 1:
 			obEdges.append(anEdge)
-	return topologic.Wire.ByEdges(obEdges)
+	returnTopology = None
+	try:
+		returnTopology = topologic.Wire.ByEdges(obEdges)
+	except:
+		returnTopology = topologic.Cluster.ByTopologies(obEdges)
+		returnTopology = returnTopology.SelfMerge()
+	return returnTopology
 
 class SvShellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -35,7 +41,7 @@ class SvShellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Shell.ExternalBoundary'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Shell')
-		self.outputs.new('SvStringsSocket', 'Wire')
+		self.outputs.new('SvStringsSocket', 'Boundary')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -48,7 +54,7 @@ class SvShellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['Wire'].sv_set(outputs)
+		self.outputs['Boundary'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvShellExternalBoundary)

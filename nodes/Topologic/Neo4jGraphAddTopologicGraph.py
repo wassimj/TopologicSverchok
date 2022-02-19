@@ -170,6 +170,13 @@ def processItem(item):
 		else:
 			nodeName = str(values[keys.index(categoryKey)])
 		n = py2neo.Node(nodeName, **pydict)
+		neo4jGraph.cypher.execute("CREATE INDEX FOR (n:%s) on (n.name)" %
+                n.nodelabel)
+		#try:
+            #neo4jGraph.cypher.execute("CREATE INDEX FOR (n:%s) on (n.name)" %
+                #n.nodelabel)
+        #except:
+            #pass
 		tx.create(n)
 		nodes.append(n)
 	for i in range(len(edges)):

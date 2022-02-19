@@ -180,6 +180,8 @@ def processItem(item):
 			dictValues.append(value)
 	return processKeysValues(dictKeys, dictValues)
 
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
 class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
 
 	"""
@@ -194,6 +196,9 @@ class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Object')
 		self.inputs.new('SvStringsSocket', 'Key')
 		self.outputs.new('SvStringsSocket', 'Dictionary')
+
+	def draw_buttons(self, context, layout):
+		layout.prop(self, "Replication",text="")
 
 	def process(self):
 		start = time.time()

@@ -283,10 +283,13 @@ def processItem(item, tol, outputMode):
 		else:
 			values.append(str(uuid.uuid4()))
 		print("Name", name)
-		print("bObject.name", bObject.name)
-		if name != "":
+		print(len(name) > 0 and name.lower() != 'none')
+		if len(name) > 0 and name.lower() != 'none':
+			print("Appending name")
 			values.append(name)
-		elif bObject.name != "":
+		elif len(bObject.name) > 0:
+			print("bObject.name", bObject.name)
+			print("Appending bObject.name")
 			values.append(bObject.name)
 		else:
 			values.append("None")

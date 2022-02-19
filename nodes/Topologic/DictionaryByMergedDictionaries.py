@@ -158,9 +158,9 @@ class SvDictionaryByMergedDictionaries(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		dictList = self.inputs['Dictionaries'].sv_get(deepcopy=True)
-		dictList = flatten(dictList)
 		outputs = []
-		outputs.append(processItem(dictList))
+		for aList in dictList:
+			outputs.append(processItem(aList))
 		self.outputs['Dictionary'].sv_set(outputs)
 
 def register():
