@@ -65,8 +65,8 @@ def getFacesStorey(faces, ifc_file):
 
   for face in faces:
     ifc_building_element = ifc_file.by_guid(topologic_lib.getDictionary(face, "IfcBuildingElement"))
-    if not ifc_building_element.is_a("IfcSlab"):
-      continue
+    # if not ifc_building_element.is_a("IfcSlab"):
+      # continue
 
     if not ifc_building_element.ContainedInStructure:
       ifc_building_element = ifc_building_element.Decomposes[0].RelatingObject
@@ -76,6 +76,25 @@ def getFacesStorey(faces, ifc_file):
       ifc_faces_storey, elevation = ifc_storey, ifc_storey.Elevation
 
   return ifc_faces_storey
+
+def assignRepresentation(topology, ifc_file, ifc_product):
+  vs, fs = topologic_lib.meshData(topology)
+  o, z = None, None
+  for v in vs:
+    if z is None or v[-1] < z:
+      o, z = v, v[-1]
+
+  product_matrix = ifcopenshell.util.placement.a2p(o, np.array([0,0,1]), np.array([1,0,0]))
+  point_list = ifc_file.createIfcCartesianPointList3D([ np.linalg.solve(product_matrix, np.append(v,1))[:-1].tolist() for v in vs ])
+  indexed_faces = [ ifc_file.createIfcIndexedPolygonalFace([ index + 1 for index in f]) for f in fs ]
+  representation = ifc_file.createIfcPolygonalFaceSet(point_list, None, indexed_faces, None)
+  body_context = next((item  for item  in ifc_file.by_type("IfcGeometricRepresentationSubContext") if item.ContextIdentifier == "Body"), None)
+  shape = ifc_file.createIfcShapeRepresentation(body_context, body_context.ContextIdentifier, "Tessellation", [representation])
+
+  ifcopenshell.api.run("geometry.assign_representation", ifc_file, product=ifc_product, representation=shape)
+  ifcopenshell.api.run("geometry.edit_object_placement", ifc_file, product=ifc_product, matrix=product_matrix)
+
+  return True
 
 def createRelSpaceBoundary(ifc_file, ifc_class, description, ifc_space, ifc_building_element, vertices, f, boundary_condition):
   ifc_rel_space_boundary = ifcopenshell.api.run("root.create_entity", ifc_file, ifc_class=ifc_class)
@@ -110,6 +129,8 @@ def createInnerBoundary(ifc_rel_space_boundary, top_opening_element, top_space_b
     return None
 
   vs, fs = topologic_lib.meshData(top_inner_boundary)
+  if not fs:
+    return None
   f = fs[0][::-1] if reverse else fs[0]
 
   ifc_element = ifc_file.by_guid(topologic_lib.getDictionary(top_opening_element, "IfcElement"))
@@ -120,8 +141,8 @@ def createInnerBoundary(ifc_rel_space_boundary, top_opening_element, top_space_b
 
   return ifc_inner_boundary
 
-def getOpenStudioVertices(ifc_space_boundary):
-  ifc_curve = ifc_space_boundary.ConnectionGeometry.SurfaceOnRelatingElement
+def getOpenStudioVertices(ifc_rel_space_boundary):
+  ifc_curve = ifc_rel_space_boundary.ConnectionGeometry.SurfaceOnRelatingElement
   if ifc_curve.is_a('IfcFaceSurface'):
     ifc_points = ifc_curve.Bounds[0].Bound.Polygon
     ifc_plane = ifc_curve.FaceSurface

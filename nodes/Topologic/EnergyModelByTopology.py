@@ -175,10 +175,11 @@ def processItem(item):
     roomNameKey = item[13]
     roomTypeKey = item[14]
 
-
     osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath))
     if osEPWFile.is_initialized():
         osEPWFile = osEPWFile.get()
+        print("OSMODEL:",osModel)
+        print("OSEPWFILE:",osEPWFile)
         openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
     ddyModel = openstudio.openstudioenergyplus.loadAndTranslateIdf(openstudio.toPath(designDayFilePath))
     if ddyModel.is_initialized():
@@ -318,21 +319,21 @@ def processItem(item):
         osSpaces.append(osSpace)
 
     osShadingGroup = openstudio.model.ShadingSurfaceGroup(osModel)
-    for faceIndex, contextFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
-        facePoints = []
-        for aVertex in getSubTopologies(contextFace.ExternalBoundary(), topologic.Vertex):
-            facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
-        aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
-        faceNormal = topologic.FaceUtility.NormalAtParameters(contextFace, 0.5, 0.5)
-        osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
-        osFaceNormal.normalize()
-        if osFaceNormal.dot(aShadingSurface.outwardNormal()) < 0:
-            aShadingSurface.setVertices(list(reversed(facePoints)))
-        aShadingSurface.setName("SHADINGSURFACE_" + str(faceIndex))
-        aShadingSurface.setShadingSurfaceGroup(osShadingGroup)
+    if not isinstance(shadingSurfaces,int):
+        for faceIndex, contextFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
+            facePoints = []
+            for aVertex in getSubTopologies(contextFace.ExternalBoundary(), topologic.Vertex):
+                facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
+            aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
+            faceNormal = topologic.FaceUtility.NormalAtParameters(contextFace, 0.5, 0.5)
+            osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
+            osFaceNormal.normalize()
+            if osFaceNormal.dot(aShadingSurface.outwardNormal()) < 0:
+                aShadingSurface.setVertices(list(reversed(facePoints)))
+            aShadingSurface.setName("SHADINGSURFACE_" + str(faceIndex))
+            aShadingSurface.setShadingSurfaceGroup(osShadingGroup)
 
     osModel.purgeUnusedResourceObjects()
-    #osModel.save(openstudio.toPath("C:/Users/wassi/osmFiles/Hola.osm"), True)
     return osModel
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
@@ -381,7 +382,10 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         weatherFileList = self.inputs['Weather File Path'].sv_get(deepcopy=True)
         ddyFileList = self.inputs['Design Day File Path'].sv_get(deepcopy=True)
         buildingTopologyList = self.inputs['Building Topology'].sv_get(deepcopy=True)
-        shadingList = self.inputs['Shading Surfaces Cluster'].sv_get(deepcopy=True)
+        if (self.inputs['Shading Surfaces Cluster'].is_linked):
+            shadingList = self.inputs['Shading Surfaces Cluster'].sv_get(deepcopy=True)
+        else:
+            shadingList = [0]
         floorLevelsList = self.inputs['Floor Levels'].sv_get(deepcopy=True)
         buildingNameList = self.inputs['Building Name'].sv_get(deepcopy=True)
         buildingTypeList = self.inputs['Building Type'].sv_get(deepcopy=True)
@@ -396,8 +400,8 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
 
 
         modelList = flatten(modelList)
-        weatherFileList = self.inputs['Weather File Path'].sv_get(deepcopy=True)
-        ddyFileList = self.inputs['Design Day File Path'].sv_get(deepcopy=True)
+        weatherFileList = flatten(weatherFileList)
+        ddyFileList = flatten(ddyFileList)
         buildingTopologyList = flatten(buildingTopologyList)
         shadingList = flatten(shadingList)
         #floorLevelsList does not need flattening

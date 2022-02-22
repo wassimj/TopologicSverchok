@@ -28,7 +28,7 @@ def processItem(item):
 	settings.set(settings.USE_WORLD_COORDS,True)
 
 	ifc_file = ifcopenshell.open(item)
-	products = ifc_file.by_type('IfcProduct')
+	products = ifc_file.by_type('IfcVirtualElement')
 	output = []
 	for p in products:
 		try:

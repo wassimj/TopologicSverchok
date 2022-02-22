@@ -5,13 +5,13 @@ import openstudio
 import ifcopenshell
 from . import ifc_topologic
 
-class SvEnergyModelByIFC(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
   """
-  Triggers: Energy model by IFC
+  Triggers: Energy model by Imported IFC
   Tooltip: Creates an Energy Model from the input IFC
   """
-  bl_idname = 'SvEnergyModelByIFC'
-  bl_label = 'EnergyModel.ByIFC'
+  bl_idname = 'SvEnergyModelByImportedIFC'
+  bl_label = 'EnergyModel.ByImoportedIFC'
 
   def sv_init(self, context):
     self.inputs.new('SvStringsSocket', 'IFC')
@@ -158,7 +158,7 @@ class SvEnergyModelByIFC(bpy.types.Node, SverchCustomTreeNode):
     self.outputs['Energy model'].sv_set([os_models])
 
 def register():
-  bpy.utils.register_class(SvEnergyModelByIFC)
+  bpy.utils.register_class(SvEnergyModelByImportedIFC)
 
 def unregister():
-  bpy.utils.unregister_class(SvEnergyModelByIFC)
+  bpy.utils.unregister_class(SvEnergyModelByImportedIFC)
