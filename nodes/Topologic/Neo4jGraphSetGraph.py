@@ -64,7 +64,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -138,8 +137,15 @@ def vertexIndex(v, vertexList, tolerance):
 			return i
 	return None
 
+def getValueAtKey(d, searchString):
+	keys, values = getKeysAndValues(d)
+	for i in range(len(keys)):
+		if keys[i].lower() == searchString.lower():
+			return values[i]
+	return None
+
 def processItem(item):
-	neo4jGraph, topologicGraph, categoryKey, bidirectional, deleteAll, tolerance, run = item
+	neo4jGraph, topologicGraph, labelKey, relationshipKey, bidirectional, deleteAll, tolerance, run = item
 	if not (run):
 		return None
 	import time
@@ -168,10 +174,10 @@ def processItem(item):
 		values.append(sp.CartesianPoint([vertices[i].X(),vertices[i].Y(),vertices[i].Z()]))
 		zip_iterator = zip(keys, values)
 		pydict = dict(zip_iterator)
-		if categoryKey == 'None':
+		if (labelKey == 'None') or (not (labelKey)):
 			nodeName = "TopologicGraphVertex"
 		else:
-			nodeName = str(values[keys.index(categoryKey)])
+			nodeName = str(getValueAtKey(vDict, labelKey))
 		n = py2neo.Node(nodeName, **pydict)
 		tx.create(n)
 		nodes.append(n)
@@ -181,10 +187,14 @@ def processItem(item):
 		ev = e.EndVertex()
 		sn = nodes[vertexIndex(sv, vertices, tolerance)]
 		en = nodes[vertexIndex(ev, vertices, tolerance)]
-		snen = py2neo.Relationship(sn, "CONNECTEDTO", en)
+		ed = e.GetDictionary()
+		relationshipType = getValueAtKey(ed, relationshipKey)
+		if not (relationshipType):
+			relationshipType = "Connected To"
+		snen = py2neo.Relationship(sn, relationshipType, en)
 		tx.create(snen)
 		if bidirectional:
-			snen = py2neo.Relationship(en, "CONNECTEDTO", sn)
+			snen = py2neo.Relationship(en, relationshipType, sn)
 			tx.create(snen)
 	if deleteAll:
 		neo4jGraph.delete_all()
@@ -203,7 +213,8 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
 	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
 	Z: FloatProperty(name="Z",  default=0, precision=4, update=updateNode)
-	categoryKey: StringProperty(name="Categorize By Key", default="None", update=updateNode)
+	labelKey: StringProperty(name="Label Key", default="None", update=updateNode)
+	relationshipKey: StringProperty(name="Relationship Type Key", default="relationship", update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
 	Run: BoolProperty(name="Run", default=True, update=updateNode)
 	Bidirectional: BoolProperty(name="Bidirectional", default=True, update=updateNode)
@@ -215,7 +226,8 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'Neo4j Graph')
 		self.inputs.new('SvStringsSocket', 'Topologic Graph')
-		self.inputs.new('SvStringsSocket', 'Categorize By Key').prop_name='categoryKey'
+		self.inputs.new('SvStringsSocket', 'Label Key').prop_name='labelKey'
+		self.inputs.new('SvStringsSocket', 'Relationship Key').prop_name='relationshipKey'
 		self.inputs.new('SvStringsSocket', 'Bidirectional').prop_name = 'Bidirectional'
 		self.inputs.new('SvStringsSocket', 'DeleteAll').prop_name = 'DeleteAll'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
@@ -232,19 +244,21 @@ class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
 			return
 		neo4jGraphList = self.inputs['Neo4j Graph'].sv_get(deepcopy=True)
 		topologicGraphList = self.inputs['Topologic Graph'].sv_get(deepcopy=True)
-		categoryKeyList = self.inputs['Categorize By Key'].sv_get(deepcopy=True)
+		labelKeyList = self.inputs['Label Key'].sv_get(deepcopy=True)
+		relationshipKeyList = self.inputs['Relationship Key'].sv_get(deepcopy=True)
 		bidirectionalList = self.inputs['Bidirectional'].sv_get(deepcopy=True)
 		deleteAllList = self.inputs['DeleteAll'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 		runList = self.inputs['Run'].sv_get(deepcopy=True)
 		neo4jGraphList = flatten(neo4jGraphList)
 		topologicGraphList = flatten(topologicGraphList)
-		categoryKeyList = flatten(categoryKeyList)
+		labelKeyList = flatten(labelKeyList)
+		relationshipKeyList = flatten(relationshipKeyList)
 		bidirectionalList = flatten(bidirectionalList)
 		deleteAllList = flatten(deleteAllList)
 		toleranceList = flatten(toleranceList)
 		runList = flatten(runList)
-		inputs = [neo4jGraphList, topologicGraphList, categoryKeyList, bidirectionalList, deleteAllList, toleranceList, runList]
+		inputs = [neo4jGraphList, topologicGraphList, labelKeyList, relationshipKeyList, bidirectionalList, deleteAllList, toleranceList, runList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)

@@ -14,6 +14,7 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 from itertools import cycle
 import uuid
 import time
+import warnings
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -214,7 +215,8 @@ def processKeysValues(keys, values):
 					l.append(topologic.StringAttribute(v))
 			stl_values.append(topologic.ListAttribute(l))
 		else:
-			raise Exception("Error: Value type is not supported. Supported types are: Boolean, Integer, Double, String, or List.")
+			warnings.warn('Warning: Value type at key %s is not supported %s. Supported types are: Boolean, Integer, Double, String, or List. Adding a NULL string' %(keys[i], value))
+			stl_values.append(topologic.StringAttribute(""))
 	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
 	return myDict
 
@@ -264,17 +266,20 @@ def processItem(item, tol, outputMode):
 	if returnTopology:
 		keys = []
 		values = []
-		keys.append("color")
-		keys.append("id")
-		keys.append("name")
-		keys.append("type")
+		for k, v in bObject.items():
+			if isinstance(v, bool) or isinstance(v, int) or isinstance(v, float) or isinstance(v, str):
+				keys.append(str(k))
+				values.append(v)
+		keys.append("TOPOLOGIC_color")
+		keys.append("TOPOLOGIC_id")
+		keys.append("TOPOLOGIC_name")
+		keys.append("TOPOLOGIC_type")
 		if color:
 			if isinstance(color, tuple):
 				color = list(color)
 			elif isinstance(color, list):
 				if isinstance(color[0], tuple):
 					color = list(color[0])
-			print(color)
 			values.append(color)
 		else:
 			values.append(list(bObject.color))
@@ -282,14 +287,10 @@ def processItem(item, tol, outputMode):
 			values.append(id)
 		else:
 			values.append(str(uuid.uuid4()))
-		print("Name", name)
-		print(len(name) > 0 and name.lower() != 'none')
 		if len(name) > 0 and name.lower() != 'none':
 			print("Appending name")
 			values.append(name)
 		elif len(bObject.name) > 0:
-			print("bObject.name", bObject.name)
-			print("Appending bObject.name")
 			values.append(bObject.name)
 		else:
 			values.append("None")

@@ -467,7 +467,10 @@ def processCellComplex(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if viaSharedApertures:
 				for sharedAperture in sharedApertures:
 					if useInternalVertex == True:
@@ -481,8 +484,12 @@ def processCellComplex(item):
 						_ = vst.SetDictionary(d3)
 					else:
 						_ = vst.SetDictionary(d1)
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorTopologies:
 				for exteriorTopology in exteriorTopologies:
 					if useInternalVertex == True:
@@ -498,7 +505,10 @@ def processCellComplex(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -506,7 +516,8 @@ def processCellComplex(item):
 						vst = internalVertex(extTop, tolerance)
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
-					d1 = exteriorAperture.GetDictionary()
+					d1 = exteriorAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exteriorAperture.String(), exteriorAperture.Type(), exteriorAperture.GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -514,7 +525,10 @@ def processCellComplex(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 
 	for aCell in cells:
 		if useInternalVertex == True:
@@ -580,7 +594,10 @@ def processCell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -589,6 +606,7 @@ def processCell(item):
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
 					d1 = exteriorAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exteriorAperture.Topology().String(), exteriorAperture.Topology().Type(), exteriorAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -596,7 +614,10 @@ def processCell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vCell, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vCell, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 
 	return topologic.Graph.ByVerticesEdges(vertices, edges)
 
@@ -729,7 +750,10 @@ def processShell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if viaSharedApertures:
 				for sharedAperture in sharedApertures:
 					if useInternalVertex == True:
@@ -737,6 +761,7 @@ def processShell(item):
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
 					d1 = sharedAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [sharedAperture.Topology().String(), sharedAperture.Topology().Type(), sharedAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -744,7 +769,10 @@ def processShell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorTopologies:
 				for exteriorTopology in exteriorTopologies:
 					if useInternalVertex == True:
@@ -759,7 +787,10 @@ def processShell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -768,6 +799,7 @@ def processShell(item):
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
 					d1 = exteriorAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exteriorAperture.Topology().String(), exteriorAperture.Topology().Type(), exteriorAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -775,7 +807,10 @@ def processShell(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 
 	for aFace in topFaces:
 		if useInternalVertex == True:
@@ -840,7 +875,10 @@ def processFace(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -849,6 +887,7 @@ def processFace(item):
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
 					d1 = exteriorAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exteriorAperture.Topology().String(), exteriorAperture.Topology().Type(), exteriorAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -856,7 +895,10 @@ def processFace(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vFace, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vFace, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 	return topologic.Graph.ByVertices(vertices, edges)
 
 def processWire(item):
@@ -995,7 +1037,10 @@ def processWire(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if viaSharedApertures:
 				for sharedAperture in sharedApertures:
 					if useInternalVertex == True:
@@ -1003,6 +1048,7 @@ def processWire(item):
 					else:
 						vst = sharedAperture.Topology().CenterOfMass()
 					d1 = sharedAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [sharedAperture.Topology().String(), sharedAperture.Topology().Type(), sharedAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -1010,11 +1056,17 @@ def processWire(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["Via Shared Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorTopologies:
-				for exteriorTopology in exteriorTopologies:
+				for vst in exteriorTopologies:
 					vertices.append(exteriorTopology)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, exteriorTopology))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -1023,6 +1075,7 @@ def processWire(item):
 					else:
 						vst = exTop.CenterOfMass()
 					d1 = exTop.GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exTop.String(), exTop.Type(), exTop.GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -1030,7 +1083,10 @@ def processWire(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 
 	for anEdge in topEdges:
 		try:
@@ -1102,7 +1158,10 @@ def processEdge(item):
 					else:
 						_ = vst.SetDictionary(d1)
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Topologies"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 			if toExteriorApertures:
 				for exteriorAperture in exteriorApertures:
 					extTop = exteriorAperture.Topology()
@@ -1111,6 +1170,7 @@ def processEdge(item):
 					else:
 						vst = exteriorAperture.Topology().CenterOfMass()
 					d1 = exteriorAperture.Topology().GetDictionary()
+					vst = topologic.Vertex.ByCoordinates(vst.X()+(tolerance*100), vst.Y()+(tolerance*100), vst.Z()+(tolerance*100))
 					if storeBRep:
 						d2 = processKeysValues(["brep", "brepType", "brepTypeString"], [exteriorAperture.Topology().String(), exteriorAperture.Topology().Type(), exteriorAperture.Topology().GetTypeAsString()])
 						d3 = mergeDictionaries2([d1, d2])
@@ -1119,7 +1179,10 @@ def processEdge(item):
 						_ = vst.SetDictionary(d1)
 					_ = vst.SetDictionary(exteriorAperture.Topology().GetDictionary())
 					vertices.append(vst)
-					edges.append(topologic.Edge.ByStartVertexEndVertex(vEdge, vst))
+					tempe = topologic.Edge.ByStartVertexEndVertex(vEdge, vst)
+					tempd = processKeysValues(["relationship"],["To Exterior Apertures"])
+					_ = tempe.SetDictionary(tempd)
+					edges.append(tempe)
 	graph = topologic.Graph.ByVerticesEdges(vertices, edges)
 	return graph
 

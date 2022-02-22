@@ -95,13 +95,24 @@ def listAttributeValues(listAttribute):
 	listAttributes = listAttribute.ListValue()
 	returnList = []
 	for attr in listAttributes:
-		if isinstance(attr, IntAttribute):
+		if isinstance(attr, topologic.IntAttribute):
 			returnList.append(attr.IntValue())
-		elif isinstance(attr, DoubleAttribute):
+		elif isinstance(attr, topologic.DoubleAttribute):
 			returnList.append(attr.DoubleValue())
-		elif isinstance(attr, StringAttribute):
+		elif isinstance(attr, topologic.StringAttribute):
 			returnList.append(attr.StringValue())
 	return returnList
+
+def listToString(item):
+	returnString = ""
+	if isinstance(item, list):
+		if len(item) < 2:
+			return str(item[0])
+		else:
+			returnString = item[0]
+			for i in range(1, len(item)):
+				returnString = returnString+str(item[i])
+	return returnString
 
 def valueAtKey(item, key):
 	try:
@@ -115,7 +126,7 @@ def valueAtKey(item, key):
 	elif isinstance(attr, topologic.StringAttribute):
 		return (attr.StringValue())
 	elif isinstance(attr, topologic.ListAttribute):
-		return str(listAttributeValues(attr).sort())
+		return listToString(listAttributeValues(attr))
 	else:
 		return None
 
@@ -134,14 +145,18 @@ def processItem(topologies, topologyType, searchType, item):
 					value = str(value)
 				value.replace("*",".+")
 				value = value.lower()
+				print("TopologyFilter: Value:", value)
 				d = aTopology.GetDictionary()
 				v = valueAtKey(d, key)
+				print("TopologyFilter: v:", v)
 				if v != None:
 					v = v.lower()
 					if searchType == "Equal To":
 						searchResult = (value == v)
 					elif searchType == "Contains":
+						print("TopologuFilter: Checking if Contains")
 						searchResult = (value in v)
+						print("TopologyFilter: Result:", searchResult)
 					elif searchType == "Starts With":
 						searchResult = (value == v[0: len(value)])
 					elif searchType == "Ends With":

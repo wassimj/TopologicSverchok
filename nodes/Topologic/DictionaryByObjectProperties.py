@@ -230,7 +230,7 @@ class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
 			outputs.append(processItem(anInput))
 		self.outputs['Dictionary'].sv_set(outputs)
 		end = time.time()
-		print("Dictionary.ByCustomProperties Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Dictionary.ByObjectProperties Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
     bpy.utils.register_class(SvDictionaryByObjectProperties)

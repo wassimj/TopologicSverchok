@@ -129,7 +129,7 @@ def cellAperturesAndDictionaries(topology, tol):
 	try:
 		_ = topology.Cells(None, cells)
 	except:
-		return []
+		return [[],[],[]]
 	cellApertures = []
 	cellDictionaries = []
 	cellSelectors = []
@@ -148,7 +148,7 @@ def faceAperturesAndDictionaries(topology, tol):
 	try:
 		_ = topology.Faces(None, faces)
 	except:
-		return []
+		return [[],[],[]]
 	faceApertures = []
 	faceDictionaries = []
 	faceSelectors = []
@@ -167,7 +167,7 @@ def edgeAperturesAndDictionaries(topology, tol):
 	try:
 		_ = topology.Edges(None, edges)
 	except:
-		return []
+		return [[],[],[]]
 	edgeApertures = []
 	edgeDictionaries = []
 	edgeSelectors = []
@@ -186,7 +186,7 @@ def vertexAperturesAndDictionaries(topology, tol):
 	try:
 		_ = topology.Vertices(None, vertices)
 	except:
-		return []
+		return [[],[],[]]
 	vertexApertures = []
 	vertexDictionaries = []
 	vertexSelectors = []

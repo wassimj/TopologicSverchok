@@ -315,7 +315,6 @@ def processApertures(subTopologies, apertures, exclusive, tolerance):
 			if topologic.VertexUtility.Distance(apCenter, subTopology) < tolerance:
 				context = topologic.Context.ByTopologyParameters(subTopology, 0.5, 0.5, 0.5)
 				_ = topologic.Aperture.ByTopologyContext(aperture, context)
-				print("Adding an Aperture")
 				if exclusive == True:
 					usedTopologies[i] = 1
 		ap = ap + 1
@@ -390,7 +389,6 @@ def processItem(item):
 				faceSelectors.append(assignDictionary(faceDataItem))
 			processSelectors(faceSelectors, topology, False, False, True, False, 0.001)
 			edgeDataList = jsonItem['edgeDictionaries']
-			print("Edge Dictionaries", edgeDataList)
 			edgeSelectors = []
 			for edgeDataItem in edgeDataList:
 				edgeSelectors.append(assignDictionary(edgeDataItem))

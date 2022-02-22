@@ -96,11 +96,11 @@ def listAttributeValues(listAttribute):
 	listAttributes = listAttribute.ListValue()
 	returnList = []
 	for attr in listAttributes:
-		if isinstance(attr, IntAttribute):
+		if isinstance(attr, topologic.IntAttribute):
 			returnList.append(attr.IntValue())
-		elif isinstance(attr, DoubleAttribute):
+		elif isinstance(attr, topologic.DoubleAttribute):
 			returnList.append(attr.DoubleValue())
-		elif isinstance(attr, StringAttribute):
+		elif isinstance(attr, topologic.StringAttribute):
 			returnList.append(attr.StringValue())
 	return returnList
 
@@ -183,11 +183,24 @@ def processKeysValues(keys, values):
 	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
 	return myDict
 
+def relevantSelector(topology, tol):
+	returnVertex = None
+	if topology.Type() == topologic.Vertex.Type():
+		return topology
+	elif topology.Type() == topologic.Edge.Type():
+		return topologic.EdgeUtility.PointAtParameter(topology, 0.5)
+	elif topology.Type() == topologic.Face.Type():
+		return topologic.FaceUtility.InternalVertex(topology, tol)
+	elif topology.Type() == topologic.Cell.Type():
+		return topologic.CellUtility.InternalVertex(topology, tol)
+	else:
+		return topology.CenterOfMass()
+
 def transferDictionaries(sources, sinks, tol):
 	for sink in sinks:
 		sinkKeys = []
 		sinkValues = []
-		iv = relevantSelector(sink)
+		iv = relevantSelector(sink, tol)
 		j = 1
 		for source in sources:
 			if topologyContains(source, iv, tol):
@@ -203,7 +216,7 @@ def transferDictionaries(sources, sinks, tol):
 							sinkValues.append("")
 					for i in range(len(sourceKeys)):
 						index = sinkKeys.index(sourceKeys[i])
-						sourceValue = valueAtKey(d, sourceKeys[i])
+						sourceValue = getValueAtKey(d, sourceKeys[i])
 						if sourceValue != None:
 							if sinkValues[index] != "":
 								if isinstance(sinkValues[index], list):
@@ -391,21 +404,21 @@ def processItem(item):
 			sourceFaces.append(topologyA)
 		elif hidimA >= topologic.Face.Type():
 			facesA = []
-			_ = topologyA.Faces(facesA)
+			_ = topologyA.Faces(None, facesA)
 			for aFace in facesA:
 				sourceFaces.append(aFace)
 		if topologyB.Type() == topologic.Face.Type():
 			sourceFaces.append(topologyB)
 		elif hidimB >= topologic.Face.Type():
 			facesB = []
-			_ = topologyB.Faces(facesB)
+			_ = topologyB.Faces(None, facesB)
 			for aFace in facesB:
 				sourceFaces.append(aFace)
 		sinkFaces = []
 		if topologyC.Type() == topologic.Face.Type():
 			sinkFaces.append(topologyC)
 		elif hidimC >= topologic.Face.Type():
-			_ = topologyC.Faces(sinkFaces)
+			_ = topologyC.Faces(None, sinkFaces)
 		_ = transferDictionaries(sourceFaces, sinkFaces, tolerance)
 		if topologyA.Type() == topologic.Cell.Type():
 			sourceCells.append(topologyA)
@@ -425,7 +438,7 @@ def processItem(item):
 		if topologyC.Type() == topologic.Cell.Type():
 			sinkCells.append(topologyC)
 		elif hidimC >= topologic.Cell.Type():
-			_ = topologyC.Cells(sinkCells)
+			_ = topologyC.Cells(None, sinkCells)
 		_ = transferDictionaries(sourceCells, sinkCells, tolerance)
 	return topologyC
 
