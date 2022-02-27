@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+import warnings
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -16,7 +17,29 @@ def flatten(element):
 	return returnList
 
 def processItem(faces, tol):
-	return topologic.Shell.ByFaces(faces, tol)
+	shell = topologic.Shell.ByFaces(faces, tol)
+	if not shell:
+		warnings.warn("Warning: Default Shell.ByFaces method failed. Attempting to Merge the Faces.", UserWarning)
+		shell = faces[0]
+		for i in range(1,len(faces)):
+			newShell = None
+			try:
+				newShell = shell.Merge(faces[i], False)
+			except:
+				warnings.warn("Warning: Failed to merge Face #"+i+". Skipping.", UserWarning)
+				pass
+			if newShell:
+				shell = newShell
+		if shell.Type() != 16: #16 is the type of a Shell
+			warnings.warn("Warning: Input Faces do not form a Shell", UserWarning)
+			if shell.Type() > 16:
+				returnShells = []
+				_ = shell.Shells(None, returnShells)
+				return returnShells
+			else:
+				return None
+	else:
+		return shell
 
 class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -42,7 +65,7 @@ class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 		output = []
 		for faces in faceList:
 			output.append(processItem(faces, tol))
-		self.outputs['Shell'].sv_set(output)
+		self.outputs['Shell'].sv_set(flatten(output))
 
 def register():
     bpy.utils.register_class(SvShellByFaces)

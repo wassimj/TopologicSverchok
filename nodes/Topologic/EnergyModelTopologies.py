@@ -63,7 +63,7 @@ def processItem(item):
     shadingSurfaces = item.getShadingSurfaces()
     for aShadingSurface in shadingSurfaces:
         shadingFaces.append(surfaceToFace(aShadingSurface))
-    for aSpace in spaces:
+    for count, aSpace in enumerate(spaces):
         osTransformation = aSpace.transformation()
         osTranslation = osTransformation.translation()
         osMatrix = osTransformation.rotationMatrix()
@@ -91,38 +91,42 @@ def processItem(item):
             addApertures(aFace, apertures)
             spaceFaces.append(aFace)
         spaceCell = topologic.Cell.ByFaces(spaceFaces)
-        # Set Dictionary for Cell
-        stl_keys = []
-        stl_keys.append("id")
-        stl_keys.append("name")
-        stl_keys.append("type")
-        stl_keys.append("color")
-        stl_values = []
-        spaceID = str(aSpace.handle()).replace('{','').replace('}','')
-        stl_values.append(topologic.StringAttribute(spaceID))
-        stl_values.append(topologic.StringAttribute(aSpace.name().get()))
-        spaceTypeName = "Unknown"
-        red = 255
-        green = 255
-        blue = 255
-        print("******* Trying to get space name *********")
-        print(aSpace.spaceType())
-        if (aSpace.spaceType().is_initialized()):
-            if(aSpace.spaceType().get().name().is_initialized()):
-                spaceTypeName = aSpace.spaceType().get().name().get()
-            if(aSpace.spaceType().get().renderingColor()):
-                red = aSpace.spaceType().get().renderingColor().get().renderingRedValue()
-                green = aSpace.spaceType().get().renderingColor().get().renderingGreenValue()
-                blue = aSpace.spaceType().get().renderingColor().get().renderingBlueValue()
-        stl_values.append(topologic.StringAttribute(spaceTypeName))
-        l = []
-        l.append(topologic.IntAttribute(red))
-        l.append(topologic.IntAttribute(green))
-        l.append(topologic.IntAttribute(blue))
-        stl_values.append(topologic.ListAttribute(l))
-        dict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
-        _ = spaceCell.SetDictionary(dict)
-        cells.append(spaceCell)
+        print(count, spaceCell)
+        if not spaceCell:
+            spaceCell = topologic.Shell.ByFaces(spaceFaces)
+        if not spaceCell:
+            spaceCell = topologic.Cluster.ByTopologies(spaceFaces)
+        if spaceCell:
+            # Set Dictionary for Cell
+            stl_keys = []
+            stl_keys.append("TOPOLOGIC_id")
+            stl_keys.append("TOPOLOGIC_name")
+            stl_keys.append("TOPOLOGIC_type")
+            stl_keys.append("TOPOLOGIC_color")
+            stl_values = []
+            spaceID = str(aSpace.handle()).replace('{','').replace('}','')
+            stl_values.append(topologic.StringAttribute(spaceID))
+            stl_values.append(topologic.StringAttribute(aSpace.name().get()))
+            spaceTypeName = "Unknown"
+            red = 255
+            green = 255
+            blue = 255
+            if (aSpace.spaceType().is_initialized()):
+                if(aSpace.spaceType().get().name().is_initialized()):
+                    spaceTypeName = aSpace.spaceType().get().name().get()
+                if(aSpace.spaceType().get().renderingColor()):
+                    red = aSpace.spaceType().get().renderingColor().get().renderingRedValue()
+                    green = aSpace.spaceType().get().renderingColor().get().renderingGreenValue()
+                    blue = aSpace.spaceType().get().renderingColor().get().renderingBlueValue()
+            stl_values.append(topologic.StringAttribute(spaceTypeName))
+            l = []
+            l.append(topologic.IntAttribute(red))
+            l.append(topologic.IntAttribute(green))
+            l.append(topologic.IntAttribute(blue))
+            stl_values.append(topologic.ListAttribute(l))
+            dict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
+            _ = spaceCell.SetDictionary(dict)
+            cells.append(spaceCell)
     return [cells, apertures, shadingFaces]
 		
 class SvEnergyModelTopologies(bpy.types.Node, SverchCustomTreeNode):
@@ -134,17 +138,17 @@ class SvEnergyModelTopologies(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'EnergyModel.Topologies'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Energy Model')
-		self.outputs.new('SvStringsSocket', 'Cells')
+		self.outputs.new('SvStringsSocket', 'Topologies')
 		self.outputs.new('SvStringsSocket', 'Apertures')
 		self.outputs.new('SvStringsSocket', 'Shading Faces')
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Cells'].sv_set([])
+			self.outputs['Topologies'].sv_set([])
 			self.outputs['Apertures'].sv_set([])
 			return
-		inputs = self.inputs['Energy Model'].sv_get(deepcopy=False)
+		inputs = self.inputs['Energy Model'].sv_get(deepcopy=True)
 		inputs = flatten(inputs)
 		cellOutputs = []
 		apertureOutputs = []
@@ -154,7 +158,7 @@ class SvEnergyModelTopologies(bpy.types.Node, SverchCustomTreeNode):
 			cellOutputs.append(cells)
 			apertureOutputs.append(apertures)
 			shadingFaceOutputs.append(shadingFaces)
-		self.outputs['Cells'].sv_set(cellOutputs)
+		self.outputs['Topologies'].sv_set(cellOutputs)
 		self.outputs['Apertures'].sv_set(apertureOutputs)
 		self.outputs['Shading Faces'].sv_set(shadingFaceOutputs)
 

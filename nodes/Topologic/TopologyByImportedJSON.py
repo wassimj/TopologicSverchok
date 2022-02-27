@@ -17,10 +17,6 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-
-
-
-
 def relevantSelector(topology, tol):
 	returnVertex = None
 	if topology.Type() == topologic.Vertex.Type():
@@ -364,19 +360,31 @@ def processItem(item):
 			_ = topology.SetDictionary(topDictionary)
 			cellApertures = getApertures(jsonItem['cellApertures'])
 			cells = []
-			_ = topology.Cells(None, cells)
+			try:
+				_ = topology.Cells(None, cells)
+			except:
+				pass
 			processApertures(cells, cellApertures, False, 0.001)
 			faceApertures = getApertures(jsonItem['faceApertures'])
 			faces = []
-			_ = topology.Faces(None, faces)
+			try:
+				_ = topology.Faces(None, faces)
+			except:
+				pass
 			processApertures(faces, faceApertures, False, 0.001)
 			edgeApertures = getApertures(jsonItem['edgeApertures'])
 			edges = []
-			_ = topology.Edges(None, edges)
+			try:
+				_ = topology.Edges(None, edges)
+			except:
+				pass
 			processApertures(edges, edgeApertures, False, 0.001)
 			vertexApertures = getApertures(jsonItem['vertexApertures'])
 			vertices = []
-			_ = topology.Vertices(None, vertices)
+			try:
+				_ = topology.Vertices(None, vertices)
+			except:
+				pass
 			processApertures(vertices, vertexApertures, False, 0.001)
 			cellDataList = jsonItem['cellDictionaries']
 			cellSelectors = []

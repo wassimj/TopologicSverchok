@@ -16,12 +16,25 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
+def getApertures(topology):
+	apertures = []
+	apTopologies = []
+	_ = topology.Apertures(apertures)
+	for aperture in apertures:
+		apTopologies.append(topologic.Aperture.Topology(aperture))
+	return apTopologies
+
 def processItem(item):
-	outerWalls = []
-	innerWalls = []
-	roofs = []
-	floors = []
-	slabs = []
+	externalVerticalFaces = []
+	internalVerticalFaces = []
+	topHorizontalFaces = []
+	bottomHorizontalFaces = []
+	internalHorizontalFaces = []
+	externalVerticalApertures = []
+	internalVerticalApertures = []
+	topHorizontalApertures = []
+	bottomHorizontalApertures = []
+	internalHorizontalApertures = []
 
 	faces = []
 	_ = item.Faces(None, faces)
@@ -32,17 +45,54 @@ def processItem(item):
 		n = len(cells)
 		if abs(z) < 0.001:
 			if n == 1:
-				outerWalls.append(aFace)
+				externalVerticalFaces.append(aFace)
+				externalVerticalApertures.append(getApertures(aFace))
 			else:
-				innerWalls.append(aFace)
+				internalVerticalFaces.append(aFace)
+				internalVerticalApertures.append(getApertures(aFace))
 		elif n == 1:
 			if z > 0.9:
-				roofs.append(aFace)
+				topHorizontalFaces.append(aFace)
+				topHorizontalApertures.append(getApertures(aFace))
 			elif z < -0.9:
-				floors.append(aFace)
+				bottomHorizontalFaces.append(aFace)
+				bottomHorizontalApertures.append(getApertures(aFace))
+
 		else:
-			slabs.append(aFace)
-	return [outerWalls, innerWalls, roofs, floors, slabs]
+			internalHorizontalFaces.append(aFace)
+			internalHorizontalApertures.append(getApertures(aFace))
+	return1 = []
+	return2 = []
+	return3 = []
+	return4 = []
+	return5 = []
+	return6 = []
+	return7 = []
+	return8 = []
+	return9 = []
+	return10 = []
+	if len(externalVerticalFaces) > 0:
+		return1 = topologic.Cluster.ByTopologies(flatten(externalVerticalFaces))
+	if len(internalVerticalFaces) > 0:
+		return2 = topologic.Cluster.ByTopologies(flatten(internalVerticalFaces))
+	if len(topHorizontalFaces) > 0:
+		return3 = topologic.Cluster.ByTopologies(flatten(topHorizontalFaces))
+	if len(bottomHorizontalFaces) > 0:
+		return4 = topologic.Cluster.ByTopologies(flatten(bottomHorizontalFaces))
+	if len(internalHorizontalFaces) > 0:
+		return5 = topologic.Cluster.ByTopologies(flatten(internalHorizontalFaces))
+	if len(externalVerticalApertures) > 0:
+		return6 = topologic.Cluster.ByTopologies(flatten(externalVerticalApertures))
+	if len(internalVerticalApertures) > 0:
+		return7 = topologic.Cluster.ByTopologies(flatten(internalVerticalApertures))
+	if len(topHorizontalApertures) > 0:
+		return8 = topologic.Cluster.ByTopologies(flatten(topHorizontalApertures))
+	if len(bottomHorizontalApertures) > 0:
+		return9 = topologic.Cluster.ByTopologies(flatten(bottomHorizontalApertures))
+	if len(internalHorizontalApertures) > 0:
+		return10 = topologic.Cluster.ByTopologies(flatten(internalHorizontalApertures))
+
+	return [return1, return2, return3, return4, return5, return6, return7, return8, return9, return10]
 
 class SvCellComplexDecompose(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -53,37 +103,55 @@ class SvCellComplexDecompose(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'CellComplex.Decompose'
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'CellComplex')
-		self.outputs.new('SvStringsSocket', 'Outer Wall')
-		self.outputs.new('SvStringsSocket', 'Inner Wall')
-		self.outputs.new('SvStringsSocket', 'Roof')
-		self.outputs.new('SvStringsSocket', 'Floor')
-		self.outputs.new('SvStringsSocket', 'Slab')
+		self.outputs.new('SvStringsSocket', 'External Vertical Faces')
+		self.outputs.new('SvStringsSocket', 'Internal Vertical Faces')
+		self.outputs.new('SvStringsSocket', 'Top Horizontal Faces')
+		self.outputs.new('SvStringsSocket', 'Bottom Horizontal Faces')
+		self.outputs.new('SvStringsSocket', 'Internal Horizontal Faces')
+		self.outputs.new('SvStringsSocket', 'External Vertical Apertures')
+		self.outputs.new('SvStringsSocket', 'Internal Vertical Apertures')
+		self.outputs.new('SvStringsSocket', 'Top Horizontal Apertures')
+		self.outputs.new('SvStringsSocket', 'Bottom Horizontal Apertures')
+		self.outputs.new('SvStringsSocket', 'Internal Horizontal Apertures')
 
 	def process(self):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['CellComplex'].sv_set([])
-			return
 		inputs = self.inputs['CellComplex'].sv_get(deepcopy=False)
 		inputs = flatten(inputs)
-		outerWalls = []
-		innerWalls = []
-		roofs = []
-		floors = []
-		slabs = []
+		externalVerticalFaces = []
+		internalVerticalFaces = []
+		topHorizontalFaces = []
+		bottomHorizontalFaces = []
+		internalHorizontalFaces = []
+		externalVerticalApertures = []
+		internalVerticalApertures = []
+		topHorizontalApertures = []
+		bottomHorizontalApertures = []
+		internalHorizontalApertures = []
 		for anInput in inputs:
-			outerWalls.append(processItem(anInput)[0])
-			innerWalls.append(processItem(anInput)[1])
-			roofs.append(processItem(anInput)[2])
-			floors.append(processItem(anInput)[3])
-			slabs.append(processItem(anInput)[4])
-		self.outputs['Outer Wall'].sv_set(flatten(outerWalls))
-		self.outputs['Inner Wall'].sv_set(flatten(innerWalls))
-		self.outputs['Roof'].sv_set(flatten(roofs))
-		self.outputs['Floor'].sv_set(flatten(floors))
-		self.outputs['Slab'].sv_set(flatten(slabs))
+			output = processItem(anInput)
+			externalVerticalFaces.append(output[0])
+			internalVerticalFaces.append(output[1])
+			topHorizontalFaces.append(output[2])
+			bottomHorizontalFaces.append(output[3])
+			internalHorizontalFaces.append(output[4])
+			externalVerticalApertures.append(output[5])
+			internalVerticalApertures.append(output[6])
+			topHorizontalApertures.append(output[7])
+			bottomHorizontalApertures.append(output[8])
+			internalHorizontalApertures.append(output[9])
+		self.outputs['External Vertical Faces'].sv_set(flatten(externalVerticalFaces))
+		self.outputs['Internal Vertical Faces'].sv_set(flatten(internalVerticalFaces))
+		self.outputs['Top Horizontal Faces'].sv_set(flatten(topHorizontalFaces))
+		self.outputs['Bottom Horizontal Faces'].sv_set(flatten(bottomHorizontalFaces))
+		self.outputs['Internal Horizontal Faces'].sv_set(flatten(internalHorizontalFaces))
+		self.outputs['External Vertical Apertures'].sv_set(flatten(externalVerticalApertures))
+		self.outputs['Internal Vertical Apertures'].sv_set(flatten(internalVerticalApertures))
+		self.outputs['Top Horizontal Apertures'].sv_set(flatten(topHorizontalApertures))
+		self.outputs['Bottom Horizontal Apertures'].sv_set(flatten(bottomHorizontalApertures))
+		self.outputs['Internal Horizontal Apertures'].sv_set(flatten(internalHorizontalApertures))
 
 
 def register():

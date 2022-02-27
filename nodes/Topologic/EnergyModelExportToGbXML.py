@@ -105,7 +105,7 @@ def processItem(item, overwrite):
 		filepath = filepath+".xml"
 	if(exists(filepath) and (overwrite == False)):
 		raise Exception("Error: Could not create a new file at the following location: "+filepath)
-	return openstudio.gbxml.GbXMLForwardTranslator().modelToGbXML(osModel, openstudio.openstudioutilitiescore.toPath(filePath))
+	return openstudio.gbxml.GbXMLForwardTranslator().modelToGbXML(osModel, openstudio.openstudioutilitiescore.toPath(filepath))
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 

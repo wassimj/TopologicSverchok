@@ -20,18 +20,24 @@ def flatten(element):
 
 def processItem(cells):
 	cellComplex = cells[0]
-	gc = topologic.GlobalCluster.GetInstance()
-	subTopologies = []
 	for i in range(1,len(cells)):
+		newCellComplex = None
 		try:
-			cellComplex = cellComplex.Merge(cells[i], False)
-			gc.RemoveTopology(cellComplex)
+			newCellComplex = cellComplex.Merge(cells[i], False)
 		except:
-			raise Exception("Error: CellComplex.ByCells operation failed during processing the input Cells")
+			warnings.warn("Warning: Failed to merge Cell #"+i+". Skipping.", UserWarning)
+		if newCellComplex:
+			cellComplex = newCellComplex
 	if cellComplex.Type() != 64: #64 is the type of a CellComplex
 		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
-	gc.AddTopology(cellComplex)
-	return cellComplex
+		if cellComplex.Type() > 64:
+			returnCellComplexes = []
+			_ = cellComplex.CellComplexes(None, returnCellComplexes)
+			return returnCellComplexes
+		else:
+			return None
+	else:
+		return cellComplex
 
 class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -57,7 +63,7 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 			outputs.append(processItem(cells))
 		self.outputs['CellComplex'].sv_set(outputs)
 		end = time.time()
-		print("CellComplex.ByCells Operation consumed "+str(round(end - start,2))+" seconds")
+		print("CellComplex.ByCells Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
     bpy.utils.register_class(SvCellComplexByCells)

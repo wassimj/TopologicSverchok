@@ -56,7 +56,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -145,18 +144,14 @@ def processItem(topologies, topologyType, searchType, item):
 					value = str(value)
 				value.replace("*",".+")
 				value = value.lower()
-				print("TopologyFilter: Value:", value)
 				d = aTopology.GetDictionary()
 				v = valueAtKey(d, key)
-				print("TopologyFilter: v:", v)
 				if v != None:
 					v = v.lower()
 					if searchType == "Equal To":
 						searchResult = (value == v)
 					elif searchType == "Contains":
-						print("TopologuFilter: Checking if Contains")
 						searchResult = (value in v)
-						print("TopologyFilter: Result:", searchResult)
 					elif searchType == "Starts With":
 						searchResult = (value == v[0: len(value)])
 					elif searchType == "Ends With":

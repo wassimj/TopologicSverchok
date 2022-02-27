@@ -56,7 +56,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -150,6 +149,8 @@ def processItem(item):
 		elif typeFilter == "Cell":
 			topologies = []
 			_ = topology.Cells(None, topologies)
+		elif typeFilter == 'Self':
+			topologies = [topology]
 		else:
 			topologies = []
 			_ = topology.Vertices(None, topologies)
@@ -169,7 +170,7 @@ def processItem(item):
 		cluster = topologic.Cluster.ByTopologies(newTopologies)
 	return cluster
 
-topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Face", "Face", "", 3), ("Cell", "Cell", "", 4)]
+topologyTypes = [("Self", "Self", "", 1),("Vertex", "Vertex", "", 2),("Edge", "Edge", "", 3),("Face", "Face", "", 4), ("Cell", "Cell", "", 5)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvTopologyExplode(bpy.types.Node, SverchCustomTreeNode):

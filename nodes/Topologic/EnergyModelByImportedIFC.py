@@ -40,8 +40,8 @@ class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
     for idx, ifc_file in enumerate(ifc_files):
       epw_path = epw_paths[idx]
       ddy_path = ddy_paths[idx]
-      space_type = space_types[idx][0]
-      construction_set = construction_sets[idx][0]
+      space_type = space_types[idx]
+      construction_set = construction_sets[idx]
       htg_temp = htg_temps[idx]
       clg_temp = clg_temps[idx]
 

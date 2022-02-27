@@ -5,19 +5,17 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
+def flatten(element):
+	returnList = []
+	if isinstance(element, list) == True:
+		for anItem in element:
+			returnList = returnList + flatten(anItem)
+	else:
+		returnList = [element]
+	return returnList
+
 def processItem(item):
 	return [item.Type(), item.GetTypeAsString()]
-
-def recur(input):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input, list):
-		for anItem in input:
-			output.append(recur(anItem))
-	else:
-		output = processItem(input)
-	return output
 		
 class SvTopologyType(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -37,11 +35,12 @@ class SvTopologyType(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			self.outputs['Cells'].sv_set([])
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
+		topologyList = flatten(topologyList)
 		ids = []
 		names = []
-		for anInput in inputs:
-			output = recur(anInput)
+		for anInput in topologyList:
+			output = processItem(anInput)
 			ids.append(output[0])
 			names.append(output[1])
 		self.outputs['ID'].sv_set(ids)

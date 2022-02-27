@@ -138,9 +138,11 @@ def cellAperturesAndDictionaries(topology, tol):
 		_ = aCell.Apertures(tempApertures)
 		for anAperture in tempApertures:
 			cellApertures.append(anAperture)
-		cellDictionaries.append(getTopologyDictionary(aCell))
-		iv = topologic.CellUtility.InternalVertex(aCell, tol)
-		cellSelectors.append([iv.X(), iv.Y(), iv.Z()])
+		cellDictionary = getTopologyDictionary(aCell)
+		if len(cellDictionary.keys()) > 0:
+			cellDictionaries.append(cellDictionary)
+			iv = topologic.CellUtility.InternalVertex(aCell, tol)
+			cellSelectors.append([iv.X(), iv.Y(), iv.Z()])
 	return [cellApertures, cellDictionaries, cellSelectors]
 
 def faceAperturesAndDictionaries(topology, tol):
@@ -157,9 +159,11 @@ def faceAperturesAndDictionaries(topology, tol):
 		_ = aFace.Apertures(tempApertures)
 		for anAperture in tempApertures:
 			faceApertures.append(anAperture)
-		faceDictionaries.append(getTopologyDictionary(aFace))
-		iv = topologic.FaceUtility.InternalVertex(aFace, tol)
-		faceSelectors.append([iv.X(), iv.Y(), iv.Z()])
+		faceDictionary = getTopologyDictionary(aFace)
+		if len(faceDictionary.keys()) > 0:
+			faceDictionaries.append(faceDictionary)
+			iv = topologic.FaceUtility.InternalVertex(aFace, tol)
+			faceSelectors.append([iv.X(), iv.Y(), iv.Z()])
 	return [faceApertures, faceDictionaries, faceSelectors]
 
 def edgeAperturesAndDictionaries(topology, tol):
@@ -176,9 +180,11 @@ def edgeAperturesAndDictionaries(topology, tol):
 		_ = anEdge.Apertures(tempApertures)
 		for anAperture in tempApertures:
 			edgeApertures.append(anAperture)
-		edgeDictionaries.append(getTopologyDictionary(anEdge))
-		iv = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
-		edgeSelectors.append([iv.X(), iv.Y(), iv.Z()])
+		edgeDictionary = getTopologyDictionary(anEdge)
+		if len(edgeDictionary.keys()) > 0:
+			edgeDictionaries.append(edgeDictionary)
+			iv = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
+			edgeSelectors.append([iv.X(), iv.Y(), iv.Z()])
 	return [edgeApertures, edgeDictionaries, edgeSelectors]
 
 def vertexAperturesAndDictionaries(topology, tol):
@@ -195,8 +201,10 @@ def vertexAperturesAndDictionaries(topology, tol):
 		_ = aVertex.Apertures(tempApertures)
 		for anAperture in tempApertures:
 			vertexApertures.append(anAperture)
-		vertexDictionaries.append(getTopologyDictionary(aVertex))
-		vertexSelectors.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+		vertexDictionary = getTopologyDictionary(aVertex)
+		if len(vertexDictionary.keys()) > 0:
+			vertexDictionaries.append(vertexDictionary)
+			vertexSelectors.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
 	return [vertexApertures, vertexDictionaries, vertexSelectors]
 
 

@@ -149,8 +149,9 @@ def getOpenStudioVertices(ifc_rel_space_boundary):
   elif ifc_curve.is_a('IfcCurveBoundedPlane'):
     ifc_points = ifc_curve.OuterBoundary.Points
     ifc_plane = ifc_curve.BasisSurface
-  plane_vertices = [ v.Coordinates for v in ifc_points ]
   plane_matrix = ifcopenshell.util.placement.get_axis2placement(ifc_plane.Position)
-  vertices = [ (plane_matrix @ np.array(v+(0,1))) for v in plane_vertices ]
+  plane_coords = [ v.Coordinates for v in ifc_points ]
+  plane_vertices = [ np.array(v+(0,1)) if len(v) == 2 else np.array(v+(1,)) for v in plane_coords ]
+  vertices = [ (plane_matrix @ v) for v in plane_vertices ]
 
   return [ openstudio.Point3d(v[0], v[1], v[2]) for v in vertices ]

@@ -61,7 +61,6 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
-			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -127,20 +126,23 @@ def listAttributeValues(listAttribute):
 	return returnList
 
 def valueAtKey(item, key):
-	try:
-		attr = item.ValueAtKey(key)
-	except:
-		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
-	if isinstance(attr, topologic.IntAttribute):
-		return (attr.IntValue())
-	elif isinstance(attr, topologic.DoubleAttribute):
-		return (attr.DoubleValue())
-	elif isinstance(attr, topologic.StringAttribute):
-		return (attr.StringValue())
-	elif isinstance(attr, topologic.ListAttribute):
-		return (listAttributeValues(attr))
-	else:
-		return None
+    if key:
+	    try:
+		    attr = item.ValueAtKey(key)
+	    except:
+		    raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
+	    if isinstance(attr, topologic.IntAttribute):
+		    return (attr.IntValue())
+	    elif isinstance(attr, topologic.DoubleAttribute):
+		    return (attr.DoubleValue())
+	    elif isinstance(attr, topologic.StringAttribute):
+		    return (attr.StringValue())
+	    elif isinstance(attr, topologic.ListAttribute):
+		    return (listAttributeValues(attr))
+	    else:
+		    return None
+    else:
+        return None
 
 def getKeyName(d, keyName):
     keys = d.Keys()
@@ -158,8 +160,7 @@ def createUniqueName(name, nameList, number):
         return createUniqueName(name,nameList, number+1)
 
 def processItem(item):
-
-    osModel = item[0]
+    osModelPath = item[0]
     weatherFilePath = item[1]
     designDayFilePath = item[2]
     buildingTopology = item[3]
@@ -174,12 +175,17 @@ def processItem(item):
     heatingTemp = item[12]
     roomNameKey = item[13]
     roomTypeKey = item[14]
-
+    translator = openstudio.osversion.VersionTranslator()
+    osmFile = openstudio.openstudioutilitiescore.toPath(osModelPath)
+    osModel = translator.loadModel(osmFile)
+    if osModel.isNull():
+        raise Exception("File Path is not a valid path to an OpenStudio Model")
+        return None
+    else:
+        osModel = osModel.get()
     osEPWFile = openstudio.openstudioutilitiesfiletypes.EpwFile.load(openstudio.toPath(weatherFilePath))
     if osEPWFile.is_initialized():
         osEPWFile = osEPWFile.get()
-        print("OSMODEL:",osModel)
-        print("OSEPWFILE:",osEPWFile)
         openstudio.model.WeatherFile.setWeatherFile(osModel, osEPWFile)
     ddyModel = openstudio.openstudioenergyplus.loadAndTranslateIdf(openstudio.toPath(designDayFilePath))
     if ddyModel.is_initialized():
@@ -215,6 +221,7 @@ def processItem(item):
     osSpaces = []
     spaceNames = []
     for spaceNumber, buildingCell in enumerate(getSubTopologies(buildingTopology, topologic.Cell)):
+        print("EnergyModelByTopology, SpaceNumber:",spaceNumber)
         osSpace = openstudio.model.Space(osModel)
         osSpaceZ = buildingCell.CenterOfMass().Z()
         osBuildingStory = osBuildingStorys[0]
@@ -241,7 +248,9 @@ def processItem(item):
                 keyName = getKeyName(cellDictionary, roomNameKey)
             else:
                 keyName = getKeyName(cellDictionary, 'name')
-            osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
+            osSpaceName = None
+            if keyName:
+                osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
             if osSpaceName:
                 osSpace.setName(osSpaceName)
         else:
@@ -274,37 +283,34 @@ def processItem(item):
                     if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
                         osSurface.setOutsideBoundaryCondition("Ground")
                     else:
-                        if glazingRatio > 0: #user wants to use default glazing ratio on all surfaces
-                            print("Setting Glazing Ratio to: "+str(glazingRatio))
-                            osSurface.setWindowToWallRatio(glazingRatio)
-                        else: # See if there is a glazingRatio in the dictionary of the face
-                            faceDictionary = buildingFace.GetDictionary()
-                            usedGlazingRatio = False
-                            if faceDictionary:
+                        faceDictionary = buildingFace.GetDictionary()
+                        apertures = []
+                        _ = buildingFace.Apertures(apertures)
+                        if len(apertures) > 0:
+                            for aperture in apertures:
+                                osSubSurfacePoints = []
+                                apertureFace = getSubTopologies(aperture, topologic.Face)[0]
+                                for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                                    osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
+                                osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
+                                apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
+                                osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal[0], apertureFaceNormal[1], apertureFaceNormal[2])
+                                osSubSurfaceNormal.normalize()
+                                if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
+                                    osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
+                                osSubSurface.setSubSurfaceType("FixedWindow")
+                                osSubSurface.setSurface(osSurface)
+                        else:
                                 # Get the keys
+                                print("Did not find any apertures on the face, searching the dictionary of the face for TOPOLOGIC_glazing_ratio key.")
                                 keys = faceDictionary.Keys()
-                                if ('glazing ratio' in keys):
-                                    faceGlazingRatio = valueAtKey(faceDictionary,'glazing ratio')
-                                    if faceGlazingRatio and faceGlazingRatio >= 0:
+                                if ('TOPOLOGIC_glazing_ratio' in keys):
+                                    faceGlazingRatio = valueAtKey(faceDictionary,'TOPOLOGIC_glazing_ratio')
+                                    if faceGlazingRatio and faceGlazingRatio >= 0.01:
                                         osSurface.setWindowToWallRatio(faceGlazingRatio)
-                                        usedGlazingRatio = True
-                            if not usedGlazingRatio: # Look for apertures and use as subsurfaces
-                                apertures = []
-                                _ = buildingFace.Apertures(apertures)
-                                if len(apertures) > 0:
-                                    for aperture in apertures:
-                                        osSubSurfacePoints = []
-                                        apertureFace = getSubTopologies(aperture, topologic.Face)[0]
-                                        for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
-                                            osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
-                                        osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
-                                        apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
-                                        osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal[0], apertureFaceNormal[1], apertureFaceNormal[2])
-                                        osSubSurfaceNormal.normalize()
-                                        if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
-                                            osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
-                                        osSubSurface.setSubSurfaceType("FixedWindow")
-                                        osSubSurface.setSurface(osSurface)
+                                else:
+                                    if glazingRatio > 0.01: #Glazing ratio must be more than 1% to make any sense.
+                                        osSurface.setWindowToWallRatio(glazingRatio)
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
@@ -345,7 +351,13 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
     """
     bl_idname = 'SvEnergyModelByTopology'
     bl_label = 'EnergyModel.ByTopology'
+    OSMFilePath: StringProperty(name="Template (OSM) File Path", default="", subtype="FILE_PATH")
+    EPWFilePath: StringProperty(name="Weather (EPW) File Path", default="", subtype="FILE_PATH")
+    DDYFilePath: StringProperty(name="Design Day (DDY) File Path", default="", subtype="FILE_PATH")
     NorthAxis: FloatProperty(name='North Axis', default=0, min=0, max=359.99, precision=2, update=updateNode)
+    BuildingName: StringProperty(name='Building Name', default="TopologicBuilding", update=updateNode)
+    BuildingType: StringProperty(name='Building Type', default="Commercial", update=updateNode)
+    DefaultSpaceType: StringProperty(name='Default Space Type', default="189.1-2009 - Office - WholeBuilding - Lg Office - CZ4-8", update=updateNode)
     GlazingRatio: FloatProperty(name='Glazing Ratio', default=0.25, min=0, max=1.0, precision=2, update=updateNode)
     CoolingTemp: FloatProperty(name='Cooling Temperature', default=25, precision=2, update=updateNode)
     HeatingTemp: FloatProperty(name='Heating Temperature', default=20, precision=2, update=updateNode)
@@ -355,15 +367,15 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
     Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
     def sv_init(self, context):
-        self.inputs.new('SvStringsSocket', 'Template Energy Model')
-        self.inputs.new('SvStringsSocket', 'Weather File Path')
-        self.inputs.new('SvStringsSocket', 'Design Day File Path')
+        self.inputs.new('SvStringsSocket', 'Template (OSM) File Path').prop_name='OSMFilePath'
+        self.inputs.new('SvStringsSocket', 'Weather (EPW) File Path').prop_name='EPWFilePath'
+        self.inputs.new('SvStringsSocket', 'Design Day (DDY) File Path').prop_name='DDYFilePath'
         self.inputs.new('SvStringsSocket', 'Building Topology')
         self.inputs.new('SvStringsSocket', 'Shading Surfaces Cluster')
-        self.inputs.new('SvStringsSocket', 'Floor Levels')
-        self.inputs.new('SvStringsSocket', 'Building Name')
-        self.inputs.new('SvStringsSocket', 'Building Type')
-        self.inputs.new('SvStringsSocket', 'Default Space Type')
+        self.inputs.new('SvStringsSocket', 'Floor Z Levels')
+        self.inputs.new('SvStringsSocket', 'Building Name').prop_name='BuildingName'
+        self.inputs.new('SvStringsSocket', 'Building Type').prop_name='BuildingType'
+        self.inputs.new('SvStringsSocket', 'Default Space Type').prop_name='DefaultSpaceType'
         self.inputs.new('SvStringsSocket', 'North Axis').prop_name='NorthAxis'
         self.inputs.new('SvStringsSocket', 'Default Glazing Ratio').prop_name='GlazingRatio'
         self.inputs.new('SvStringsSocket', 'Cooling Temperature').prop_name='CoolingTemp'
@@ -378,15 +390,15 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
     def process(self):
         if not any(socket.is_linked for socket in self.outputs):
             return
-        modelList = self.inputs['Template Energy Model'].sv_get(deepcopy=True)
-        weatherFileList = self.inputs['Weather File Path'].sv_get(deepcopy=True)
-        ddyFileList = self.inputs['Design Day File Path'].sv_get(deepcopy=True)
+        modelList = self.inputs['Template (OSM) File Path'].sv_get(deepcopy=True)
+        weatherFileList = self.inputs['Weather (EPW) File Path'].sv_get(deepcopy=True)
+        ddyFileList = self.inputs['Design Day (DDY) File Path'].sv_get(deepcopy=True)
         buildingTopologyList = self.inputs['Building Topology'].sv_get(deepcopy=True)
         if (self.inputs['Shading Surfaces Cluster'].is_linked):
             shadingList = self.inputs['Shading Surfaces Cluster'].sv_get(deepcopy=True)
         else:
             shadingList = [0]
-        floorLevelsList = self.inputs['Floor Levels'].sv_get(deepcopy=True)
+        floorLevelsList = self.inputs['Floor Z Levels'].sv_get(deepcopy=True)
         buildingNameList = self.inputs['Building Name'].sv_get(deepcopy=True)
         buildingTypeList = self.inputs['Building Type'].sv_get(deepcopy=True)
         defaultSpaceList = self.inputs['Default Space Type'].sv_get(deepcopy=True)
