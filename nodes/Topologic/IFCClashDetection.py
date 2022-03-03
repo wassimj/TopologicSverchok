@@ -18,7 +18,7 @@ class SvIFCClashDetection(bpy.types.Node, SverchCustomTreeNode):
     self.inputs.new('SvStringsSocket', 'Building elements')
 
     self.outputs.new('SvStringsSocket', 'Clashes')
-    self.outputs.new('SvStringsSocket', 'Building elements graph')
+    self.outputs.new('SvStringsSocket', 'Building topology')
 
   def process(self):
     if not any(socket.is_linked for socket in self.outputs):
@@ -27,34 +27,30 @@ class SvIFCClashDetection(bpy.types.Node, SverchCustomTreeNode):
     ifc_files = self.inputs['IFC'].sv_get(deepcopy=False)[0]
     top_building_element_cellss = self.inputs['Building elements'].sv_get(deepcopy=False)[0]
 
-    clashess, building_elements_graphs = [], []
+    clashess, top_building_cell_complexs = [], []
     for ifc_file, top_building_element_cells in zip(ifc_files, top_building_element_cellss):
+      top_building_cell_complex = topologic.CellComplex.ByCells(top_building_element_cells)
+
       clashes = []
-      building_elements_graph = np.zeros((len(top_building_element_cells), len(top_building_element_cells)), dtype=np.bool)
+      for sink in topologic_lib.getSubTopologies(top_building_cell_complex, topologic.Cell):
+        vertex = topologic.CellUtility.InternalVertex(sink, 1e-3)
 
-      top_building_element_bounding_boxs = [ topologic_lib.getBoundingBox(building_element_cell) for building_element_cell in top_building_element_cells ]
-      for building_element_index, building_element_cell in enumerate(top_building_element_cells):
-        top_building_element_bounding_box = top_building_element_bounding_boxs[building_element_index]
-        for other_building_element_index in range(building_element_index+1, len(top_building_element_cells)):
-          if not topologic_lib.doBoundingBoxIntersect(top_building_element_bounding_box, top_building_element_bounding_boxs[other_building_element_index]):
-            continue
+        cells = []
+        for source in top_building_element_cells:
+          if topologic.CellUtility.Contains(source, vertex, 1e-4) == 0:
+            cells.append(source)
 
-          other_building_element_cell = top_building_element_cells[other_building_element_index]
-          intersection = topologic_lib.boolean(building_element_cell, other_building_element_cell, "Intersect")
-          if intersection is None:
-            continue
-
-          intersection_cells = topologic_lib.getSubTopologies(intersection, topologic.Cell)
-          if len(intersection_cells) > 0:
-            clashes.append([building_element_cell, other_building_element_cell])
-          building_elements_graph[building_element_index,other_building_element_index] = 1
-      building_elements_graph += building_elements_graph.T + np.eye(len(top_building_element_cells), dtype=np.bool)
+        if len(cells) > 1:
+          clashes.append([sink] + cells)
+        else:
+          global_id = topologic_lib.getDictionary(cells[0], "IfcBuildingElement")
+          topologic_lib.setDictionary(sink, "IfcBuildingElement", global_id)
 
       clashess.append(clashes)
-      building_elements_graphs.append(building_elements_graph)
+      top_building_cell_complexs.append(top_building_cell_complex)
 
     self.outputs['Clashes'].sv_set([clashess])
-    self.outputs['Building elements graph'].sv_set([building_elements_graphs])
+    self.outputs['Building topology'].sv_set([top_building_cell_complexs])
 
 def register():
     bpy.utils.register_class(SvIFCClashDetection)
