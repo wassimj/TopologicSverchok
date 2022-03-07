@@ -18,7 +18,7 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(cells):
+def processItem(cells, tol):
 	cellComplex = topologic.CellComplex.ByCells(cells, tol)
 	if not cellComplex:
 		warnings.warn("Warning: Default CellComplex.ByCells method failed. Attempting to Merge the Cells.", UserWarning)
@@ -44,9 +44,11 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellComplexByCells'
 	bl_label = 'CellComplex.ByCells'
+	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Cells')
+		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'CellComplex')
 
 	def process(self):
@@ -56,9 +58,10 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 		cellsList = self.inputs['Cells'].sv_get(deepcopy=False)
 		if isinstance(cellsList[0], list) == False:
 			cellsList = [cellsList]
+		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
 		outputs = []
 		for cells in cellsList:
-			outputs.append(processItem(cells))
+			outputs.append(processItem(cells, tol))
 		self.outputs['CellComplex'].sv_set(outputs)
 		end = time.time()
 		print("CellComplex.ByCells Operation consumed "+str(round(end - start,2)*1000)+" ms")
