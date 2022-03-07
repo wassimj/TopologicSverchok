@@ -15,7 +15,10 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	return topologic.FaceUtility.Area(item)
+	if item:
+		return topologic.FaceUtility.Area(item)
+	else:
+		return None
 		
 class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
 	"""

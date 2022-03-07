@@ -200,7 +200,7 @@ class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Aperture Clusters')
+		self.inputs.new('SvStringsSocket', 'Aperture Cluster')
 		self.inputs.new('SvStringsSocket', 'Exclusive').prop_name = 'Exclusive'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Topology')
@@ -216,7 +216,7 @@ class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		aperturesList = self.inputs['Aperture Clusters'].sv_get(deepcopy=True)
+		aperturesList = self.inputs['Aperture Cluster'].sv_get(deepcopy=True)
 		exclusiveList = self.inputs['Exclusive'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 

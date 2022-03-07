@@ -6,6 +6,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import json
+import os
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -191,33 +192,6 @@ def processSelectors(sources, sink, tranVertices, tranEdges, tranFaces, tranCell
 		_ = transferDictionaries(sources, sinkCells, tolerance)
 	return sink
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def processKeysValues(keys, values):
 	if len(keys) != len(values):
 		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
@@ -316,10 +290,17 @@ def processApertures(subTopologies, apertures, exclusive, tolerance):
 		ap = ap + 1
 	return None
 
-def getApertures(apertureList):
+def getApertures(apertureList, folderPath):
 	returnApertures = []
 	for item in apertureList:
-		aperture = topologic.Topology.ByString(item['brep'])
+		brepFileName = item['brep']
+		brepFilePath = os.path.join(folderPath, brepFileName+".brep")
+		print(brepFilePath)
+		brepFile = open(brepFilePath)
+		if brepFile:
+			brepString = brepFile.read()
+			aperture = topologic.Topology.ByString(brepString)
+			brepFile.close()
 		dictionary = item['dictionary']
 		keys = list(dictionary.keys())
 		values = []
@@ -346,40 +327,47 @@ def assignDictionary(item):
 	_ = v.SetDictionary(d)
 	return v
 
-def processItem(item):
+def processItem(jsonFilePath):
 	topology = None
-	file = open(item)
-	if file:
+	jsonFile = open(jsonFilePath)
+	folderPath = os.path.dirname(jsonFilePath)
+	if jsonFile:
 		topologies = []
-		jsondata = json.load(file)
+		jsondata = json.load(jsonFile)
 		for jsonItem in jsondata:
-			brep = jsonItem['brep']
-			topology = topologic.Topology.ByString(brep)
+			brepFileName = jsonItem['brep']
+			brepFilePath = os.path.join(folderPath, brepFileName+".brep")
+			brepFile = open(brepFilePath)
+			if brepFile:
+				brepString = brepFile.read()
+				topology = topologic.Topology.ByString(brepString)
+				brepFile.close()
+			#topology = topologic.Topology.ByString(brep)
 			dictionary = jsonItem['dictionary']
 			topDictionary = dictionaryByPythonDictionary(dictionary)
 			_ = topology.SetDictionary(topDictionary)
-			cellApertures = getApertures(jsonItem['cellApertures'])
+			cellApertures = getApertures(jsonItem['cellApertures'], folderPath)
 			cells = []
 			try:
 				_ = topology.Cells(None, cells)
 			except:
 				pass
 			processApertures(cells, cellApertures, False, 0.001)
-			faceApertures = getApertures(jsonItem['faceApertures'])
+			faceApertures = getApertures(jsonItem['faceApertures'], folderPath)
 			faces = []
 			try:
 				_ = topology.Faces(None, faces)
 			except:
 				pass
 			processApertures(faces, faceApertures, False, 0.001)
-			edgeApertures = getApertures(jsonItem['edgeApertures'])
+			edgeApertures = getApertures(jsonItem['edgeApertures'], folderPath)
 			edges = []
 			try:
 				_ = topology.Edges(None, edges)
 			except:
 				pass
 			processApertures(edges, edgeApertures, False, 0.001)
-			vertexApertures = getApertures(jsonItem['vertexApertures'])
+			vertexApertures = getApertures(jsonItem['vertexApertures'], folderPath)
 			vertices = []
 			try:
 				_ = topology.Vertices(None, vertices)
@@ -410,14 +398,14 @@ def processItem(item):
 		return topologies
 	return None
 		
-class SvTopologyByImportedJSON(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByImportedJSONMK2(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology from the input BREP file
 	"""
-	bl_idname = 'SvTopologyByImportedJSON'
-	bl_label = 'Topology.ByImportedJSON'
-	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
+	bl_idname = 'SvTopologyByImportedJSONMK2'
+	bl_label = 'Topology.ByImportedJSON MK2'
+	FilePath: StringProperty(name="File Path", default="", subtype="FILE_PATH")
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
@@ -434,7 +422,7 @@ class SvTopologyByImportedJSON(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Topology'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyByImportedJSON)
+	bpy.utils.register_class(SvTopologyByImportedJSONMK2)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyByImportedJSON)
+	bpy.utils.unregister_class(SvTopologyByImportedJSONMK2)

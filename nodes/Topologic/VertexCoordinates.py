@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from mathutils import Matrix
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -16,26 +17,33 @@ def flatten(element):
 	return returnList
 
 def processItem(item, outputType, decimals):
-	coords = None
-	x = round(item.X(), decimals)
-	y = round(item.Y(), decimals)
-	z = round(item.Z(), decimals)
-	coords = [x,y,z]
-	if outputType == "XYZ":
-		coords = [x,y,z]
-	elif outputType == "XY":
-		coords = [x,y]
-	elif outputType == "XZ":
-		coords = [x,z]
-	elif outputType == "YZ":
-		coords = [y,z]
-	elif outputType == "X":
-		coords = x
-	elif outputType == "Y":
-		coords = y
-	elif outputType == "Z":
-		coords = z
-	return [coords, x, y, z]
+	if item:
+		coords = None
+		x = round(item.X(), decimals)
+		y = round(item.Y(), decimals)
+		z = round(item.Z(), decimals)
+		coords = (x,y,z)
+		matrix = Matrix([[1,0,0,x],
+				[0,1,0,y],
+				[0,0,1,z],
+				[0,0,0,1]])
+		if outputType == "XYZ":
+			coords = [x,y,z]
+		elif outputType == "XY":
+			coords = [x,y]
+		elif outputType == "XZ":
+			coords = [x,z]
+		elif outputType == "YZ":
+			coords = [y,z]
+		elif outputType == "X":
+			coords = x
+		elif outputType == "Y":
+			coords = y
+		elif outputType == "Z":
+			coords = z
+		return [coords, matrix, x, y, z]
+	else:
+		return [None,Matrix(),None, None, None]
 
 outputTypes = [("XYZ", "XYZ", "", 1),("XY", "XY", "", 2),("XZ", "XZ", "", 3),("YZ", "YZ", "", 4),("X", "X", "", 5), ("Y", "Y", "", 6),("Z", "Z", "", 7)]
 
@@ -53,7 +61,8 @@ class SvVertexCoordinates(bpy.types.Node, SverchCustomTreeNode):
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Vertex')
 		self.inputs.new('SvStringsSocket', 'Decimals').prop_name = 'Decimals'
-		self.outputs.new('SvStringsSocket', 'Coordinates').prop_name="Coordinates"
+		self.outputs.new('SvVerticesSocket', 'Coordinates')
+		self.outputs.new('SvMatrixSocket', 'Matrix')
 		self.outputs.new('SvStringsSocket', 'X')
 		self.outputs.new('SvStringsSocket', 'Y')
 		self.outputs.new('SvStringsSocket', 'Z')
@@ -71,16 +80,19 @@ class SvVertexCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		vertexList = flatten(vertexList)
 		decimals = self.inputs['Decimals'].sv_get(deepcopy=False)[0][0] #Consider only one Decimals value
 		coordinatesList = []
+		matrixList = []
 		xList = []
 		yList = []
 		zList = []
 		for aVertex in vertexList:
 			output = processItem(aVertex, self.outputType, decimals)
 			coordinatesList.append(output[0])
-			xList.append(output[1])
-			yList.append(output[2])
-			zList.append(output[3])
+			matrixList.append(output[1])
+			xList.append(output[2])
+			yList.append(output[3])
+			zList.append(output[4])
 		self.outputs['Coordinates'].sv_set(coordinatesList)
+		self.outputs['Matrix'].sv_set(matrixList)
 		self.outputs['X'].sv_set(xList)
 		self.outputs['Y'].sv_set(yList)
 		self.outputs['Z'].sv_set(zList)

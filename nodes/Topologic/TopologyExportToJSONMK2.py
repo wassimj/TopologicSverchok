@@ -5,6 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 import json
+import os
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -125,6 +126,8 @@ def getTopologyDictionary(topology):
 	return returnDict
 
 def cellAperturesAndDictionaries(topology, tol):
+	if topology.Type() <= 32:
+		return [[],[],[]]
 	cells = []
 	try:
 		_ = topology.Cells(None, cells)
@@ -146,6 +149,8 @@ def cellAperturesAndDictionaries(topology, tol):
 	return [cellApertures, cellDictionaries, cellSelectors]
 
 def faceAperturesAndDictionaries(topology, tol):
+	if topology.Type() <= 8:
+		return [[],[],[]]
 	faces = []
 	try:
 		_ = topology.Faces(None, faces)
@@ -167,6 +172,8 @@ def faceAperturesAndDictionaries(topology, tol):
 	return [faceApertures, faceDictionaries, faceSelectors]
 
 def edgeAperturesAndDictionaries(topology, tol):
+	if topology.Type() <= 2:
+		return [[],[],[]]
 	edges = []
 	try:
 		_ = topology.Edges(None, edges)
@@ -188,6 +195,8 @@ def edgeAperturesAndDictionaries(topology, tol):
 	return [edgeApertures, edgeDictionaries, edgeSelectors]
 
 def vertexAperturesAndDictionaries(topology, tol):
+	if topology.Type() <= 1:
+		return [[],[],[]]
 	vertices = []
 	try:
 		_ = topology.Vertices(None, vertices)
@@ -208,11 +217,16 @@ def vertexAperturesAndDictionaries(topology, tol):
 	return [vertexApertures, vertexDictionaries, vertexSelectors]
 
 
-def apertureDicts(apertureList):
+def apertureDicts(apertureList, brepName, folderPath):
 	apertureDicts = []
-	for anAperture in apertureList:
+	for index, anAperture in enumerate(apertureList):
+		apertureName = brepName+"_aperture_"+str(index+1).zfill(5)
+		brepFilePath = os.path.join(folderPath, apertureName+".brep")
+		brepFile = open(brepFilePath, "w")
+		brepFile.write(anAperture.String())
+		brepFile.close()
 		apertureData = {}
-		apertureData['brep'] = anAperture.String()
+		apertureData['brep'] = apertureName
 		apertureData['dictionary'] = getTopologyDictionary(anAperture)
 		apertureDicts.append(apertureData)
 	return apertureDicts
@@ -226,20 +240,20 @@ def subTopologyDicts(dicts, selectors):
 		returnDicts.append(data)
 	return returnDicts
 
-def getTopologyData(topology, tol):
+def getTopologyData(topology, brepName, folderPath, tol):
 	returnDict = {}
-	brep = topology.String()
+	#brep = topology.String()
 	dictionary = getTopologyDictionary(topology)
-	returnDict['brep'] = brep
+	returnDict['brep'] = brepName
 	returnDict['dictionary'] = dictionary
 	cellApertures, cellDictionaries, cellSelectors = cellAperturesAndDictionaries(topology, tol)
 	faceApertures, faceDictionaries, faceSelectors = faceAperturesAndDictionaries(topology, tol)
 	edgeApertures, edgeDictionaries, edgeSelectors = edgeAperturesAndDictionaries(topology, tol)
 	vertexApertures, vertexDictionaries, vertexSelectors = vertexAperturesAndDictionaries(topology, tol)
-	returnDict['cellApertures'] = apertureDicts(cellApertures)
-	returnDict['faceApertures'] = apertureDicts(faceApertures)
-	returnDict['edgeApertures'] = apertureDicts(edgeApertures)
-	returnDict['vertexApertures'] = apertureDicts(vertexApertures)
+	returnDict['cellApertures'] = apertureDicts(cellApertures, brepName, folderPath)
+	returnDict['faceApertures'] = apertureDicts(faceApertures, brepName, folderPath)
+	returnDict['edgeApertures'] = apertureDicts(edgeApertures, brepName, folderPath)
+	returnDict['vertexApertures'] = apertureDicts(vertexApertures, brepName, folderPath)
 	returnDict['cellDictionaries'] = subTopologyDicts(cellDictionaries, cellSelectors)
 	returnDict['faceDictionaries'] = subTopologyDicts(faceDictionaries, faceSelectors)
 	returnDict['edgeDictionaries'] = subTopologyDicts(edgeDictionaries, edgeSelectors)
@@ -250,46 +264,55 @@ def processItem(item, overwrite):
 	topologyList = item[0]
 	if not (isinstance(topologyList,list)):
 		topologyList = [topologyList]
-	filepath = item[1]
-	tol = item[2]
+	folderPath = item[1]
+	fileName = item[2]
+	tol = item[3]
 	# Make sure the file extension is .json
-	ext = filepath[len(filepath)-5:len(filepath)]
+	ext = fileName[len(fileName)-5:len(fileName)]
 	if ext.lower() != ".json":
-		filepath = filepath+".json"
-	f = None
+		fileName = fileName+".json"
+	jsonFile = None
+	jsonFilePath = os.path.join(folderPath, fileName)
 	try:
 		if overwrite == True:
-			f = open(filepath, "w")
+			jsonFile = open(jsonFilePath, "w")
 		else:
-			f = open(filepath, "x") # Try to create a new File
+			jsonFile = open(jsonFilePath, "x") # Try to create a new File
 	except:
-		raise Exception("Error: Could not create a new file at the following location: "+filepath)
-	if (f):
+		raise Exception("Error: Could not create a new file at the following location: "+jsonFilePath)
+	if (jsonFilePath):
 		jsondata = []
-		for topology in topologyList:
-			jsondata.append(getTopologyData(topology, tol))
-		json.dump(jsondata, f, indent=4, sort_keys=True)
-		f.close()	
+		for index, topology in enumerate(topologyList):
+			brepName = "topology_"+str(index+1).zfill(5)
+			brepFilePath = os.path.join(folderPath, brepName+".brep")
+			brepFile = open(brepFilePath, "w")
+			brepFile.write(topology.String())
+			brepFile.close()
+			jsondata.append(getTopologyData(topology, brepName, folderPath, tol))
+		json.dump(jsondata, jsonFile, indent=4, sort_keys=True)
+		jsonFile.close()	
 		return True
 	return False
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyExportToJSON(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyExportToJSONMK2(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Exports the input Topology to a JSON file   
 	"""
-	bl_idname = 'SvTopologyExportToJSON'
-	bl_label = 'Topology.ExportToJSON'
+	bl_idname = 'SvTopologyExportToJSONMK2'
+	bl_label = 'Topology.ExportToJSON MK2'
 	OverwriteProp: BoolProperty(name="Overwrite", default=True, update=updateNode)
-	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
+	FolderPath: StringProperty(name="Folder Path", default="", subtype="FILE_PATH")
+	FileName: StringProperty(name="File Name", default="Untitled.json")
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	Tolerance: FloatProperty(name="Tolerance",  default=0.001, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
+		self.inputs.new('SvStringsSocket', 'Folder Path').prop_name='FolderPath'
+		self.inputs.new('SvStringsSocket', 'File Name').prop_name='FileName'
 		self.inputs.new('SvStringsSocket', 'Overwrite File').prop_name = 'OverwriteProp'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Status')
@@ -299,8 +322,10 @@ class SvTopologyExportToJSON(bpy.types.Node, SverchCustomTreeNode):
 
 	def process(self):
 		try:
-			filepathList = self.inputs['File Path'].sv_get(deepcopy=True)
-			filepathList = flatten(filepathList)
+			folderpathList = self.inputs['Folder Path'].sv_get(deepcopy=True)
+			folderpathList = flatten(folderpathList)
+			filenameList = self.inputs['File Name'].sv_get(deepcopy=True)
+			filenameList = flatten(filenameList)
 			topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
 		except:
 			self.outputs['Status'].sv_set([False])
@@ -309,7 +334,7 @@ class SvTopologyExportToJSON(bpy.types.Node, SverchCustomTreeNode):
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)
 		toleranceList = flatten(toleranceList)
 
-		inputs = [topologyList, filepathList, toleranceList]
+		inputs = [topologyList, folderpathList, filenameList, toleranceList]
 		if ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)
@@ -327,7 +352,7 @@ class SvTopologyExportToJSON(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Status'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvTopologyExportToJSON)
+	bpy.utils.register_class(SvTopologyExportToJSONMK2)
 
 def unregister():
-	bpy.utils.unregister_class(SvTopologyExportToJSON)
+	bpy.utils.unregister_class(SvTopologyExportToJSONMK2)

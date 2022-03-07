@@ -15,7 +15,10 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 def processItem(item):
-	return item.CenterOfMass()
+	if item:
+		return item.CenterOfMass()
+	else:
+		return None
 
 
 class SvTopologyCenterOfMass(bpy.types.Node, SverchCustomTreeNode):

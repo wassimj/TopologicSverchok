@@ -20,21 +20,17 @@ def processItem(faces, tol):
 	shell = topologic.Shell.ByFaces(faces, tol)
 	if not shell:
 		warnings.warn("Warning: Default Shell.ByFaces method failed. Attempting to Merge the Faces.", UserWarning)
-		shell = faces[0]
-		for i in range(1,len(faces)):
-			newShell = None
-			try:
-				newShell = shell.Merge(faces[i], False)
-			except:
-				warnings.warn("Warning: Failed to merge Face #"+i+". Skipping.", UserWarning)
-				pass
-			if newShell:
-				shell = newShell
-		if shell.Type() != 16: #16 is the type of a Shell
+		result = faces[0]
+		remainder = faces[1:]
+		cluster = topologic.Cluster.ByTopologies(remainder, False)
+		print("Cluster", cluster)
+		result = result.Merge(cluster, False)
+		print("Result Type", result.Type())
+		if result.Type() != 16: #16 is the type of a Shell
 			warnings.warn("Warning: Input Faces do not form a Shell", UserWarning)
-			if shell.Type() > 16:
+			if result.Type() > 16:
 				returnShells = []
-				_ = shell.Shells(None, returnShells)
+				_ = result.Shells(None, returnShells)
 				return returnShells
 			else:
 				return None

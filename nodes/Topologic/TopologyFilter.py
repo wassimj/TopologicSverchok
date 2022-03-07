@@ -135,6 +135,8 @@ def processItem(topologies, topologyType, searchType, item):
 	filteredTopologies = []
 	otherTopologies = []
 	for aTopology in topologies:
+		if not aTopology:
+			continue
 		if (topologyType == "Any") or (aTopology.GetTypeAsString() == topologyType):
 			if value == "" or key == "":
 				filteredTopologies.append(aTopology)

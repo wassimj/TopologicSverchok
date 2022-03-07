@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty, BoolProperty, EnumProperty
+from bpy.props import FloatProperty, StringProperty, EnumProperty, BoolProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -91,41 +91,29 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	sv = item[0]
-	ev = item[1]
-	tol = item[2]
-	edge = None
-	if not sv or not ev:
-		return None
-	if topologic.Topology.IsSame(sv, ev):
-		return None
-	if topologic.VertexUtility.Distance(sv, ev) < tol:
-		return None
-	try:
-		edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
-	except:
-		edge = None
-	return edge
+	vertex = item[0]
+	face = item[1]
+	projected_vertex = None
+	if vertex and face:
+		if (face.Type() == topologic.Face.Type()) and (vertex.Type() == topologic.Vertex.Type()):
+			projected_vertex = (topologic.FaceUtility.ProjectToSurface(face, vertex))
+	return projected_vertex
 
 lacing = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Lace", "Lace", "", 5)]
 
-class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvVertexProject(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates an Edge from the input Vertices
+	Tooltip: Outputs True if the input Vertex is inside the input Face. Returns False otherwise
 	"""
-	bl_idname = 'SvEdgeByStartVertexEndVertex'
-	bl_label = 'Edge.ByStartVertexEndVertex'
-	startVertex: StringProperty(name="StartVertex", update=updateNode)
-	endVertex: StringProperty(name="EndVertex", update=updateNode)
-	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	bl_idname = 'SvVertexProject'
+	bl_label = 'Vertex.Project'
 	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Default", items=lacing, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'StartVertex')
-		self.inputs.new('SvStringsSocket', 'EndVertex')
-		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
-		self.outputs.new('SvStringsSocket', 'Edge')
+		self.inputs.new('SvStringsSocket', 'Vertex')
+		self.inputs.new('SvStringsSocket', 'Face')
+		self.outputs.new('SvStringsSocket', 'Vertex')
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Lacing",text="")
@@ -133,16 +121,11 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Edge'].sv_set([])
-			return
-		svList = self.inputs['StartVertex'].sv_get(deepcopy=True)
-		evList = self.inputs['EndVertex'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		svList = flatten(svList)
-		evList = flatten(evList)
-		toleranceList = flatten(toleranceList)
-		inputs = [svList, evList, toleranceList]
+		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
+		vertexList = flatten(vertexList)
+		faceList = self.inputs['Face'].sv_get(deepcopy=False)
+		faceList = flatten(faceList)
+		inputs = [vertexList, faceList]
 		if ((self.Lacing) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
@@ -156,13 +139,11 @@ class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(lace(inputs))
 		outputs = []
 		for anInput in inputs:
-			anOutput = processItem(anInput)
-			if anOutput:
-				outputs.append(anOutput)
-		self.outputs['Edge'].sv_set(outputs)
+			outputs.append(processItem(anInput))
+		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-    bpy.utils.register_class(SvEdgeByStartVertexEndVertex)
+	bpy.utils.register_class(SvVertexProject)
 
 def unregister():
-    bpy.utils.unregister_class(SvEdgeByStartVertexEndVertex)
+	bpy.utils.unregister_class(SvVertexProject)

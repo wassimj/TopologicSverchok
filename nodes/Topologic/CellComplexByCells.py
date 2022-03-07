@@ -19,23 +19,21 @@ def flatten(element):
 	return returnList
 
 def processItem(cells):
-	cellComplex = cells[0]
-	for i in range(1,len(cells)):
-		newCellComplex = None
-		try:
-			newCellComplex = cellComplex.Merge(cells[i], False)
-		except:
-			warnings.warn("Warning: Failed to merge Cell #"+i+". Skipping.", UserWarning)
-		if newCellComplex:
-			cellComplex = newCellComplex
-	if cellComplex.Type() != 64: #64 is the type of a CellComplex
-		warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
-		if cellComplex.Type() > 64:
-			returnCellComplexes = []
-			_ = cellComplex.CellComplexes(None, returnCellComplexes)
-			return returnCellComplexes
-		else:
-			return None
+	cellComplex = topologic.CellComplex.ByCells(cells, tol)
+	if not cellComplex:
+		warnings.warn("Warning: Default CellComplex.ByCells method failed. Attempting to Merge the Cells.", UserWarning)
+		result = cells[0]
+		remainder = cells[1:]
+		cluster = topologic.Cluster.ByTopologies(remainder, False)
+		result = result.Merge(cluster, False)
+		if result.Type() != 64: #64 is the type of a CellComplex
+			warnings.warn("Warning: Input Cells do not form a CellComplex", UserWarning)
+			if result.Type() > 64:
+				returnCellComplexes = []
+				_ = result.CellComplexes(None, returnCellComplexes)
+				return returnCellComplexes
+			else:
+				return None
 	else:
 		return cellComplex
 
