@@ -7,11 +7,11 @@ from . import ifc_topologic
 
 class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
   """
-  Triggers: Energy model by Imported IFC
+  Triggers: Energy model by IFC
   Tooltip: Creates an Energy Model from the input IFC
   """
   bl_idname = 'SvEnergyModelByImportedIFC'
-  bl_label = 'EnergyModel.ByImoportedIFC'
+  bl_label = 'EnergyModel.ByImportedIFC'
 
   def sv_init(self, context):
     self.inputs.new('SvStringsSocket', 'IFC')
@@ -96,6 +96,9 @@ class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
         if ifc_building_storey.Elevation:
           os_building_story.setNominalZCoordinate(float(ifc_building_storey.Elevation))
         for ifc_space in ifc_spaces:
+          if ifc_space.PredefinedType == "EXTERNAL":
+            continue
+
           os_space = openstudio.model.Space(os_model)
           os_space.setName(ifc_space.Name)
           os_space.setBuildingStory(os_building_story)
@@ -104,34 +107,42 @@ class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
           os_space.setYOrigin(space_matrix[1,-1])
           os_space.setZOrigin(space_matrix[2,-1])
 
-          for ifc_space_boundary in ifc_space.BoundedBy:
-            if ifc_space_boundary.ParentBoundary is not None:
+          for ifc_rel_space_boundary in ifc_space.BoundedBy:
+            if ifc_rel_space_boundary.ParentBoundary is not None:
               continue
 
-            os_surface = openstudio.model.Surface(ifc_topologic.getOpenStudioVertices(ifc_space_boundary), os_model)
-            if ifc_space_boundary.Name is not None:
-              os_surface.setName(ifc_space_boundary.Name)
+            os_surface = openstudio.model.Surface(ifc_topologic.getOpenStudioVertices(ifc_rel_space_boundary), os_model)
+            if ifc_rel_space_boundary.Name is not None:
+              os_surface.setName(ifc_rel_space_boundary.Name)
             os_surface.setSpace(os_space)
-            if ifc_space_boundary.InternalOrExternalBoundary == "INTERNAL":
-              if ifc_space_boundary.CorrespondingBoundary in ifc2os:
-                os_surface.setAdjacentSurface(ifc2os[ifc_space_boundary.CorrespondingBoundary])
-            else:
-              if ifc_space_boundary.Description == "2a":
+            if ifc_rel_space_boundary.CorrespondingBoundary is None:
+              if ifc_rel_space_boundary.Description == "2a":
                 os_surface.setOutsideBoundaryCondition("Outdoors")
-              elif ifc_space_boundary.Description == "2b":
+              elif ifc_rel_space_boundary.Description == "2b":
                 os_surface.setOutsideBoundaryCondition("Adiabatic")
-            ifc_building_element = ifc_space_boundary.RelatedBuildingElement
+            else:
+              if ifc_rel_space_boundary.CorrespondingBoundary in ifc2os:
+                os_surface.setAdjacentSurface(ifc2os[ifc_rel_space_boundary.CorrespondingBoundary])
+              else:
+                os_surface.setOutsideBoundaryCondition("Outdoors")
+            ifc_building_element = ifc_rel_space_boundary.RelatedBuildingElement
             if ifc_building_element is not None:
-              ifc_rel_associates_material = next((x for x in ifc_building_element.HasAssociations if x.is_a("IfcRelAssociatesMaterial")), None)
-              if ifc_rel_associates_material is not None:
-                ifc_material = ifc_rel_associates_material.RelatingMaterial
+              for ifc_rel_associates in ifc_building_element.HasAssociations:
+                if not ifc_rel_associates.is_a("IfcRelAssociatesMaterial"):
+                  continue
+
+                ifc_material = ifc_rel_associates.RelatingMaterial
                 if ifc_material.is_a('IfcMaterialLayerSetUsage'):
                   ifc_material = ifc_material.ForLayerSet
-                os_surface.setConstruction(ifc2os[ifc_material])
-            ifc2os[ifc_space_boundary] = os_surface
+                elif not ifc_material.is_a('IfcMaterialLayerSet'):
+                  continue
 
-            for ifc_inner_boundary in ifc_space_boundary.InnerBoundaries:
-              if ifc_inner_boundary.ParentBoundary != ifc_space_boundary:
+                os_surface.setConstruction(ifc2os[ifc_material])
+                break
+            ifc2os[ifc_rel_space_boundary] = os_surface
+
+            for ifc_inner_boundary in ifc_rel_space_boundary.InnerBoundaries:
+              if ifc_inner_boundary.ParentBoundary != ifc_rel_space_boundary:
                 continue
 
               os_sub_surface = openstudio.model.SubSurface(ifc_topologic.getOpenStudioVertices(ifc_inner_boundary), os_model)
@@ -142,8 +153,7 @@ class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
               elif ifc_inner_boundary.RelatedBuildingElement.is_a("IfcWindow"):
                 os_sub_surface.setSubSurfaceType("FixedWindow")
               os_sub_surface.setSurface(os_surface)
-              if (ifc_inner_boundary.InternalOrExternalBoundary == "INTERNAL" and
-                ifc_inner_boundary.CorrespondingBoundary is not None and
+              if (ifc_inner_boundary.CorrespondingBoundary is not None and
                 ifc_inner_boundary.CorrespondingBoundary in ifc2os):
                 os_sub_surface.setAdjacentSubSurface(ifc2os[ifc_inner_boundary.CorrespondingBoundary])
               ifc2os[ifc_inner_boundary] = os_sub_surface

@@ -14,13 +14,24 @@ def getIfcSettings():
 
   return settings
 
-def getIfcProductCell(product):
+def getIfcProductTopology(product):
   shape = ifcopenshell.geom.create_shape(getIfcSettings(), product)
   brepString = shape.geometry.brep_data
-  topology = topologic.Topology.ByString(brepString)
+
+  return topologic.Topology.ByString(brepString)
+
+def getIfcProductCell(product):
+  topology = getIfcProductTopology(product)
   faces = topologic_lib.getSubTopologies(topology, topologic.Face)
 
   return topologic.Cell.ByFaces(faces, 1e-4)
+
+def createIfcRelFillsElement(ifc_file, ifc_opening_element, ifc_building_element):
+  rel_fills_element = ifc_file.create_entity("IfcRelFillsElement")
+  rel_fills_element.RelatingOpeningElement = ifc_opening_element
+  rel_fills_element.RelatedBuildingElement = ifc_building_element
+
+  return rel_fills_element
 
 def createIfcFaceSurface(ifc_file, element_matrix, vertices, face):
   element_vertices = [np.linalg.solve(element_matrix, np.array(v+(1,)))[:-1] for v in vertices]
@@ -79,20 +90,22 @@ def getFacesStorey(faces, ifc_file):
 
 def assignRepresentation(topology, ifc_file, ifc_product):
   vs, fs = topologic_lib.meshData(topology)
-  o, z = None, None
-  for v in vs:
-    if z is None or v[-1] < z:
-      o, z = v, v[-1]
+  if ifc_product.is_a("IfcSpace"):
+    o, z = None, None
+    for v in vs:
+      if z is None or v[-1] < z:
+        o, z = v, v[-1]
+    product_matrix = ifcopenshell.util.placement.a2p(o, np.array([0,0,1]), np.array([1,0,0]))
+    ifcopenshell.api.run("geometry.edit_object_placement", ifc_file, product=ifc_product, matrix=product_matrix)
+  else:
+    product_matrix = ifcopenshell.util.placement.get_local_placement(ifc_product.ObjectPlacement)
 
-  product_matrix = ifcopenshell.util.placement.a2p(o, np.array([0,0,1]), np.array([1,0,0]))
   point_list = ifc_file.createIfcCartesianPointList3D([ np.linalg.solve(product_matrix, np.append(v,1))[:-1].tolist() for v in vs ])
   indexed_faces = [ ifc_file.createIfcIndexedPolygonalFace([ index + 1 for index in f]) for f in fs ]
   representation = ifc_file.createIfcPolygonalFaceSet(point_list, None, indexed_faces, None)
   body_context = next((item  for item  in ifc_file.by_type("IfcGeometricRepresentationSubContext") if item.ContextIdentifier == "Body"), None)
   shape = ifc_file.createIfcShapeRepresentation(body_context, body_context.ContextIdentifier, "Tessellation", [representation])
-
   ifcopenshell.api.run("geometry.assign_representation", ifc_file, product=ifc_product, representation=shape)
-  ifcopenshell.api.run("geometry.edit_object_placement", ifc_file, product=ifc_product, matrix=product_matrix)
 
   return True
 
@@ -109,16 +122,15 @@ def createRelSpaceBoundary(ifc_file, ifc_class, description, ifc_space, ifc_buil
 
   return ifc_rel_space_boundary
 
-def createRelSpaceBoundary2ndLevel(ifc_file, top_space_boundary, reverse, ifc_space, other_ifc_space, ifc_building_element, space_boundary_2b):
+def createRelSpaceBoundary2ndLevel(ifc_file, top_space_boundary, reverse, ifc_space, other_ifc_space, ifc_building_element):
   ifc_rel_space_boundary = None
   if ifc_space is not None:
     vs, fs = topologic_lib.meshData(top_space_boundary)
     f = fs[0][::-1] if reverse else fs[0]
     boundary_condition = "EXTERNAL" if other_ifc_space is None else "INTERNAL"
     ifc_rel_space_boundary = createRelSpaceBoundary(ifc_file, "IfcRelSpaceBoundary2ndLevel", "2a", ifc_space, ifc_building_element, vs, f, boundary_condition)
-    space_boundary_2b = topologic_lib.boolean(space_boundary_2b, top_space_boundary, "Difference")
 
-  return [ifc_rel_space_boundary, space_boundary_2b]
+  return ifc_rel_space_boundary
 
 def createInnerBoundary(ifc_rel_space_boundary, top_opening_element, top_space_boundary, reverse, ifc_file):
   if ifc_rel_space_boundary is None:
@@ -152,6 +164,8 @@ def getOpenStudioVertices(ifc_rel_space_boundary):
   plane_matrix = ifcopenshell.util.placement.get_axis2placement(ifc_plane.Position)
   plane_coords = [ v.Coordinates for v in ifc_points ]
   plane_vertices = [ np.array(v+(0,1)) if len(v) == 2 else np.array(v+(1,)) for v in plane_coords ]
-  vertices = [ (plane_matrix @ v) for v in plane_vertices ]
+  vertices = [ (plane_matrix @ v)[0:3] for v in plane_vertices ]
+  if np.dot(np.cross(vertices[1] - vertices[0], vertices[-1] - vertices[0]), (plane_matrix @ np.array([0, 0, 1, 0]))[0:3]) < -1e-6:
+    vertices.reverse()
 
   return [ openstudio.Point3d(v[0], v[1], v[2]) for v in vertices ]
