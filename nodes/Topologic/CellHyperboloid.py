@@ -115,14 +115,12 @@ def wireByVertices(vList):
 	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
-def createHyperboloid(baseWire, topWire, tol):
-	baseVertices = []
-	_ = baseWire.Vertices(None,baseVertices)
-	topVertices = []
-	_ = topWire.Vertices(None,topVertices)
-	topVertices.reverse()
-	faces = [topologic.Face.ByExternalBoundary(baseWire)]
-	faces.append(topologic.Face.ByExternalBoundary(topWire))
+def createHyperboloid(baseVertices, topVertices, tol):
+	baseWire = wireByVertices(baseVertices)
+	topWire = wireByVertices(topVertices)
+	baseFace = topologic.Face.ByExternalBoundary(baseWire)
+	topFace = topologic.Face.ByExternalBoundary(topWire)
+	faces = [baseFace, topFace]
 	for i in range(0, len(baseVertices)-1):
 		w = wireByVertices([baseVertices[i], topVertices[i], topVertices[i+1]])
 		f = topologic.Face.ByExternalBoundary(w)
@@ -136,7 +134,11 @@ def createHyperboloid(baseWire, topWire, tol):
 	w = wireByVertices([baseVertices[0], baseVertices[-1], topVertices[0]])
 	f = topologic.Face.ByExternalBoundary(w)
 	faces.append(f)
-	return topologic.Cell.ByFaces(faces, tol)
+	returnTopology = topologic.Cell.ByFaces(faces, tol)
+	if returnTopology == None:
+		returnTopology = topologic.Cluster.ByTopologies(faces)
+	return returnTopology
+		
 
 def processItem(item, originLocation):
 	origin = item[0]
@@ -173,17 +175,9 @@ def processItem(item, originLocation):
 			topY = math.cos(angle-math.radians(twist))*topRadius + origin.Y() + yOffset
 			topV.append(topologic.Vertex.ByCoordinates(topX,topY,topZ))
 
-	if baseRadius > 0:
-		baseWire = wireByVertices(baseV)
-	else:
-		baseWire = None
-	if topRadius > 0:
-		topWire = wireByVertices(topV)
-	else:
-		topWire = None
-	hyperboloid = createHyperboloid(baseWire, topWire, tol)
+	hyperboloid = createHyperboloid(baseV, topV, tol)
 	if hyperboloid == None:
-		raise Exception("Cell.Cone - Error: Could not create cone")
+		raise Exception("Cell.Hyperboloid - Error: Could not create hyperboloid")
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
