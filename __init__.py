@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 7, 0, 6),
+    "version": (0, 7, 0, 8),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -115,8 +115,10 @@ def nodes_index():
                 ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
                 ("Topologic.ShellExternalBoundary", "SvShellExternalBoundary"),
+                ("Topologic.ShellHyperbolicParaboloid", "SvShellHyperbolicParaboloid"),
                 ("Topologic.ShellInternalBoundaries", "SvShellInternalBoundaries"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
+                ("Topologic.ShellTessellatedDisk", "SvShellTessellatedDisk"),
                 ("Topologic.CellCone", "SvCellCone"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
                 ("Topologic.CellByFaces", "SvCellByFaces"),
@@ -510,8 +512,10 @@ class NODEVIEW_MT_AddTPSubcategoryShell(bpy.types.Menu):
         layout_draw_categories(self.layout, self.bl_label, [
             ['SvShellByFaces'],
             ['SvShellExternalBoundary'],
+            ['SvShellHyperbolicParaboloid'],
             ['SvShellInternalBoundaries'],
             ['SvShellIsClosed'],
+            ['SvShellTessellatedDisk'],
         ])
 
 make_class('TPSubcategoryShell', 'Topologic @ Shell')

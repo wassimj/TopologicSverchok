@@ -272,17 +272,29 @@ def processItem(item):
                 osFaceNormal.normalize()
                 if osFaceNormal.dot(osSurface.outwardNormal()) < 1e-6:
                     osSurface.setVertices(list(reversed(osFacePoints)))
-                if math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175:
-                    osSurface.setSurfaceType("Floor")
-
                 osSurface.setSpace(osSpace)
-                osSurface.setName(osSpace.name().get() + "_SURFACE_" + str(faceNumber))
                 faceCells = []
                 _ = topologic.FaceUtility.AdjacentCells(buildingFace, buildingTopology, faceCells)
-                if len(faceCells) == 1:
-                    if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
-                        osSurface.setOutsideBoundaryCondition("Ground")
+                print("Length of Face Cells:", len(faceCells))
+                if len(faceCells) == 1: #Exterior Surfaces
+                    osSurface.setOutsideBoundaryCondition("Outdoors")
+                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175) or (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 5):
+                        print("   Setting Type as Roof/Outdoors")
+                        osSurface.setSurfaceType("RoofCeiling")
+                        osSurface.setOutsideBoundaryCondition("Outdoors")
+                        osSurface.setName(osSpace.name().get() + "_TopHorizontalSlab_" + str(faceNumber))
+                        print("MaxZ:",max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))))
+                        if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
+                            print("   Setting Type as Floor/GroundSlab")
+                            osSurface.setSurfaceType("Floor")
+                            osSurface.setOutsideBoundaryCondition("Ground")
+                            osSurface.setName(osSpace.name().get() + "_BottomHorizontalSlab_" + str(faceNumber))
                     else:
+                        print("   Setting Type as Wall/Outdoors")
+                        osSurface.setSurfaceType("Wall")
+                        osSurface.setOutsideBoundaryCondition("Outdoors")
+                        osSurface.setName(osSpace.name().get() + "_ExternalVerticalFace_" + str(faceNumber))
+                        # Check for exterior apertures
                         faceDictionary = buildingFace.GetDictionary()
                         apertures = []
                         _ = buildingFace.Apertures(apertures)
@@ -301,7 +313,7 @@ def processItem(item):
                                 osSubSurface.setSubSurfaceType("FixedWindow")
                                 osSubSurface.setSurface(osSurface)
                         else:
-                                # Get the keys
+                                # Get the dictionary keys
                                 print("Did not find any apertures on the face, searching the dictionary of the face for TOPOLOGIC_glazing_ratio key.")
                                 keys = faceDictionary.Keys()
                                 if ('TOPOLOGIC_glazing_ratio' in keys):
@@ -311,6 +323,33 @@ def processItem(item):
                                 else:
                                     if glazingRatio > 0.01: #Glazing ratio must be more than 1% to make any sense.
                                         osSurface.setWindowToWallRatio(glazingRatio)
+                else: #Interior Surfaces
+                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175) or (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 5):
+                        print("   Setting Type as Floor")
+                        osSurface.setSurfaceType("Floor")
+                        osSurface.setName(osSpace.name().get() + "_InternalHorizontalFace_" + str(faceNumber))
+                    else:
+                        print("   Setting Type as Interior Wall")
+                        osSurface.setSurfaceType("Wall")
+                        osSurface.setName(osSpace.name().get() + "_InternalVerticalFace_" + str(faceNumber))
+                    # Check for interior apertures
+                    faceDictionary = buildingFace.GetDictionary()
+                    apertures = []
+                    _ = buildingFace.Apertures(apertures)
+                    if len(apertures) > 0:
+                        for aperture in apertures:
+                            osSubSurfacePoints = []
+                            apertureFace = getSubTopologies(aperture, topologic.Face)[0]
+                            for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                                osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
+                            osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
+                            apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
+                            osSubSurfaceNormal = openstudio.Vector3d(apertureFaceNormal[0], apertureFaceNormal[1], apertureFaceNormal[2])
+                            osSubSurfaceNormal.normalize()
+                            if osSubSurfaceNormal.dot(osSubSurface.outwardNormal()) < 1e-6:
+                                osSubSurface.setVertices(list(reversed(osSubSurfacePoints)))
+                            osSubSurface.setSubSurfaceType("Door") #We are assuming all interior apertures to be doors
+                            osSubSurface.setSurface(osSurface)
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
@@ -326,12 +365,12 @@ def processItem(item):
 
     osShadingGroup = openstudio.model.ShadingSurfaceGroup(osModel)
     if not isinstance(shadingSurfaces,int):
-        for faceIndex, contextFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
+        for faceIndex, shadingFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
             facePoints = []
-            for aVertex in getSubTopologies(contextFace.ExternalBoundary(), topologic.Vertex):
+            for aVertex in getSubTopologies(shadingFace.ExternalBoundary(), topologic.Vertex):
                 facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
             aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
-            faceNormal = topologic.FaceUtility.NormalAtParameters(contextFace, 0.5, 0.5)
+            faceNormal = topologic.FaceUtility.NormalAtParameters(shadingFace, 0.5, 0.5)
             osFaceNormal = openstudio.Vector3d(faceNormal[0], faceNormal[1], faceNormal[2])
             osFaceNormal.normalize()
             if osFaceNormal.dot(aShadingSurface.outwardNormal()) < 0:

@@ -328,10 +328,10 @@ def processVEF(item, tol, outputMode):
 	if returnTopology:
 		keys = []
 		values = []
-		keys.append("color")
-		keys.append("id")
-		keys.append("name")
-		keys.append("type")
+		keys.append("TOPOLOGIC_color")
+		keys.append("TOPOLOGIC_id")
+		keys.append("TOPOLOGIC_name")
+		keys.append("TOPOLOGIC_type")
 		if color:
 			if isinstance(color, tuple):
 				color = list(color)

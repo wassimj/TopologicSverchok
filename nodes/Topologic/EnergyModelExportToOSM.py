@@ -104,7 +104,7 @@ def processItem(item, overwrite):
         filePath = filePath+".osm"
     osCondition = False
     osPath = openstudio.openstudioutilitiescore.toPath(filePath)
-    osCondition = model.save(osPath, Overwrite)
+    osCondition = model.save(osPath, overwrite)
     return osCondition
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
