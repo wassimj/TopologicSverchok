@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 7, 0, 8),
+    "version": (0, 8, 0, 0),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -152,6 +152,7 @@ def nodes_index():
                 ("Topologic.TopologyAdjacentTopologies", "SvTopologyAdjacentTopologies"),
                 ("Topologic.TopologyAnalyze", "SvTopologyAnalyze"),
                 ("Topologic.TopologyApertures", "SvTopologyApertures"),
+                ("Topologic.TopologyBlenderGeometry", "SvTopologyBlenderGeometry"),
                 ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
                 ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
@@ -264,6 +265,7 @@ def nodes_index():
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
                 ("Topologic.EnergyModelExportToGbXML", "SvEnergyModelExportToGbXML"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
+                ("Topologic.EnergyModelGbXMLString", "SvEnergyModelGbXMLString"),
                 ("Topologic.EnergyModelQuery", "SvEnergyModelQuery"),
                 ("Topologic.EnergyModelReportNames", "SvEnergyModelReportNames"),
                 ("Topologic.EnergyModelRowNames", "SvEnergyModelRowNames"),
@@ -284,7 +286,24 @@ def nodes_index():
                 ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
                 ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll"),
                 ("Topologic.Neo4jGraphNodeLabels", "SvNeo4jGraphNodelLabels"),
-                ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph"),]
+                ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph")]
+	speckleNodes = [("Topologic.SpeckleBranchByID", "SvSpeckleBranchByID"),
+                ("Topologic.SpeckleBranchesByStream", "SvSpeckleBranchesByStream"),
+                ("Topologic.SpeckleClientByHost", "SvSpeckleClientByHost"),
+                ("Topologic.SpeckleClientByURL", "SvSpeckleClientByURL"),
+                ("Topologic.SpeckleCommitByID", "SvSpeckleCommitByID"),
+                ("Topologic.SpeckleCommitByURL", "SvSpeckleCommitByURL"),
+                ("Topologic.SpeckleCommitDelete", "SvSpeckleCommitDelete"),
+                ("Topologic.SpeckleCommitsByBranch", "SvSpeckleCommitsByBranch"),
+                ("Topologic.SpeckleGlobalsByStream", "SvSpeckleGlobalsByStream"),
+                ("Topologic.SpeckleReceive", "SvSpeckleReceive"),
+                ("Topologic.SpeckleSend", "SvSpeckleSend"),
+                ("Topologic.SpeckleSendObject", "SvSpeckleSendObject"),
+                ("Topologic.SpeckleStreamByID", "SvSpeckleStreamByID"),
+                ("Topologic.SpeckleStreamByURL", "SvSpeckleStreamByURL"),
+                ("Topologic.SpeckleStreamsByClient", "SvSpeckleStreamsByClient"),]
+
+
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
 	osifc = 0
 
@@ -338,6 +357,13 @@ def nodes_index():
 		coreNodes = coreNodes+osifcNodes
 	else:
 		print("Topologic - Warning: Could not import either openstudio or ifcopenshell so some related nodes that require both to be installed are not available.")
+
+	try:
+		import specklepy
+		import bpy_speckle
+		coreNodes = coreNodes+speckleNodes
+	except:
+		print("Topologic - Warning: Could not import speckle so some related nodes are not available.")
 
 	return [("Topologic", coreNodes)]
 
@@ -693,6 +719,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyAdjacentTopologies'],
             ['SvTopologyAnalyze'],
             ['SvTopologyApertures'],
+            ['SvTopologyBlenderGeometry'],
             ['SvTopologyBoolean'],
             ['SvTopologyBoundingBox'],
             ['SvTopologyByGeometry'],
@@ -768,12 +795,13 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelByImportedOSM'],
             ['SvEnergyModelByTopology'],
             ['SvHBJSONByTopology'],
-            ['SvEnergyModelExportToHBJSON'],
             ['SvEnergyModelColumnNames'],
             ['SvEnergyModelDefaultConstructionSets'],
             ['SvEnergyModelDefaultScheduleSets'],
             ['SvEnergyModelExportToGbXML'],
+            ['SvEnergyModelExportToHBJSON'],
             ['SvEnergyModelExportToOSM'],
+            ['SvEnergyModelGbXMLString'],
             ['SvEnergyModelQuery'],
             ['SvEnergyModelReportNames'],
             ['SvEnergyModelRowNames'],
@@ -855,6 +883,32 @@ class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
         ])
 
 make_class('TPSubcategoryNeo4j', 'Topologic @ Neo4j')
+
+class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
+    bl_label = "TPSubcategorySpeckle"
+    bl_idname = 'NODEVIEW_MT_AddTPSubcategorySpeckle'
+
+    def draw(self, context):
+        layout = self.layout
+        layout_draw_categories(self.layout, self.bl_label, [
+            ['SvSpeckleBranchByID'],
+            ['SvSpeckleBranchesByStream'],
+            ['SvSpeckleClientByHost'],
+            ['SvSpeckleClientByURL'],
+            ['SvSpeckleCommitByID'],
+            ['SvSpeckleCommitByURL'],
+            ['SvSpeckleCommitDelete'],
+            ['SvSpeckleCommitsByBranch'],
+            ['SvSpeckleGlobalsByStream'],
+            ['SvSpeckleRecieve'],
+            ['SvSpeckleSend'],
+            ['SvSpeckleSendObject'],
+            ['SvSpeckleStreamByID'],
+            ['SvSpeckleStreamByURL'],
+            ['SvSpeckleStreamsByClient'],
+        ])
+
+make_class('TPSubcategorySpeckle', 'Topologic @ Speckle')
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
     bl_label = 'Topologic'
@@ -881,6 +935,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ IFC'],
             ['@ Blockchain'],
             ['@ Neo4j'],
+            ['@ Speckle'],
             ['@ About'],
         ])
 
@@ -916,6 +971,7 @@ def register():
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
+    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
     bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     menu = make_menu()
     menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
@@ -955,6 +1011,7 @@ def unregister():
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryIFC)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
+    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
     bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
     #sockets.unregister()
     #icons.unregister()

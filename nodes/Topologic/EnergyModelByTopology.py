@@ -221,7 +221,6 @@ def processItem(item):
     osSpaces = []
     spaceNames = []
     for spaceNumber, buildingCell in enumerate(getSubTopologies(buildingTopology, topologic.Cell)):
-        print("EnergyModelByTopology, SpaceNumber:",spaceNumber)
         osSpace = openstudio.model.Space(osModel)
         osSpaceZ = buildingCell.CenterOfMass().Z()
         osBuildingStory = osBuildingStorys[0]
@@ -246,11 +245,13 @@ def processItem(item):
                     osSpace.setSpaceType(sp_.get())
             if roomNameKey:
                 keyName = getKeyName(cellDictionary, roomNameKey)
+
             else:
                 keyName = getKeyName(cellDictionary, 'name')
             osSpaceName = None
             if keyName:
-                osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
+                #osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
+                osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName),spaceNames, 1)
             if osSpaceName:
                 osSpace.setName(osSpaceName)
         else:
@@ -275,22 +276,17 @@ def processItem(item):
                 osSurface.setSpace(osSpace)
                 faceCells = []
                 _ = topologic.FaceUtility.AdjacentCells(buildingFace, buildingTopology, faceCells)
-                print("Length of Face Cells:", len(faceCells))
                 if len(faceCells) == 1: #Exterior Surfaces
                     osSurface.setOutsideBoundaryCondition("Outdoors")
-                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175) or (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 5):
-                        print("   Setting Type as Roof/Outdoors")
+                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 135) or (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 45):
                         osSurface.setSurfaceType("RoofCeiling")
                         osSurface.setOutsideBoundaryCondition("Outdoors")
                         osSurface.setName(osSpace.name().get() + "_TopHorizontalSlab_" + str(faceNumber))
-                        print("MaxZ:",max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))))
                         if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
-                            print("   Setting Type as Floor/GroundSlab")
                             osSurface.setSurfaceType("Floor")
                             osSurface.setOutsideBoundaryCondition("Ground")
                             osSurface.setName(osSpace.name().get() + "_BottomHorizontalSlab_" + str(faceNumber))
                     else:
-                        print("   Setting Type as Wall/Outdoors")
                         osSurface.setSurfaceType("Wall")
                         osSurface.setOutsideBoundaryCondition("Outdoors")
                         osSurface.setName(osSpace.name().get() + "_ExternalVerticalFace_" + str(faceNumber))
@@ -314,7 +310,6 @@ def processItem(item):
                                 osSubSurface.setSurface(osSurface)
                         else:
                                 # Get the dictionary keys
-                                print("Did not find any apertures on the face, searching the dictionary of the face for TOPOLOGIC_glazing_ratio key.")
                                 keys = faceDictionary.Keys()
                                 if ('TOPOLOGIC_glazing_ratio' in keys):
                                     faceGlazingRatio = valueAtKey(faceDictionary,'TOPOLOGIC_glazing_ratio')
@@ -324,12 +319,13 @@ def processItem(item):
                                     if glazingRatio > 0.01: #Glazing ratio must be more than 1% to make any sense.
                                         osSurface.setWindowToWallRatio(glazingRatio)
                 else: #Interior Surfaces
-                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 175) or (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 5):
-                        print("   Setting Type as Floor")
+                    if (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) > 135):
                         osSurface.setSurfaceType("Floor")
                         osSurface.setName(osSpace.name().get() + "_InternalHorizontalFace_" + str(faceNumber))
+                    elif (math.degrees(math.acos(osSurface.outwardNormal().dot(openstudio.Vector3d(0, 0, 1)))) < 40):
+                        osSurface.setSurfaceType("RoofCeiling")
+                        osSurface.setName(osSpace.name().get() + "_InternalHorizontalFace_" + str(faceNumber))
                     else:
-                        print("   Setting Type as Interior Wall")
                         osSurface.setSurfaceType("Wall")
                         osSurface.setName(osSpace.name().get() + "_InternalVerticalFace_" + str(faceNumber))
                     # Check for interior apertures
@@ -352,6 +348,7 @@ def processItem(item):
                             osSubSurface.setSurface(osSurface)
 
         osThermalZone = openstudio.model.ThermalZone(osModel)
+        osThermalZone.setVolume(topologic.CellUtility.Volume(buildingCell))
         osThermalZone.setName(osSpace.name().get() + "_THERMAL_ZONE")
         osThermalZone.setUseIdealAirLoads(True)
         osThermalZone.setVolume(topologic.CellUtility.Volume(buildingCell))

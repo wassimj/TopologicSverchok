@@ -7,7 +7,12 @@ from sverchok.data_structure import updateNode
 from topologic import Dictionary
 
 def processItem(item):
-	return item.Keys()
+	if isinstance(item, dict):
+		return list(item.keys())
+	elif isinstance(item, Dictionary):
+		return item.Keys()
+	else:
+		return None
 
 def recur(input):
 	output = []

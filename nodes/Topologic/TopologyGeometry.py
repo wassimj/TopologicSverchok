@@ -128,19 +128,22 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 				_ = aFace.InternalBoundaries(ib)
 				if(len(ib) > 0):
 					triFaces = []
-					_ = FaceUtility.Triangulate(aFace, 0.0, triFaces)
-					for aTriFace in triFaces:
-						wire = aTriFace.ExternalBoundary()
-						faceVertices = getSubTopologies(wire, Vertex)
-						f = []
-						for aVertex in faceVertices:
-							try:
-								fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
-							except:
-								vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
-								fVertexIndex = len(vertices)-1
-							f.append(fVertexIndex)
-						faces.append(f)
+					try:
+						_ = FaceUtility.Triangulate(aFace, 0.0, triFaces)
+						for aTriFace in triFaces:
+							wire = aTriFace.ExternalBoundary()
+							faceVertices = getSubTopologies(wire, Vertex)
+							f = []
+							for aVertex in faceVertices:
+								try:
+									fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+								except:
+									vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+									fVertexIndex = len(vertices)-1
+								f.append(fVertexIndex)
+							faces.append(f)
+					except:
+						continue
 				else:
 					wire =  aFace.ExternalBoundary()
 					#wire = topologic.WireUtility.RemoveCollinearEdges(wire, 0.1) #This is an angle Tolerance

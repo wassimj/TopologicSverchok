@@ -20,9 +20,9 @@ def toDegrees(ang):
 	return ang * 180 / math.pi
 
 # From https://gis.stackexchange.com/questions/387237/deleting-collinear-vertices-from-polygon-feature-class-using-arcpy
-def are_collinear(v2, tolerance=0.5):
+def are_collinear(v2, wire, tolerance=0.5):
 	edges = []
-	_ = v2.Edges(None, edges)
+	_ = v2.Edges(wire, edges)
 	if len(edges) == 2:
 		ang = toDegrees(topologic.EdgeUtility.AngleBetween(edges[0], edges[1]))
 		if -tolerance <= ang <= tolerance:
@@ -33,13 +33,13 @@ def are_collinear(v2, tolerance=0.5):
 		raise Exception("Topology.RemoveCollinearEdges - Error: This method only applies to manifold closed wires")
 
 #----------------------------------------------------------------------
-def get_redundant_vertices(vertices, angTol):
+def get_redundant_vertices(vertices, wire, angTol):
     """get redundant vertices from a line shape vertices"""
     indexes_of_vertices_to_remove = []
     start_idx, middle_index, end_index = 0, 1, 2
     for i in range(len(vertices)):
         v1, v2, v3 = vertices[start_idx:end_index + 1]
-        if are_collinear(v2, angTol):
+        if are_collinear(v2, wire, angTol):
             indexes_of_vertices_to_remove.append(middle_index)
 
         start_idx += 1
@@ -47,16 +47,16 @@ def get_redundant_vertices(vertices, angTol):
         end_index += 1
         if end_index == len(vertices):
             break
-    if are_collinear(vertices[0], angTol):
+    if are_collinear(vertices[0], wire, angTol):
         indexes_of_vertices_to_remove.append(0)
     return indexes_of_vertices_to_remove
 
 def processWire(wire, angTol):
 	vertices = []
 	_ = wire.Vertices(None, vertices)
-	redundantIndices = get_redundant_vertices(vertices, angTol)
+	redundantIndices = get_redundant_vertices(vertices, wire, angTol)
 	# Check if first vertex is also collinear
-	if are_collinear(vertices[0], angTol):
+	if are_collinear(vertices[0], wire, angTol):
 		redundantIndices.append(0)
 	cleanedVertices = []
 	for i in range(len(vertices)):

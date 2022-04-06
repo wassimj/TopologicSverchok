@@ -26,11 +26,16 @@ def listAttributeValues(listAttribute):
 			returnList.append(attr.DoubleValue())
 		elif isinstance(attr, StringAttribute):
 			returnList.append(attr.StringValue())
+		elif isinstance(attr, float) or isinstance(attr, int) or isinstance(attr, str) or isinstance(attr, dict):
+			returnList.append(attr)
 	return returnList
 
 def processItem(item, key):
 	try:
-		attr = item.ValueAtKey(key)
+		if isinstance(item, dict):
+			attr = item[key]
+		elif isinstance(item, Dictionary):
+			attr = item.ValueAtKey(key)
 	except:
 		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
 	if isinstance(attr, IntAttribute):
@@ -41,6 +46,12 @@ def processItem(item, key):
 		return (attr.StringValue())
 	elif isinstance(attr, ListAttribute):
 		return (listAttributeValues(attr))
+	elif isinstance(attr, float) or isinstance(attr, int) or isinstance(attr, str):
+		return attr
+	elif isinstance(attr, list):
+		return listAttributeValues(attr)
+	elif isinstance(attr, dict):
+		return attr
 	else:
 		return None
 
@@ -51,10 +62,10 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvDictionaryValueAtKey'
 	bl_label = 'Dictionary.ValueAtKey'
-	Keys: StringProperty(name="Keys", update=updateNode)
+	Keys: StringProperty(name="Key", update=updateNode)
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Dictionary')
-		self.inputs.new('SvStringsSocket', 'Key').prop_name='Keys'
+		self.inputs.new('SvStringsSocket', 'Key').prop_name='Key'
 		self.outputs.new('SvStringsSocket', 'Value')
 
 	def process(self):

@@ -16,14 +16,24 @@ def listAttributeValues(listAttribute):
 			returnList.append(attr.DoubleValue())
 		elif isinstance(attr, StringAttribute):
 			returnList.append(attr.StringValue())
+		elif isinstance(attr, float) or isinstance(attr, int) or isinstance(attr, str):
+			returnList.append(attr)
 	return returnList
 
 def processItem(item):
-	keys = item.Keys()
+	if isinstance(item, dict):
+		keys = item.keys()
+	elif isinstance(item, Dictionary):
+		keys = item.Keys()
 	returnList = []
 	for key in keys:
 		try:
-			attr = item.ValueAtKey(key)
+			if isinstance(item, dict):
+				attr = item[key]
+			elif isinstance(item, Dictionary):
+				attr = item.ValueAtKey(key)
+			else:
+				attr = None
 		except:
 			raise Exception("Dictionary.Values - Error: Could not retrieve a Value at the specified key ("+key+")")
 		if isinstance(attr, IntAttribute):
@@ -33,6 +43,10 @@ def processItem(item):
 		elif isinstance(attr, StringAttribute):
 			returnList.append(attr.StringValue())
 		elif isinstance(attr, ListAttribute):
+			returnList.append(listAttributeValues(attr))
+		elif isinstance(attr, float) or isinstance(attr, int) or isinstance(attr, str):
+			returnList.append(attr)
+		elif isinstance(attr, list):
 			returnList.append(listAttributeValues(attr))
 		else:
 			returnList.append("")
