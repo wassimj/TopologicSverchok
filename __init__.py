@@ -1,16 +1,16 @@
 # * This file is part of Topologic software library.
 # * Copyright(C) 2021, Cardiff University and University College London
-# *
+# * 
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU Affero General Public License as published by
 # * the Free Software Foundation, either version 3 of the License, or
 # * (at your option) any later version.
-# *
+# * 
 # * This program is distributed in the hope that it will be useful,
 # * but WITHOUT ANY WARRANTY; without even the implied warranty of
 # * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # * GNU Affero General Public License for more details.
-# *
+# * 
 # * You should have received a copy of the GNU Affero General Public License
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
@@ -221,6 +221,7 @@ def nodes_index():
                 ("Topologic.GraphDiameter", "SvGraphDiameter"),
                 ("Topologic.GraphEdge", "SvGraphEdge"),
                 ("Topologic.GraphEdges", "SvGraphEdges"),
+                ("Topologic.GraphExportToDGCNN", "SvGraphExportToDGCNN"),
                 ("Topologic.GraphIsComplete", "SvGraphIsComplete"),
                 ("Topologic.GraphIsErdoesGallai", "SvGraphIsErdoesGallai"),
                 ("Topologic.GraphIsolatedVertices", "SvGraphIsolatedVertices"),
@@ -247,15 +248,15 @@ def nodes_index():
 
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
-	ifcNodes = [("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC"),
-                ("Topologic.IFCReadFile", "SvIFCReadFile"),
+	ifcNodes = [("Topologic.IFCAdd2ndLevelBoundaries", "SvIFCAdd2ndLevelBoundaries"),
                 ("Topologic.IFCBuildingElements", "SvIFCBuildingElements"),
                 ("Topologic.IFCClashDetection", "SvIFCClashDetection"),
                 ("Topologic.IFCConnectBuildingElements", "SvIFCConnectBuildingElements"),
                 ("Topologic.IFCCreateSpaces", "SvIFCCreateSpaces"),
-                ("Topologic.IFCAdd2ndLevelBoundaries", "SvIFCAdd2ndLevelBoundaries"),
+                ("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON"),
+                ("Topologic.IFCReadFile", "SvIFCReadFile"),
                 ("Topologic.IFCWriteFile", "SvIFCWriteFile"),
-                ("Topologic.IFCExportToHBSJON", "SvHBJSONByIFC")]
+                ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC",]
 	web3Nodes = [("Topologic.ContractByParameters", "SvContractByParameters")]
 	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                  ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
@@ -302,7 +303,7 @@ def nodes_index():
                 ("Topologic.SpeckleSendObject", "SvSpeckleSendObject"),
                 ("Topologic.SpeckleStreamByID", "SvSpeckleStreamByID"),
                 ("Topologic.SpeckleStreamByURL", "SvSpeckleStreamByURL"),
-                ("Topologic.SpeckleStreamsByClient", "SvSpeckleStreamsByClient"),]
+                ("Topologic.SpeckleStreamsByClient", "SvSpeckleStreamsByClient")]
 
 
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
@@ -640,6 +641,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphDiameter'],
             ['SvGraphEdge'],
             ['SvGraphEdges'],
+            ['SvGraphExportToDGCNN'],
             ['SvGraphIsComplete'],
             ['SvGraphIsErdoesGallai'],
             ['SvGraphIsolatedVertices'],
@@ -849,8 +851,7 @@ class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
             ['SvIFCConnectBuildingElements'],
             ['SvIFCCreateSpaces'],
             ['SvIFCAdd2ndLevelBoundaries'],
-            ['SvIFCWriteFile'],
-            ['SvHBJSONByIFC']
+            ['SvIFCWriteFile']
         ])
 
 make_class('TPSubcategoryIFC', 'Topologic @ IFC')

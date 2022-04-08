@@ -167,7 +167,7 @@ def processItem(item, originLocation):
 	return prism
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "Lower Left", "", 3)]
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -184,7 +184,7 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 
 	originLocation: EnumProperty(name="Origin Location", description="Origing Location", default="Bottom", items=originLocations, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -222,6 +222,9 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 		dirYList = flatten(dirYList)
 		dirZList = flatten(dirZList)
 		inputs = [originList, widthList, lengthList, heightList, dirXList, dirYList, dirZList]
+		if ((self.Replication) == "Default"):
+			inputs = iterate(inputs)
+			inputs = transposeList(inputs)
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
