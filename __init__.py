@@ -256,7 +256,7 @@ def nodes_index():
                 ("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON"),
                 ("Topologic.IFCReadFile", "SvIFCReadFile"),
                 ("Topologic.IFCWriteFile", "SvIFCWriteFile"),
-                ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC",]
+                ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
 	web3Nodes = [("Topologic.ContractByParameters", "SvContractByParameters")]
 	ipfsNodes = [("Topologic.TopologyByImportedIPFS", "SvTopologyByImportedIPFS"),
                  ("Topologic.TopologyExportToIPFS", "SvTopologyExportToIPFS")]
