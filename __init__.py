@@ -843,15 +843,16 @@ class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout_draw_categories(self.layout, self.bl_label, [
-            ['SvEnergyModelByImportedIFC'],
-            ['SvTopologyByImportedIFC'],
-            ['SvIFCReadFile'],
+            ['SvIFCAdd2ndLevelBoundaries'],
             ['SvIFCBuildingElements'],
+            ['SvEnergyModelByImportedIFC'],
             ['SvIFCClashDetection'],
             ['SvIFCConnectBuildingElements'],
             ['SvIFCCreateSpaces'],
-            ['SvIFCAdd2ndLevelBoundaries'],
-            ['SvIFCWriteFile']
+            ['SvIFCExportToHBJSON'],
+            ['SvIFCReadFile'],
+            ['SvIFCWriteFile'],
+            ['SvTopologyByImportedIFC'],
         ])
 
 make_class('TPSubcategoryIFC', 'Topologic @ IFC')
