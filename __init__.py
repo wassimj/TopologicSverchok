@@ -17,7 +17,7 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 8, 0, 2),
+    "version": (0, 8, 1, 0),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
@@ -882,7 +882,7 @@ class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
             ['SvGraphByNeo4jGraph'],
             ['SvNeo4jGraphByParameters'],
             ['SvNeo4jGraphDeleteAll'],
-            ['SvNeo4jGraphNodelLabels'],
+            ['SvNeo4jGraphNodeLabels'],
             ['SvNeo4jGraphSetGraph'],
 
         ])
