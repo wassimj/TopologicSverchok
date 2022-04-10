@@ -16,7 +16,7 @@ def flatten(element):
 	return returnList
 
 def processItem(item):
-	face = topologic.Face.ByExternalInternalBoundaries(item, [])
+	face = topologic.Face.ByExternalBoundary(item)
 	return face
 
 '''

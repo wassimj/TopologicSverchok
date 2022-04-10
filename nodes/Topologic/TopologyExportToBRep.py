@@ -121,7 +121,7 @@ class SvTopologyExportToBRep(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvTopologyExportToBRep'
 	bl_label = 'Topology.ExportToBRep'
 	OverwriteProp: BoolProperty(name="Overwrite", default=True, update=updateNode)
-	FilePath: StringProperty(name="file", default="", subtype="FILE_PATH")
+	FilePath: StringProperty(name="File Path", default="", subtype="FILE_PATH")
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):

@@ -137,7 +137,6 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in newInputs:
 			outputs.append(processItem(anInput, self.originLocation))
-		print(outputs)
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

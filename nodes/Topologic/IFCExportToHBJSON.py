@@ -1,5 +1,6 @@
 
 import bpy
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from honeybee.model import Model
 from honeybee_energy.material.opaque import EnergyMaterial
@@ -16,18 +17,19 @@ import numpy as np
 from . import ifc_topologic
 import json
 
-class SvHBJSONByIFC(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCExportToHBJSON(bpy.types.Node, SverchCustomTreeNode):
   """
   Triggers: Export analytical model to HBJSON
   Tooltip: Exports the analytical model in IFC to HBJSON
   """
-  bl_idname = 'SvHBJSONByIFC'
+  bl_idname = 'SvIFCExportToHBJSON'
   bl_label = 'IFC.ExportToHBJSON'
+  FilePath: StringProperty(name="File Path", default="", subtype="FILE_PATH")
 
   def sv_init(self, context):
     self.inputs.new('SvStringsSocket', 'IFC')
     self.inputs.new('SvStringsSocket', 'Offset')
-    self.inputs.new('SvStringsSocket', 'File path')
+    self.inputs.new('SvStringsSocket', 'File Path').prop_name='FilePath'
 
     self.outputs.new('SvStringsSocket', 'HBJSON')
 
@@ -37,7 +39,7 @@ class SvHBJSONByIFC(bpy.types.Node, SverchCustomTreeNode):
 
     ifc_files = self.inputs['IFC'].sv_get(deepcopy=False)[0]
     offsets = self.inputs['Offset'].sv_get(deepcopy=False)[0]
-    file_paths = self.inputs['File path'].sv_get(deepcopy=False)[0]
+    file_paths = self.inputs['File Path'].sv_get(deepcopy=False)[0]
 
     hbjsons = []
     for idx, ifc_file in enumerate(ifc_files):
@@ -164,7 +166,7 @@ class SvHBJSONByIFC(bpy.types.Node, SverchCustomTreeNode):
     self.outputs['HBJSON'].sv_set([hbjsons])
 
 def register():
-  bpy.utils.register_class(SvHBJSONByIFC)
+  bpy.utils.register_class(SvIFCExportToHBJSON)
 
 def unregister():
-  bpy.utils.unregister_class(SvHBJSONByIFC)
+  bpy.utils.unregister_class(SvIFCExportToHBJSON)

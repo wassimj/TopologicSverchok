@@ -151,7 +151,6 @@ class SvWireStar(bpy.types.Node, SverchCustomTreeNode):
 		newInputs = zip(originList, radiusAList, radiusBList, raysList, dirXList, dirYList, dirZList)
 		outputs = []
 		for anInput in newInputs:
-			print(anInput)
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Wire'].sv_set(outputs)
 

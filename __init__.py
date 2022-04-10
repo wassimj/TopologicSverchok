@@ -17,14 +17,14 @@
 bl_info = {
     "name": "Topologic",
     "author": "Wassim Jabi",
-    "version": (0, 8, 0, 1),
+    "version": (0, 8, 0, 2),
     "blender": (3, 0, 0),
     "location": "Node Editor",
     "category": "Node",
     "description": "Topologic",
     "warning": "",
     "wiki_url": "http://topologic.app",
-    "tracker_url": "https://github.com/wassimj/topologicsverchok/issues"
+    "tracker_url": "https://github.com/wassimj/TopologicSverchok/issues"
 }
 
 import sys
@@ -247,7 +247,8 @@ def nodes_index():
                 ("Topologic.MatrixMultiply", "SvMatrixMultiply")]
 
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
-	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces")]
+	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces"),
+                  ("Topologic.FaceByOffset", "SvFaceByOffset")]
 	ifcNodes = [("Topologic.IFCAdd2ndLevelBoundaries", "SvIFCAdd2ndLevelBoundaries"),
                 ("Topologic.IFCBuildingElements", "SvIFCBuildingElements"),
                 ("Topologic.IFCClashDetection", "SvIFCClashDetection"),
@@ -266,6 +267,7 @@ def nodes_index():
                 ("Topologic.EnergyModelDefaultConstructionSets", "SvEnergyModelDefaultConstructionSets"),
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
                 ("Topologic.EnergyModelExportToGbXML", "SvEnergyModelExportToGbXML"),
+                ("Topologic.EnergyModelExportToHBJSON", "SvEnergyModelExportToHBJSON"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
                 ("Topologic.EnergyModelGbXMLString", "SvEnergyModelGbXMLString"),
                 ("Topologic.EnergyModelQuery", "SvEnergyModelQuery"),
@@ -287,7 +289,7 @@ def nodes_index():
 	neo4jNodes = [("Topologic.GraphByNeo4jGraph", "SvGraphByNeo4jGraph"),
                 ("Topologic.Neo4jGraphByParameters", "SvNeo4jGraphByParameters"),
                 ("Topologic.Neo4jGraphDeleteAll", "SvNeo4jGraphDeleteAll"),
-                ("Topologic.Neo4jGraphNodeLabels", "SvNeo4jGraphNodelLabels"),
+                ("Topologic.Neo4jGraphNodeLabels", "SvNeo4jGraphNodeLabels"),
                 ("Topologic.Neo4jGraphSetGraph", "SvNeo4jGraphSetGraph")]
 	speckleNodes = [("Topologic.SpeckleBranchByID", "SvSpeckleBranchByID"),
                 ("Topologic.SpeckleBranchesByStream", "SvSpeckleBranchesByStream"),
@@ -471,7 +473,6 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
             ['SvEdgeEndVertex'],
             ['SvEdgeLength'],
             ['SvEdgeParameterAtVertex'],
-            ['SvEdgeSharedVertices'],
             ['SvEdgeStartVertex'],
             ['SvEdgeVertexByDistance'],
             ['SvEdgeVertexByParameter'],
@@ -511,6 +512,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceArea'],
             ['SvFaceBoundingFace'],
             ['SvFaceByEdges'],
+            ['SvFaceByOffset'],
             ['SvFaceByVertices'],
             ['SvFaceByWire'],
             ['SvFaceByWires'],
@@ -524,7 +526,6 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceIsInside'],
             ['SvFaceNormalAtParameters'],
             ['SvFaceParametersAtVertex'],
-            ['SvFaceTriangulate'],
             ['SvFaceTrimByWire'],
             ['SvFaceVertexByParameters'],
         ])
@@ -734,7 +735,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyCenterOfMass'],
             ['SvTopologyCentroid'],
             ['SvTopologyContent'],
-            ['SvTopologyContexts'],
+            ['SvTopologyContext'],
             ['SvTopologyCopy'],
             ['SvTopologyDecodeInformation'],
             ['SvTopologyDictionary'],
@@ -904,7 +905,7 @@ class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
             ['SvSpeckleCommitDelete'],
             ['SvSpeckleCommitsByBranch'],
             ['SvSpeckleGlobalsByStream'],
-            ['SvSpeckleRecieve'],
+            ['SvSpeckleReceive'],
             ['SvSpeckleSend'],
             ['SvSpeckleSendObject'],
             ['SvSpeckleStreamByID'],
