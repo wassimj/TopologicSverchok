@@ -23,7 +23,7 @@ def triangulateFace(face):
 			return faceTriangles
 		except:
 			continue
-	faceTrinagles.append(face)
+	faceTriangles.append(face)
 	return faceTriangles
 
 def processItem(topology, tolerance):

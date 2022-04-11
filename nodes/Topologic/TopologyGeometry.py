@@ -40,19 +40,16 @@ def getSubTopologies(topology, subTopologyClass):
 		_ = topology.CellComplexes(None, topologies)
 	return topologies
 
-def triangulate(faces):
-	triangles = []
-	for aFace in faces:
-		ib = []
-		_ = aFace.InternalBoundaries(ib)
-		if len(ib) != 0:
-			faceTriangles = []
-			FaceUtility.Triangulate(aFace, 0.0, faceTriangles)
-			for aFaceTriangle in faceTriangles:
-				triangles.append(aFaceTriangle)
-		else:
-			triangles.append(aFace)
-	return triangles
+def triangulateFace(face):
+	faceTriangles = []
+	for i in range(0,5,1):
+		try:
+			_ = topologic.FaceUtility.Triangulate(face, float(i)*0.1, faceTriangles)
+			return faceTriangles
+		except:
+			continue
+	faceTriangles.append(face)
+	return faceTriangles
 
 class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -126,24 +123,21 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 			for aFace in topFaces:
 				ib = []
 				_ = aFace.InternalBoundaries(ib)
+				print("Internal Boundaries", ib)
 				if(len(ib) > 0):
-					triFaces = []
-					try:
-						_ = FaceUtility.Triangulate(aFace, 0.0, triFaces)
-						for aTriFace in triFaces:
-							wire = aTriFace.ExternalBoundary()
-							faceVertices = getSubTopologies(wire, Vertex)
-							f = []
-							for aVertex in faceVertices:
-								try:
-									fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
-								except:
-									vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
-									fVertexIndex = len(vertices)-1
-								f.append(fVertexIndex)
-							faces.append(f)
-					except:
-						continue
+					triFaces = triangulateFace(aFace)
+					for aTriFace in triFaces:
+						wire = aTriFace.ExternalBoundary()
+						faceVertices = getSubTopologies(wire, Vertex)
+						f = []
+						for aVertex in faceVertices:
+							try:
+								fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+							except:
+								vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+								fVertexIndex = len(vertices)-1
+							f.append(fVertexIndex)
+						faces.append(f)
 				else:
 					wire =  aFace.ExternalBoundary()
 					#wire = topologic.WireUtility.RemoveCollinearEdges(wire, 0.1) #This is an angle Tolerance
