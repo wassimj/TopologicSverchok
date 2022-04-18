@@ -5,6 +5,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from . import Replication, DictionaryValueAtKey
 import time
 
 from honeybee.model import Model
@@ -66,89 +67,7 @@ except:
 	raise Exception("Error: Could not import openstudio.")
 import math
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
 
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
 
 def getSubTopologies(topology, subTopologyClass):
     subTopologies = []
@@ -167,36 +86,6 @@ def getSubTopologies(topology, subTopologyClass):
     elif subTopologyClass == topologic.CellComplex:
         _ = topology.CellComplexes(None, subTopologies)
     return subTopologies
-
-def listAttributeValues(listAttribute):
-	listAttributes = listAttribute.ListValue()
-	returnList = []
-	for attr in listAttributes:
-		if isinstance(attr, topologic.IntAttribute):
-			returnList.append(attr.IntValue())
-		elif isinstance(attr, topologic.DoubleAttribute):
-			returnList.append(attr.DoubleValue())
-		elif isinstance(attr, topologic.StringAttribute):
-			returnList.append(attr.StringValue())
-	return returnList
-
-def valueAtKey(item, key):
-    if key == None:
-        return None
-    try:
-        attr = item.ValueAtKey(key)
-    except:
-        return None
-    if isinstance(attr, topologic.IntAttribute):
-        return (attr.IntValue())
-    elif isinstance(attr, topologic.DoubleAttribute):
-        return (attr.DoubleValue())
-    elif isinstance(attr, topologic.StringAttribute):
-        return (attr.StringValue())
-    elif isinstance(attr, topologic.ListAttribute):
-        return (listAttributeValues(attr))
-    else:
-        return None
 
 def cellFloor(cell):
     faces = []
@@ -264,7 +153,7 @@ def processItem(item):
         tpCellConditioned = True
         if tpDictionary:
             keyName = getKeyName(tpDictionary, 'Story')
-            tpCellStory = valueAtKey(tpDictionary, keyName)
+            tpCellStory = DictionaryValueAtKey.processItem(tpDictionary, keyName)
             if tpCellStory:
                 tpCellStory = tpCellStory.replace(" ","_")
             else:
@@ -273,7 +162,7 @@ def processItem(item):
                 keyName = getKeyName(tpDictionary, roomNameKey)
             else:
                 keyName = getKeyName(tpDictionary, 'Name')
-            tpCellName = valueAtKey(tpDictionary,keyName)
+            tpCellName = DictionaryValueAtKey.processItem(tpDictionary,keyName)
             if tpCellName:
                 tpCellName = createUniqueName(tpCellName.replace(" ","_"), spaceNames, 1)
             else:
@@ -282,7 +171,7 @@ def processItem(item):
                 keyName = getKeyName(tpDictionary, roomTypeKey)
             else:
                 keyName = getKeyName(tpDictionary, 'Program')
-            tpCellProgramIdentifier = valueAtKey(tpDictionary, keyName)
+            tpCellProgramIdentifier = DictionaryValueAtKey.processItem(tpDictionary, keyName)
             if tpCellProgramIdentifier:
                 program = prog_type_lib.program_type_by_identifier(tpCellProgramIdentifier)
             elif defaultProgramIdentifier:
@@ -290,7 +179,7 @@ def processItem(item):
             else:
                 program = prog_type_lib.office_program #Default Office Program as a last resort
             keyName = getKeyName(tpDictionary, 'construction_set')
-            tpCellConstructionSetIdentifier = valueAtKey(tpDictionary, keyName)
+            tpCellConstructionSetIdentifier = DictionaryValueAtKey.processItem(tpDictionary, keyName)
             if tpCellConstructionSetIdentifier:
                 constr_set = constr_set_lib.construction_set_by_identifier(tpCellConstructionSetIdentifier)
             elif defaultConstructionSetIdentifier:
@@ -323,7 +212,7 @@ def processItem(item):
                         apertureTopology = topologic.Aperture.Topology(tpFaceAperture)
                         tpFaceApertureDictionary = apertureTopology.GetDictionary()
                         if tpFaceApertureDictionary:
-                            tpFaceApertureType = valueAtKey(tpFaceApertureDictionary,'type')
+                            tpFaceApertureType = DictionaryValueAtKey.processItem(tpFaceApertureDictionary,'type')
                         hbFaceAperturePoints = []
                         tpFaceApertureVertices = []
                         _ = apertureTopology.ExternalBoundary().Vertices(None, tpFaceApertureVertices)
@@ -340,7 +229,7 @@ def processItem(item):
                 else:
                     tpFaceDictionary = tpCellFace.GetDictionary()
                     if (abs(tpCellFaceNormal[2]) < 1e-6) and tpFaceDictionary: #It is a mostly vertical wall and has a dictionary
-                        apertureRatio = valueAtKey(tpFaceDictionary,'apertureRatio')
+                        apertureRatio = DictionaryValueAtKey.processItem(tpFaceDictionary,'apertureRatio')
                         if apertureRatio:
                             hbRoomFace.apertures_by_ratio(apertureRatio, tolerance=0.01)
                 fType = honeybee.facetype.get_type_from_normal(Vector3D(tpCellFaceNormal[0],tpCellFaceNormal[1],tpCellFaceNormal[2]), roof_angle=30, floor_angle=150)
@@ -431,7 +320,7 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         buildingTopologyList = self.inputs['Building Topology'].sv_get(deepcopy=True)
         if (self.inputs['Shading Faces Cluster'].is_linked):
             shadingList = self.inputs['Shading Faces Cluster'].sv_get(deepcopy=True)
-            shadingList = flatten(shadingList)
+            shadingList = Replication.flatten(shadingList)
         else:
             shadingList = [topologic.Cluster.ByTopologies([topologic.Vertex.ByCoordinates(0,0,0)])] #Create a fake Cluster with no faces
         buildingNameList = self.inputs['Building Name'].sv_get(deepcopy=True)
@@ -444,32 +333,32 @@ class SvHBModelByTopology(bpy.types.Node, SverchCustomTreeNode):
         roomNameKeyList = self.inputs['Room Name Key'].sv_get(deepcopy=True)
         roomTypeKeyList = self.inputs['Room Type Key'].sv_get(deepcopy=True)
 
-        buildingTopologyList = flatten(buildingTopologyList)
-        buildingNameList = flatten(buildingNameList)
-        defaultProgramIdentifierList = flatten(defaultProgramIdentifierList)
-        defaultConstructionSetIdentifierList = flatten(defaultConstructionSetIdentifierList)
-        coolingSetpointList = flatten(coolingSetpointList)
-        heatingSetpointList = flatten(heatingSetpointList)
-        humidifyingSetpointList = flatten(humidifyingSetpointList)
-        dehumidifyingSetpointList = flatten(dehumidifyingSetpointList)
-        roomNameKeyList = flatten(roomNameKeyList)
-        roomTypeKeyList = flatten(roomTypeKeyList)
+        buildingTopologyList = Replication.flatten(buildingTopologyList)
+        buildingNameList = Replication.flatten(buildingNameList)
+        defaultProgramIdentifierList = Replication.flatten(defaultProgramIdentifierList)
+        defaultConstructionSetIdentifierList = Replication.flatten(defaultConstructionSetIdentifierList)
+        coolingSetpointList = Replication.flatten(coolingSetpointList)
+        heatingSetpointList = Replication.flatten(heatingSetpointList)
+        humidifyingSetpointList = Replication.flatten(humidifyingSetpointList)
+        dehumidifyingSetpointList = Replication.flatten(dehumidifyingSetpointList)
+        roomNameKeyList = Replication.flatten(roomNameKeyList)
+        roomTypeKeyList = Replication.flatten(roomTypeKeyList)
 
         inputs = [buildingTopologyList, shadingList, buildingNameList, defaultProgramIdentifierList, defaultConstructionSetIdentifierList, coolingSetpointList, heatingSetpointList, humidifyingSetpointList, dehumidifyingSetpointList, roomNameKeyList, roomTypeKeyList]
         if ((self.Replication) == "Default"):
-            inputs = iterate(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.iterate(inputs)
+            inputs = Replication.transposeList(inputs)
         if ((self.Replication) == "Trim"):
-            inputs = trim(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.trim(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Iterate"):
-            inputs = iterate(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.iterate(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Repeat"):
-            inputs = repeat(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.repeat(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Interlace"):
-            inputs = list(interlace(inputs))
+            inputs = list(Replication.interlace(inputs))
         outputs = []
         for anInput in inputs:
             outputs.append(processItem(anInput))

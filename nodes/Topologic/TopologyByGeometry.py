@@ -16,89 +16,8 @@ import uuid
 import time
 import warnings
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
+from . import Replication
+from . import DictionaryByKeysValues, TopologySelfMerge
 
 def edgesByVertices(vertices, topVerts):
     edges = []
@@ -150,7 +69,7 @@ def topologyByFaces(faces, tolerance, outputMode):
 		else:
 			raise Exception("Error: Could not create a Shell.")
 	if outputMode == "Default":
-		output = Cluster.ByTopologies(faces)
+		output = TopologySelfMerge.processItem(Cluster.ByTopologies(faces))
 	if output:
 		if output:
 			return output
@@ -176,49 +95,6 @@ def getObjectKeysValues(bObject):
 					keys.append(K)
 					values.append(bObject[K])
 	return [keys, values]
-
-def processKeysValues(keys, values):
-	if len(keys) != len(values):
-		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
-	stl_keys = []
-	stl_values = []
-	for i in range(len(keys)):
-		if isinstance(keys[i], str):
-			stl_keys.append(keys[i])
-		else:
-			stl_keys.append(str(keys[i]))
-		if isinstance(values[i], list) and len(values[i]) == 1:
-			value = values[i][0]
-		else:
-			value = values[i]
-		if isinstance(value, bool):
-			if value == False:
-				stl_values.append(topologic.IntAttribute(0))
-			else:
-				stl_values.append(topologic.IntAttribute(1))
-		elif isinstance(value, int):
-			stl_values.append(topologic.IntAttribute(value))
-		elif isinstance(value, float):
-			stl_values.append(topologic.DoubleAttribute(value))
-		elif isinstance(value, str):
-			stl_values.append(topologic.StringAttribute(value))
-		elif isinstance(value, list):
-			l = []
-			for v in value:
-				if isinstance(v, bool):
-					l.append(topologic.IntAttribute(v))
-				elif isinstance(v, int):
-					l.append(topologic.IntAttribute(v))
-				elif isinstance(v, float):
-					l.append(topologic.DoubleAttribute(v))
-				elif isinstance(v, str):
-					l.append(topologic.StringAttribute(v))
-			stl_values.append(topologic.ListAttribute(l))
-		else:
-			warnings.warn('Warning: Value type at key %s is not supported %s. Supported types are: Boolean, Integer, Double, String, or List. Adding a NULL string' %(keys[i], value))
-			stl_values.append(topologic.StringAttribute(""))
-	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
-	return myDict
 
 def convertFaces(faces):
 	returnList = []
@@ -249,7 +125,12 @@ def processItem(item, tol, outputMode):
 			topVerts.append(v)
 	else:
 		return None
-	if len(faces) > 0:
+	if (outputMode == "Wire") and (len(edges) > 0):
+		for anEdge in edges:
+			topEdge = topologic.Edge.ByStartVertexEndVertex(topVerts[anEdge.vertices[0]], topVerts[anEdge.vertices[1]])
+			topEdges.append(topEdge)
+		returnTopology = topologyByEdges(topEdges)
+	elif len(faces) > 0:
 		for aFace in faces:
 			faceEdges = edgesByVertices(aFace, topVerts)
 			faceWire = Wire.ByEdges(faceEdges)
@@ -258,11 +139,13 @@ def processItem(item, tol, outputMode):
 		returnTopology = topologyByFaces(topFaces, tol, outputMode)
 	elif len(edges) > 0:
 		for anEdge in edges:
-			topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
+			topEdge = topologic.Edge.ByStartVertexEndVertex(topVerts[anEdge.vertices[0]], topVerts[anEdge.vertices[1]])
 			topEdges.append(topEdge)
 		returnTopology = topologyByEdges(topEdges)
-	else:
+	elif len(topVerts) > 0:
 		returnTopology = Cluster.ByTopologies(topVerts)
+	else:
+		returnTopology = None
 	if returnTopology:
 		keys = []
 		values = []
@@ -274,6 +157,7 @@ def processItem(item, tol, outputMode):
 		keys.append("TOPOLOGIC_id")
 		keys.append("TOPOLOGIC_name")
 		keys.append("TOPOLOGIC_type")
+		keys.append("TOPOLOGIC_length_unit")
 		if color:
 			if isinstance(color, tuple):
 				color = list(color)
@@ -288,29 +172,35 @@ def processItem(item, tol, outputMode):
 		else:
 			values.append(str(uuid.uuid4()))
 		if len(name) > 0 and name.lower() != 'none':
-			print("Appending name")
 			values.append(name)
 		elif len(bObject.name) > 0:
 			values.append(bObject.name)
 		else:
-			values.append("None")
+			values.append("Topologic_"+returnTopology.GetTypeAsString())
 		values.append(returnTopology.GetTypeAsString())
-		topDict = processKeysValues(keys, values)
+		values.append(bpy.context.scene.unit_settings.length_unit)
+		topDict = DictionaryByKeysValues.processKeysValues(keys, values)
 		_ = returnTopology.SetDictionary(topDict)
 	return returnTopology
 
 def processVEF(item, tol, outputMode):
 	vertices, edges, faces, color, id, name = item
 	returnTopology = None
+	topVerts = []
+	topEdges = []
+	topFaces = []
 	if len(vertices) > 0:
-		topVerts = []
 		for aVertex in vertices:
 			v = Vertex.ByCoordinates(aVertex[0], aVertex[1], aVertex[2])
 			topVerts.append(v)
 	else:
 		return None
-	if len(faces) > 0:
-		topFaces = []
+	if (outputMode == "Wire") and (len(edges) > 0):
+		for anEdge in edges:
+			topEdge = topologic.Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
+			topEdges.append(topEdge)
+		returnTopology = topologyByEdges(topEdges)
+	elif len(faces) > 0:
 		for aFace in faces:
 			faceEdges = edgesByVertices(aFace, topVerts)
 			faceWire = Wire.ByEdges(faceEdges)
@@ -318,7 +208,6 @@ def processVEF(item, tol, outputMode):
 			topFaces.append(topFace)
 		returnTopology = topologyByFaces(topFaces, tol, outputMode)
 	elif len(edges) > 0:
-		topEdges = []
 		for anEdge in edges:
 			topEdge = Edge.ByStartVertexEndVertex(topVerts[anEdge[0]], topVerts[anEdge[1]])
 			topEdges.append(topEdge)
@@ -332,6 +221,7 @@ def processVEF(item, tol, outputMode):
 		keys.append("TOPOLOGIC_id")
 		keys.append("TOPOLOGIC_name")
 		keys.append("TOPOLOGIC_type")
+		keys.append("TOPOLOGIC_length_unit")
 		if color:
 			if isinstance(color, tuple):
 				color = list(color)
@@ -349,15 +239,16 @@ def processVEF(item, tol, outputMode):
 		if name:
 			values.append(name)
 		else:
-			values.append("None")
+			values.append("Topologic_"+returnTopology.GetTypeAsString())
 		values.append(returnTopology.GetTypeAsString())
-		topDict = processKeysValues(keys, values)
+		values.append(bpy.context.scene.unit_settings.length_unit)
+		topDict = DictionaryByKeysValues.processKeysValues(keys, values)
 		_ = returnTopology.SetDictionary(topDict)
 	return returnTopology
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 input_items = [("Object", "Object", "", 1),("Vertex/Edge/Face", "Vertex/Edge/Face", "", 2)]
-output_items = [("Default", "Default", "", 1),("CellComplex", "CellComplex", "", 2),("Cell", "Cell", "", 3), ("Shell", "Shell", "", 4)]
+output_items = [("Default", "Default", "", 1),("CellComplex", "CellComplex", "", 2),("Cell", "Cell", "", 3), ("Shell", "Shell", "", 4), ("Wire", "Wire", "", 5)]
 
 def update_sockets(self, context):
 	# hide all input sockets
@@ -390,7 +281,7 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Object", update=update_sockets)
 	outputMode : EnumProperty(name='Output Mode', description='The desired output format', items=output_items, default="Default", update=updateNode)
-	Name: StringProperty(name="Name", default='None', update=updateNode)
+	Name: StringProperty(name="Name", default='', update=updateNode)
 	ID: StringProperty(name="ID", default=defaultID, update=updateNode)
 	Color: FloatVectorProperty(update=updateNode, name='Color', default=(1.0, 1.0, 1.0, 1.0), size=4, min=0.0, max=1.0, subtype='COLOR')
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
@@ -421,29 +312,29 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			matrixList = [""]
 		else:
 			matrixList = self.inputs['Matrix'].sv_get(deepcopy=True)
-			matrixList = flatten(matrixList)
+			matrixList = Replication.flatten(matrixList)
 
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
 		if self.inputMode == "Object":
 			objectList = self.inputs['Object'].sv_get(deepcopy=True)
-			objectList = flatten(objectList)
+			objectList = Replication.flatten(objectList)
 			colorList = self.inputs['Color'].sv_get(deepcopy=False)
 			idList = self.inputs['ID'].sv_get(deepcopy=False)
-			idList = flatten(idList)
+			idList = Replication.flatten(idList)
 			nameList = self.inputs['Name'].sv_get(deepcopy=False)
-			nameList = flatten(nameList)
+			nameList = Replication.flatten(nameList)
 			inputs = [objectList, matrixList, colorList, idList, nameList]
 			if ((self.Replication) == "Trim"):
-				inputs = trim(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.trim(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
-				inputs = iterate(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.iterate(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Repeat"):
-				inputs = repeat(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.repeat(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Interlace"):
-				inputs = list(interlace(inputs))
+				inputs = list(Replication.interlace(inputs))
 			outputs = []
 			for anInput in inputs:
 				outputs.append(processItem(anInput, tol, self.outputMode))
@@ -454,20 +345,20 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			nameList = self.inputs['Name'].sv_get(deepcopy=False)
 			colorList = self.inputs['Color'].sv_get(deepcopy=False)
 			idList = self.inputs['ID'].sv_get(deepcopy=False)
-			idList = flatten(idList)
-			nameList = flatten(nameList)
+			idList = Replication.flatten(idList)
+			nameList = Replication.flatten(nameList)
 			inputs = [verticesList, edgesList, facesList, colorList, idList, nameList]
 			if ((self.Replication) == "Trim"):
-				inputs = trim(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.trim(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
-				inputs = iterate(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.iterate(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Repeat"):
-				inputs = repeat(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.repeat(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Interlace"):
-				inputs = list(interlace(inputs))
+				inputs = list(Replication.interlace(inputs))
 			outputs = []
 			for anInput in inputs:
 				outputs.append(processVEF(anInput, tol, self.outputMode))

@@ -9,18 +9,8 @@ from sverchok.utils.sv_mesh_utils import get_unique_faces
 
 import topologic
 from topologic import Topology, Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Graph, Dictionary, Attribute, VertexUtility, EdgeUtility, WireUtility, FaceUtility, ShellUtility, CellUtility, TopologyUtility
-
+from . import Replication
 import time
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
 
 def getSubTopologies(topology, subTopologyClass):
 	topologies = []
@@ -51,6 +41,82 @@ def triangulateFace(face):
 	faceTriangles.append(face)
 	return faceTriangles
 
+def processItem(item):
+	vertices = []
+	edges = []
+	faces = []
+	if item == None:
+		return [None, None, None]
+	topVerts = []
+	if (item.Type() == 1): #input is a vertex, just add it and process it
+		topVerts.append(item)
+	else:
+		_ = item.Vertices(None, topVerts)
+	for aVertex in topVerts:
+		try:
+			vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
+		except:
+			vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
+	topEdges = []
+	if (item.Type() == 2): #Input is an Edge, just add it and process it
+		topEdges.append(item)
+	elif (item.Type() > 2):
+		_ = item.Edges(None, topEdges)
+	for anEdge in topEdges:
+		e = []
+		sv = anEdge.StartVertex()
+		ev = anEdge.EndVertex()
+		try:
+			svIndex = vertices.index([sv.X(), sv.Y(), sv.Z()])
+		except:
+			vertices.append([sv.X(), sv.Y(), sv.Z()])
+			svIndex = len(vertices)-1
+		try:
+			evIndex = vertices.index([ev.X(), ev.Y(), ev.Z()])
+		except:
+			vertices.append([ev.X(), ev.Y(), ev.Z()])
+			evIndex = len(vertices)-1
+		e.append(svIndex)
+		e.append(evIndex)
+		if ([e[0], e[1]] not in edges) and ([e[1], e[0]] not in edges):
+			edges.append(e)
+	topFaces = []
+	if (item.Type() == 8): # Input is a Face, just add it and process it
+		topFaces.append(item)
+	elif (item.Type() > 8):
+		_ = item.Faces(None, topFaces)
+	for aFace in topFaces:
+		ib = []
+		_ = aFace.InternalBoundaries(ib)
+		if(len(ib) > 0):
+			triFaces = triangulateFace(aFace)
+			for aTriFace in triFaces:
+				wire = aTriFace.ExternalBoundary()
+				faceVertices = getSubTopologies(wire, Vertex)
+				f = []
+				for aVertex in faceVertices:
+					try:
+						fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+					except:
+						vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+						fVertexIndex = len(vertices)-1
+					f.append(fVertexIndex)
+				faces.append(f)
+		else:
+			wire =  aFace.ExternalBoundary()
+			#wire = topologic.WireUtility.RemoveCollinearEdges(wire, 0.1) #This is an angle Tolerance
+			faceVertices = getSubTopologies(wire, Vertex)
+			f = []
+			for aVertex in faceVertices:
+				try:
+					fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
+				except:
+					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
+					fVertexIndex = len(vertices)-1
+				f.append(fVertexIndex)
+			faces.append(f)
+	return [vertices, edges, faces]
+
 class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -72,93 +138,18 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		inputs = self.inputs['Topology'].sv_get(deepcopy=True)
-		inputs = flatten(inputs)
-		finalVertexList = []
-		finalEdgeList = []
-		finalFaceList = []
+		inputs = Replication.flatten(inputs)
+		vertex_list = []
+		edge_list = []
+		face_list = []
 		for anInput in inputs:
-			vertices = []
-			edges = []
-			faces = []
-			if anInput == None:
-				continue
-			topVerts = []
-			if (anInput.Type() == 1): #input is a vertex, just add it and process it
-				topVerts.append(anInput)
-			else:
-				_ = anInput.Vertices(None, topVerts)
-			for aVertex in topVerts:
-				try:
-					vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex already in list
-				except:
-					vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()]) # Vertex not in list, add it.
-			topEdges = []
-			if (anInput.Type() == 2): #Input is an Edge, just add it and process it
-				topEdges.append(anInput)
-			elif (anInput.Type() > 2):
-				_ = anInput.Edges(None, topEdges)
-			for anEdge in topEdges:
-				e = []
-				sv = anEdge.StartVertex()
-				ev = anEdge.EndVertex()
-				try:
-					svIndex = vertices.index([sv.X(), sv.Y(), sv.Z()])
-				except:
-					vertices.append([sv.X(), sv.Y(), sv.Z()])
-					svIndex = len(vertices)-1
-				try:
-					evIndex = vertices.index([ev.X(), ev.Y(), ev.Z()])
-				except:
-					vertices.append([ev.X(), ev.Y(), ev.Z()])
-					evIndex = len(vertices)-1
-				e.append(svIndex)
-				e.append(evIndex)
-				if ([e[0], e[1]] not in edges) and ([e[1], e[0]] not in edges):
-					edges.append(e)
-			topFaces = []
-			if (anInput.Type() == 8): # Input is a Face, just add it and process it
-				topFaces.append(anInput)
-			elif (anInput.Type() > 8):
-				_ = anInput.Faces(None, topFaces)
-			for aFace in topFaces:
-				ib = []
-				_ = aFace.InternalBoundaries(ib)
-				print("Internal Boundaries", ib)
-				if(len(ib) > 0):
-					triFaces = triangulateFace(aFace)
-					for aTriFace in triFaces:
-						wire = aTriFace.ExternalBoundary()
-						faceVertices = getSubTopologies(wire, Vertex)
-						f = []
-						for aVertex in faceVertices:
-							try:
-								fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
-							except:
-								vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
-								fVertexIndex = len(vertices)-1
-							f.append(fVertexIndex)
-						faces.append(f)
-				else:
-					wire =  aFace.ExternalBoundary()
-					#wire = topologic.WireUtility.RemoveCollinearEdges(wire, 0.1) #This is an angle Tolerance
-					faceVertices = getSubTopologies(wire, Vertex)
-					f = []
-					for aVertex in faceVertices:
-						try:
-							fVertexIndex = vertices.index([aVertex.X(), aVertex.Y(), aVertex.Z()])
-						except:
-							vertices.append([aVertex.X(), aVertex.Y(), aVertex.Z()])
-							fVertexIndex = len(vertices)-1
-						f.append(fVertexIndex)
-					faces.append(f)
-			finalVertexList.append(vertices)
-			finalEdgeList.append(edges)
-			finalFaceList.append(faces)
-		
-		#faces = get_unique_faces(faces) #Make sure we do not accidentally have duplicate faces
-		self.outputs['Vertices'].sv_set(finalVertexList)
-		self.outputs['Edges'].sv_set(finalEdgeList)
-		self.outputs['Faces'].sv_set(finalFaceList)
+			v, e, f = processItem(anInput)
+			vertex_list.append(v)
+			edge_list.append(e)
+			face_list.append(f)
+		self.outputs['Vertices'].sv_set(vertex_list)
+		self.outputs['Edges'].sv_set(edge_list)
+		self.outputs['Faces'].sv_set(face_list)
 		end = time.time()
 		print("Topology.Geometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
 

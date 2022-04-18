@@ -21,91 +21,8 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+from . import Replication
 import math
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-			# print(base,y)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
 
 def faceByVertices(vList):
 	edges = []
@@ -433,13 +350,13 @@ class SvShellHyperbolicParaboloid(bpy.types.Node, SverchCustomTreeNode):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-			originList = flatten(originList)
+			originList = Replication.flatten(originList)
 		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
 		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
 		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-		dirXList = flatten(dirXList)
-		dirYList = flatten(dirYList)
-		dirZList = flatten(dirZList)
+		dirXList = Replication.flatten(dirXList)
+		dirYList = Replication.flatten(dirYList)
+		dirZList = Replication.flatten(dirZList)
 		# Circular Domain
 		if self.domain == "Circular":
 			radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
@@ -447,24 +364,24 @@ class SvShellHyperbolicParaboloid(bpy.types.Node, SverchCustomTreeNode):
 			ringsList = self.inputs['Rings'].sv_get(deepcopy=True)
 			aList = self.inputs['A'].sv_get(deepcopy=True)
 			bList = self.inputs['B'].sv_get(deepcopy=True)
-			radiusList = flatten(radiusList)
-			sidesList = flatten(sidesList)
-			ringsList = flatten(ringsList)
-			aList = flatten(aList)
-			bList = flatten(bList)
+			radiusList = Replication.flatten(radiusList)
+			sidesList = Replication.flatten(sidesList)
+			ringsList = Replication.flatten(ringsList)
+			aList = Replication.flatten(aList)
+			bList = Replication.flatten(bList)
 
 			inputs = [originList, radiusList, sidesList, ringsList, aList, bList, dirXList, dirYList, dirZList]
 			if ((self.Replication) == "Trim"):
-				inputs = trim(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.trim(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif (((self.Replication) == "Iterate")  or ((self.Replication) == "Default")):
-				inputs = iterate(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.iterate(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Repeat"):
-				inputs = repeat(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.repeat(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Interlace"):
-				inputs = list(interlace(inputs))
+				inputs = list(Replication.interlace(inputs))
 			outputs = []
 			for anInput in inputs:
 				outputs.append(processItemCircularDomain(anInput, self.originLocation))
@@ -474,38 +391,38 @@ class SvShellHyperbolicParaboloid(bpy.types.Node, SverchCustomTreeNode):
 				llVertexList = [topologic.Vertex.ByCoordinates(0,-1,-1)]
 			else:
 				llVertexList = self.inputs['LL Vertex'].sv_get(deepcopy=True)
-				llVertexList = flatten(llVertexList)
+				llVertexList = Replication.flatten(llVertexList)
 			if not (self.inputs['LR Vertex'].is_linked):
 				lrVertexList = [topologic.Vertex.ByCoordinates(1,0,1)]
 			else:
 				lrVertexList = self.inputs['LR Vertex'].sv_get(deepcopy=True)
-				lrVertexList = flatten(lrVertexList)
+				lrVertexList = Replication.flatten(lrVertexList)
 			if not (self.inputs['UR Vertex'].is_linked):
 				urVertexList = [topologic.Vertex.ByCoordinates(0,1,-1)]
 			else:
 				urVertexList = self.inputs['UR Vertex'].sv_get(deepcopy=True)
-				urVertexList = flatten(urVertexList)
+				urVertexList = Replication.flatten(urVertexList)
 			if not (self.inputs['UL Vertex'].is_linked):
 				ulVertexList = [topologic.Vertex.ByCoordinates(-1,0,1)]
 			else:
 				ulVertexList = self.inputs['UL Vertex'].sv_get(deepcopy=True)
-				ulVertexList = flatten(ulVertexList)
+				ulVertexList = Replication.flatten(ulVertexList)
 			uList = self.inputs['U'].sv_get(deepcopy=True)
-			uList = flatten(uList)
+			uList = Replication.flatten(uList)
 			vList = self.inputs['V'].sv_get(deepcopy=True)
-			vList = flatten(vList)
+			vList = Replication.flatten(vList)
 			inputs = [originList, llVertexList, lrVertexList, urVertexList, ulVertexList, uList, vList, dirXList, dirYList, dirZList]
 			if ((self.Replication) == "Trim"):
-				inputs = trim(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.trim(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif (((self.Replication) == "Iterate")  or ((self.Replication) == "Default")):
-				inputs = iterate(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.iterate(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Repeat"):
-				inputs = repeat(inputs)
-				inputs = transposeList(inputs)
+				inputs = Replication.repeat(inputs)
+				inputs = Replication.transposeList(inputs)
 			elif ((self.Replication) == "Interlace"):
-				inputs = list(interlace(inputs))
+				inputs = list(Replication.interlace(inputs))
 			outputs = []
 			for anInput in inputs:
 				outputs.append(processItemRectangularDomain(anInput, self.originLocation))

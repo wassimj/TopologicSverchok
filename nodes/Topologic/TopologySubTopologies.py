@@ -6,39 +6,40 @@ from sverchok.data_structure import updateNode
 import topologic
 import time
 
-def processItem(item, topologyType):
-	if item.GetTypeAsString() == topologyType:
-		return [item]
+def processItem(item):
+	topology, topologyType = item
+	if topology.GetTypeAsString() == topologyType:
+		return [topology]
 	subtopologies = []
 	if topologyType == "Vertex":
-		_ = item.Vertices(None, subtopologies)
+		_ = topology.Vertices(None, subtopologies)
 	elif topologyType == "Edge":
-		_ = item.Edges(None, subtopologies)
+		_ = topology.Edges(None, subtopologies)
 	elif topologyType == "Wire":
-		_ = item.Wires(None, subtopologies)
+		_ = topology.Wires(None, subtopologies)
 	elif topologyType == "Face":
-		_ = item.Faces(None, subtopologies)
+		_ = topology.Faces(None, subtopologies)
 	elif topologyType == "Shell":
-		_ = item.Shells(None, subtopologies)
+		_ = topology.Shells(None, subtopologies)
 	elif topologyType == "Cell":
-		_ = item.Cells(None, subtopologies)
+		_ = topology.Cells(None, subtopologies)
 	elif topologyType == "CellComplex":
-		_ = item.CellComplexes(None, subtopologies)
+		_ = topology.CellComplexes(None, subtopologies)
 	elif topologyType == "Aperture":
-		_ = item.Apertures(None, subtopologies)
+		_ = topology.Apertures(None, subtopologies)
 	else:
-		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies")
+		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies of type "+topologyType)
 	return subtopologies
 
-def recur(input, topologyType):
+def recur(topology, topologyType):
 	output = []
-	if input == None:
+	if topology == None:
 		return []
-	if isinstance(input, list):
-		for anItem in input:
+	if isinstance(topology, list):
+		for anItem in topology:
 			output.append(recur(anItem, topologyType))
 	else:
-		output = processItem(input, topologyType)
+		output = processItem([topology, topologyType])
 	return output
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Aperture", "Aperture", "", 8)]

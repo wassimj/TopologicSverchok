@@ -203,6 +203,7 @@ def nodes_index():
                 ("Topologic.DictionaryByKeysValues", "SvDictionaryByKeysValues"),
                 ("Topologic.DictionaryByMergedDictionaries", "SvDictionaryByMergedDictionaries"),
                 ("Topologic.DictionaryByObjectProperties", "SvDictionaryByObjectProperties"),
+                ("Topologic.DictionarySetValueAtKey", "SvDictionarySetValueAtKey"),
                 ("Topologic.DictionaryValueAtKey", "SvDictionaryValueAtKey"),
                 ("Topologic.DictionaryKeys", "SvDictionaryKeys"),
                 ("Topologic.DictionaryValues", "SvDictionaryValues"),
@@ -244,7 +245,8 @@ def nodes_index():
                 ("Topologic.MatrixByRotation", "SvMatrixByRotation"),
                 ("Topologic.MatrixByScaling", "SvMatrixByScaling"),
                 ("Topologic.MatrixByTranslation", "SvMatrixByTranslation"),
-                ("Topologic.MatrixMultiply", "SvMatrixMultiply")]
+                ("Topologic.MatrixMultiply", "SvMatrixMultiply"),
+                ("Topologic.Run", "SvTopologicRun")]
 
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces"),
@@ -300,6 +302,7 @@ def nodes_index():
                 ("Topologic.SpeckleCommitDelete", "SvSpeckleCommitDelete"),
                 ("Topologic.SpeckleCommitsByBranch", "SvSpeckleCommitsByBranch"),
                 ("Topologic.SpeckleGlobalsByStream", "SvSpeckleGlobalsByStream"),
+                ("Topologic.SpeckleObjects", "SvSpeckleObjects"),
                 ("Topologic.SpeckleReceive", "SvSpeckleReceive"),
                 ("Topologic.SpeckleSend", "SvSpeckleSend"),
                 ("Topologic.SpeckleSendObject", "SvSpeckleSendObject"),
@@ -675,6 +678,7 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
             ['SvDictionaryByKeysValues'],
             ['SvDictionaryByMergedDictionaries'],
             ['SvDictionaryByObjectProperties'],
+            ['SvDictionarySetValueAtKey'],
             ['SvDictionaryValueAtKey'],
             ['SvDictionaryKeys'],
             ['SvDictionaryValues'],
@@ -772,6 +776,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyTriangulate'],
             ['SvTopologyType'],
             ['SvTopologyTypeID'],
+            ['SvTopologicRun'],
         ])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
@@ -905,6 +910,7 @@ class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
             ['SvSpeckleCommitDelete'],
             ['SvSpeckleCommitsByBranch'],
             ['SvSpeckleGlobalsByStream'],
+            ['SvSpeckleObjects'],
             ['SvSpeckleReceive'],
             ['SvSpeckleSend'],
             ['SvSpeckleSendObject'],

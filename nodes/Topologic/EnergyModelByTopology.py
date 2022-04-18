@@ -5,144 +5,15 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from . import Replication
+from . import DictionaryValueAtKey
+from . import TopologySubTopologies
+
 try:
 	import openstudio
 except:
 	raise Exception("Error: Could not import openstudio.")
 import math
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
-
-def getSubTopologies(topology, subTopologyClass):
-    subTopologies = []
-    if subTopologyClass == topologic.Vertex:
-        _ = topology.Vertices(None, subTopologies)
-    elif subTopologyClass == topologic.Edge:
-        _ = topology.Edges(None, subTopologies)
-    elif subTopologyClass == topologic.Wire:
-        _ = topology.Wires(None, subTopologies)
-    elif subTopologyClass == topologic.Face:
-        _ = topology.Faces(None, subTopologies)
-    elif subTopologyClass == topologic.Shell:
-        _ = topology.Shells(None, subTopologies)
-    elif subTopologyClass == topologic.Cell:
-        _ = topology.Cells(None, subTopologies)
-    elif subTopologyClass == topologic.CellComplex:
-        _ = topology.CellComplexes(None, subTopologies)
-    return subTopologies
-
-def listAttributeValues(listAttribute):
-	listAttributes = listAttribute.ListValue()
-	returnList = []
-	for attr in listAttributes:
-		if isinstance(attr, topologic.IntAttribute):
-			returnList.append(attr.IntValue())
-		elif isinstance(attr, topologic.DoubleAttribute):
-			returnList.append(attr.DoubleValue())
-		elif isinstance(attr, topologic.StringAttribute):
-			returnList.append(attr.StringValue())
-	return returnList
-
-def valueAtKey(item, key):
-    if key:
-	    try:
-		    attr = item.ValueAtKey(key)
-	    except:
-		    raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
-	    if isinstance(attr, topologic.IntAttribute):
-		    return (attr.IntValue())
-	    elif isinstance(attr, topologic.DoubleAttribute):
-		    return (attr.DoubleValue())
-	    elif isinstance(attr, topologic.StringAttribute):
-		    return (attr.StringValue())
-	    elif isinstance(attr, topologic.ListAttribute):
-		    return (listAttributeValues(attr))
-	    else:
-		    return None
-    else:
-        return None
 
 def getKeyName(d, keyName):
     keys = d.Keys()
@@ -220,7 +91,7 @@ def processItem(item):
     osBuildingStorys.sort(key=lambda x: x.nominalZCoordinate().get())
     osSpaces = []
     spaceNames = []
-    for spaceNumber, buildingCell in enumerate(getSubTopologies(buildingTopology, topologic.Cell)):
+    for spaceNumber, buildingCell in enumerate(TopologySubTopologies.processItem([buildingTopology, "Cell"])):
         osSpace = openstudio.model.Space(osModel)
         osSpaceZ = buildingCell.CenterOfMass().Z()
         osBuildingStory = osBuildingStorys[0]
@@ -238,7 +109,7 @@ def processItem(item):
                 keyType = getKeyName(cellDictionary, roomTypeKey)
             else:
                 keyType = getKeyName(cellDictionary, 'type')
-            osSpaceTypeName = valueAtKey(cellDictionary,keyType)
+            osSpaceTypeName = DictionaryValueAtKey.processItem([cellDictionary,keyType])
             if osSpaceTypeName:
                 sp_ = osModel.getSpaceTypeByName(osSpaceTypeName)
                 if sp_.is_initialized():
@@ -250,8 +121,7 @@ def processItem(item):
                 keyName = getKeyName(cellDictionary, 'name')
             osSpaceName = None
             if keyName:
-                #osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName).replace(" ","_"), spaceNames, 1)
-                osSpaceName = createUniqueName(valueAtKey(cellDictionary,keyName),spaceNames, 1)
+                osSpaceName = createUniqueName(DictionaryValueAtKey.processItem([cellDictionary,keyName]),spaceNames, 1)
             if osSpaceName:
                 osSpace.setName(osSpaceName)
         else:
@@ -261,11 +131,11 @@ def processItem(item):
             if sp_.is_initialized():
                 osSpace.setSpaceType(sp_.get())
         spaceNames.append(osSpaceName)
-        cellFaces = getSubTopologies(buildingCell, topologic.Face)
+        cellFaces = TopologySubTopologies.processItem([buildingCell, "Face"])
         if cellFaces:
             for faceNumber, buildingFace in enumerate(cellFaces):
                 osFacePoints = []
-                for vertex in getSubTopologies(buildingFace.ExternalBoundary(), topologic.Vertex):
+                for vertex in TopologySubTopologies.processItem([buildingFace.ExternalBoundary(), "Vertex"]):
                     osFacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                 osSurface = openstudio.model.Surface(osFacePoints, osModel)
                 faceNormal = topologic.FaceUtility.NormalAtParameters(buildingFace, 0.5, 0.5)
@@ -282,7 +152,7 @@ def processItem(item):
                         osSurface.setSurfaceType("RoofCeiling")
                         osSurface.setOutsideBoundaryCondition("Outdoors")
                         osSurface.setName(osSpace.name().get() + "_TopHorizontalSlab_" + str(faceNumber))
-                        if max(list(map(lambda vertex: vertex.Z(), getSubTopologies(buildingFace, topologic.Vertex)))) < 1e-6:
+                        if max(list(map(lambda vertex: vertex.Z(), TopologySubTopologies.processItem([buildingFace, "Vertex"])))) < 1e-6:
                             osSurface.setSurfaceType("Floor")
                             osSurface.setOutsideBoundaryCondition("Ground")
                             osSurface.setName(osSpace.name().get() + "_BottomHorizontalSlab_" + str(faceNumber))
@@ -297,8 +167,9 @@ def processItem(item):
                         if len(apertures) > 0:
                             for aperture in apertures:
                                 osSubSurfacePoints = []
-                                apertureFace = getSubTopologies(aperture, topologic.Face)[0]
-                                for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                                #apertureFace = TopologySubTopologies.processItem([aperture, topologic.Face])[0]
+                                apertureFace = topologic.Aperture.Topology(aperture)
+                                for vertex in TopologySubTopologies.processItem([apertureFace.ExternalBoundary(), "Vertex"]):
                                     osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                                 osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
                                 apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
@@ -312,7 +183,7 @@ def processItem(item):
                                 # Get the dictionary keys
                                 keys = faceDictionary.Keys()
                                 if ('TOPOLOGIC_glazing_ratio' in keys):
-                                    faceGlazingRatio = valueAtKey(faceDictionary,'TOPOLOGIC_glazing_ratio')
+                                    faceGlazingRatio = DictionaryValueAtKey.processItem([faceDictionary,'TOPOLOGIC_glazing_ratio'])
                                     if faceGlazingRatio and faceGlazingRatio >= 0.01:
                                         osSurface.setWindowToWallRatio(faceGlazingRatio)
                                 else:
@@ -335,8 +206,9 @@ def processItem(item):
                     if len(apertures) > 0:
                         for aperture in apertures:
                             osSubSurfacePoints = []
-                            apertureFace = getSubTopologies(aperture, topologic.Face)[0]
-                            for vertex in getSubTopologies(apertureFace.ExternalBoundary(), topologic.Vertex):
+                            #apertureFace = TopologySubTopologies.processItem([aperture, "Face"])[0]
+                            apertureFace = topologic.Aperture.Topology(aperture)
+                            for vertex in TopologySubTopologies.processItem([apertureFace.ExternalBoundary(), "Vertex"]):
                                 osSubSurfacePoints.append(openstudio.Point3d(vertex.X(), vertex.Y(), vertex.Z()))
                             osSubSurface = openstudio.model.SubSurface(osSubSurfacePoints, osModel)
                             apertureFaceNormal = topologic.FaceUtility.NormalAtParameters(apertureFace, 0.5, 0.5)
@@ -362,9 +234,9 @@ def processItem(item):
 
     osShadingGroup = openstudio.model.ShadingSurfaceGroup(osModel)
     if not isinstance(shadingSurfaces,int):
-        for faceIndex, shadingFace in enumerate(getSubTopologies(shadingSurfaces, topologic.Face)):
+        for faceIndex, shadingFace in enumerate(TopologySubTopologies.processItem([shadingSurfaces, "Face"])):
             facePoints = []
-            for aVertex in getSubTopologies(shadingFace.ExternalBoundary(), topologic.Vertex):
+            for aVertex in TopologySubTopologies.processItem([shadingFace.ExternalBoundary(), "Vertex"]):
                 facePoints.append(openstudio.Point3d(aVertex.X(), aVertex.Y(), aVertex.Z()))
             aShadingSurface = openstudio.model.ShadingSurface(facePoints, osModel)
             faceNormal = topologic.FaceUtility.NormalAtParameters(shadingFace, 0.5, 0.5)
@@ -447,36 +319,36 @@ class SvEnergyModelByTopology(bpy.types.Node, SverchCustomTreeNode):
 
 
 
-        modelList = flatten(modelList)
-        weatherFileList = flatten(weatherFileList)
-        ddyFileList = flatten(ddyFileList)
-        buildingTopologyList = flatten(buildingTopologyList)
-        shadingList = flatten(shadingList)
+        modelList = Replication.flatten(modelList)
+        weatherFileList = Replication.flatten(weatherFileList)
+        ddyFileList = Replication.flatten(ddyFileList)
+        buildingTopologyList = Replication.flatten(buildingTopologyList)
+        shadingList = Replication.flatten(shadingList)
         #floorLevelsList does not need flattening
-        buildingNameList = flatten(buildingNameList)
-        buildingTypeList = flatten(buildingTypeList)
-        defaultSpaceList = flatten(defaultSpaceList)
-        northAxisList = flatten(northAxisList)
-        glazingRatioList = flatten(glazingRatioList)
-        coolingTempList = flatten(coolingTempList)
-        heatingTempList = flatten(heatingTempList)
-        roomNameKeyList = flatten(roomNameKeyList)
-        roomTypeKeyList = flatten(roomTypeKeyList)
+        buildingNameList = Replication.flatten(buildingNameList)
+        buildingTypeList = Replication.flatten(buildingTypeList)
+        defaultSpaceList = Replication.flatten(defaultSpaceList)
+        northAxisList = Replication.flatten(northAxisList)
+        glazingRatioList = Replication.flatten(glazingRatioList)
+        coolingTempList = Replication.flatten(coolingTempList)
+        heatingTempList = Replication.flatten(heatingTempList)
+        roomNameKeyList = Replication.flatten(roomNameKeyList)
+        roomTypeKeyList = Replication.flatten(roomTypeKeyList)
         inputs = [modelList, weatherFileList, ddyFileList, buildingTopologyList, shadingList, floorLevelsList, buildingNameList, buildingTypeList, defaultSpaceList, northAxisList, glazingRatioList, coolingTempList, heatingTempList, roomNameKeyList, roomTypeKeyList]
         if ((self.Replication) == "Default"):
-            inputs = iterate(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.iterate(inputs)
+            inputs = Replication.transposeList(inputs)
         if ((self.Replication) == "Trim"):
-            inputs = trim(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.trim(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Iterate"):
-            inputs = iterate(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.iterate(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Repeat"):
-            inputs = repeat(inputs)
-            inputs = transposeList(inputs)
+            inputs = Replication.repeat(inputs)
+            inputs = Replication.transposeList(inputs)
         elif ((self.Replication) == "Interlace"):
-            inputs = list(interlace(inputs))
+            inputs = list(Replication.interlace(inputs))
         outputs = []
         for anInput in inputs:
             outputs.append(processItem(anInput))

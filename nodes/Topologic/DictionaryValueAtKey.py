@@ -5,16 +5,7 @@ from sverchok.data_structure import updateNode
 
 #from topologic import Dictionary, Attribute, AttributeManager, IntAttribute, DoubleAttribute, StringAttribute
 from topologic import Dictionary, IntAttribute, DoubleAttribute, StringAttribute, ListAttribute
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
+from . import Replication
 
 def listAttributeValues(listAttribute):
 	listAttributes = listAttribute.ListValue()
@@ -30,12 +21,13 @@ def listAttributeValues(listAttribute):
 			returnList.append(attr)
 	return returnList
 
-def processItem(item, key):
+def processItem(item):
+	d, key = item
 	try:
-		if isinstance(item, dict):
-			attr = item[key]
-		elif isinstance(item, Dictionary):
-			attr = item.ValueAtKey(key)
+		if isinstance(d, dict):
+			attr = d[key]
+		elif isinstance(d, Dictionary):
+			attr = d.ValueAtKey(key)
 	except:
 		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
 	if isinstance(attr, IntAttribute):
@@ -74,11 +66,11 @@ class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.inputs):
 			return
 		
-		DictionaryList = flatten(self.inputs['Dictionary'].sv_get(deepcopy=True))
-		key = flatten(self.inputs['Key'].sv_get(deepcopy=True))[0]
+		DictionaryList = Replication.flatten(self.inputs['Dictionary'].sv_get(deepcopy=True))
+		key = Replication.flatten(self.inputs['Key'].sv_get(deepcopy=True))[0]
 		outputs = []
 		for aDict in DictionaryList:
-			outputs.append(processItem(aDict, key))
+			outputs.append(processItem([aDict, key]))
 		self.outputs['Value'].sv_set(outputs)
 
 def register():
