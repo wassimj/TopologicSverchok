@@ -61,10 +61,6 @@ import os
 import json
 import random
 
-try:
-	import openstudio
-except:
-	raise Exception("Error: Could not import openstudio.")
 import math
 
 

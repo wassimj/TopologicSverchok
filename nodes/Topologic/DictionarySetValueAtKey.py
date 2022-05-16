@@ -45,7 +45,7 @@ def processTopologicDictionary(item, key, value):
 		if k == key:
 			values.append(value)
 		else:
-			values.append(DictionaryValueAtKey.processItem(item, k))
+			values.append(DictionaryValueAtKey.processItem([item, k]))
 	return DictionaryByKeysValues.processKeysValues(keys, values)
 
 def processItem(item, key, value):

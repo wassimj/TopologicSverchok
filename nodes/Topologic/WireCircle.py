@@ -97,7 +97,7 @@ originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)
 class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Cylinder (Cell) from the input parameters    
+	Tooltip: Creates a circle (Wire) from the input parameters    
 	"""
 	bl_idname = 'SvWireCircle'
 	bl_label = 'Wire.Circle'

@@ -104,9 +104,7 @@ def unitizeVector(vector):
 	return unitVector
 
 def processItem(item):
-	face = item[0]
-	direction = item[1]
-	asVertex = item[2]
+	face, direction, asVertex, tol = item
 
 	faceNormal = topologic.FaceUtility.NormalAtParameters(face,0.5, 0.5)
 	faceCenter = topologic.FaceUtility.VertexAtParameters(face,0.5,0.5)
@@ -125,7 +123,7 @@ def processItem(item):
 	uV = unitizeVector(dV)
 	dot = sum([i*j for (i, j) in zip(uV, faceNormal)])
 	ang = math.degrees(math.acos(dot))
-	if dot < 0:
+	if dot < tol:
 		return [False, ang]
 	return [True, ang]
 
@@ -138,11 +136,12 @@ class SvFaceFacingToward(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Face.FacingToward'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	AsVertexProp: BoolProperty(name="As Vertex", default=True, update=updateNode)
-
+	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Direction')
 		self.inputs.new('SvStringsSocket', 'AsVertex').prop_name = 'AsVertexProp'
+		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Status')
 		self.outputs.new('SvStringsSocket', 'Angle')
 
@@ -159,11 +158,13 @@ class SvFaceFacingToward(bpy.types.Node, SverchCustomTreeNode):
 		faceList = self.inputs['Face'].sv_get(deepcopy=False)
 		directionList = self.inputs['Direction'].sv_get(deepcopy=False)
 		asVertexList = self.inputs['AsVertex'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tol'].sv_get(deepcopy=True)
 
 		faceList = flatten(faceList)
 		directionList = flatten(directionList)
 		asVertexList = flatten(asVertexList)
-		inputs = [faceList, directionList, asVertexList]
+		toleranceList = flatten(toleranceList)
+		inputs = [faceList, directionList, asVertexList, toleranceList]
 		if ((self.Replication) == "Default"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)

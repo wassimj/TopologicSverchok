@@ -7,178 +7,64 @@ import idprop
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
 import time
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
+from . import Replication
+from . import DictionaryByKeysValues
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-def listAttributeValues(listAttribute):
-	listAttributes = listAttribute.ListValue()
-	returnList = []
-	for attr in listAttributes:
-		if isinstance(attr, topologic.IntAttribute):
-			returnList.append(attr.IntValue())
-		elif isinstance(attr, topologic.DoubleAttribute):
-			returnList.append(attr.DoubleValue())
-		elif isinstance(attr, topologic.StringAttribute):
-			returnList.append(attr.StringValue())
-	return returnList
-
-def valueAtKey(item, key):
-	try:
-		attr = item.ValueAtKey(key)
-	except:
-		raise Exception("Dictionary.ValueAtKey - Error: Could not retrieve a Value at the specified key ("+key+")")
-	if isinstance(attr, topologic.IntAttribute):
-		return (attr.IntValue())
-	elif isinstance(attr, topologic.DoubleAttribute):
-		return (attr.DoubleValue())
-	elif isinstance(attr, topologic.StringAttribute):
-		return (attr.StringValue())
-	elif isinstance(attr, topologic.ListAttribute):
-		return (listAttributeValues(attr))
-	else:
-		return None
-
-def processKeysValues(keys, values):
-	if len(keys) != len(values):
-		raise Exception("DictionaryByKeysValues - Keys and Values do not have the same length")
-	stl_keys = []
-	stl_values = []
-	for i in range(len(keys)):
-		if keys[i] in '_RNA_UI':
-			continue
-		if isinstance(keys[i], str):
-			stl_keys.append(keys[i])
-		else:
-			stl_keys.append(str(keys[i]))
-		if isinstance(values[i], list) and len(values[i]) == 1:
-			value = values[i][0]
-		else:
-			value = values[i]
-		if isinstance(value, idprop.types.IDPropertyArray):
-			value = value.to_list()
-		if isinstance(value, bool):
-			if value == False:
-				stl_values.append(topologic.IntAttribute(0))
-			else:
-				stl_values.append(topologic.IntAttribute(1))
-		elif isinstance(value, int):
-			stl_values.append(topologic.IntAttribute(value))
-		elif isinstance(value, float):
-			stl_values.append(topologic.DoubleAttribute(value))
-		elif isinstance(value, str):
-			stl_values.append(topologic.StringAttribute(value))
-		elif isinstance(value, list):
-			l = []
-			for v in value:
-				if isinstance(v, bool):
-					l.append(topologic.IntAttribute(v))
-				elif isinstance(v, int):
-					l.append(topologic.IntAttribute(v))
-				elif isinstance(v, float):
-					l.append(topologic.DoubleAttribute(v))
-				elif isinstance(v, str):
-					l.append(topologic.StringAttribute(v))
-			stl_values.append(topologic.ListAttribute(l))
-		else:
-			stl_values.append(topologic.StringAttribute(str(value)))
-	myDict = topologic.Dictionary.ByKeysValues(stl_keys, stl_values)
-	return myDict
-
 def processItem(item):
-	blenderObject = item[0]
-	keys = item[1]
+	bObject, keys, importAll = item
 	dictKeys = []
 	dictValues = []
-	for aKey in keys:
-		value = blenderObject[aKey]
-		if value:
-			dictKeys.append(aKey)
-			dictValues.append(value)
-	return processKeysValues(dictKeys, dictValues)
+
+	if importAll:
+		dictKeys.append("Name")
+		dictValues.append(bObject.name)
+		dictKeys.append("Color")
+		dictValues.append([bObject.color[0], bObject.color[1], bObject.color[2], bObject.color[3]])
+		dictKeys.append("Location")
+		dictValues.append([bObject.location[0], bObject.location[1], bObject.location[2]])
+		dictKeys.append("Scale")
+		dictValues.append([bObject.scale[0], bObject.scale[1], bObject.scale[2]])
+		dictKeys.append("Rotation")
+		dictValues.append([bObject.rotation_euler[0], bObject.rotation_euler[1], bObject.rotation_euler[2]])
+		dictKeys.append("Dimensions")
+		dictValues.append([bObject.dimensions[0], bObject.dimensions[1], bObject.dimensions[2]])
+		for k, v in bObject.items():
+			if isinstance(v, bool) or isinstance(v, int) or isinstance(v, float) or isinstance(v, str):
+				dictKeys.append(str(k))
+				dictValues.append(v)
+	else:
+		for k in keys:
+			try:
+				v = bObject[k]
+				if v:
+					if isinstance(v, bool) or isinstance(v, int) or isinstance(v, float) or isinstance(v, str):
+						dictKeys.append(str(k))
+						dictValues.append(v)
+			except:
+				if k.lower() == "name":
+					dictKeys.append("Name")
+					dictValues.append(bObject.name)
+				elif k.lower() == "color":
+					dictKeys.append("Color")
+					dictValues.append([bObject.color[0], bObject.color[1], bObject.color[2], bObject.color[3]])
+				elif k.lower() == "location":
+					dictKeys.append("Location")
+					dictValues.append([bObject.location[0], bObject.location[1], bObject.location[2]])
+				elif k.lower() == "scale":
+					dictKeys.append("Scale")
+					dictValues.append([bObject.scale[0], bObject.scale[1], bObject.scale[2]])
+				elif k.lower() == "rotation":
+					dictKeys.append("Rotation")
+					dictValues.append([bObject.rotation_euler[0], bObject.rotation_euler[1], bObject.rotation_euler[2]])
+				elif k.lower() == "dimensions":
+					dictKeys.append("Dimensions")
+					dictValues.append([bObject.dimensions[0], bObject.dimensions[1], bObject.dimensions[2]])
+				else:
+					raise Exception("Dictionary.ByObjectProperties: Key \""+k+"\" does not exist in the properties of object \""+bObject.name+"\".")
+
+	return DictionaryByKeysValues.processItem([dictKeys, dictValues])
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -186,15 +72,17 @@ class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
 
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a dictionary from the properties of the input Blender Object
+	Tooltip: Creates a dictionary from the custom properties of the input Blender Object
 	"""
 	bl_idname = 'SvDictionaryByObjectProperties'
 	bl_label = 'Dictionary.ByObjectProperties'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	ImportAllProp: BoolProperty(name="Import All", description="Import all Object Properties", default=False, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Object')
 		self.inputs.new('SvStringsSocket', 'Key')
+		self.inputs.new('SvStringsSocket', 'Import All').prop_name='ImportAllProp'
 		self.outputs.new('SvStringsSocket', 'Dictionary')
 
 	def draw_buttons(self, context, layout):
@@ -204,27 +92,29 @@ class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Dictionary'].sv_set([])
-			return
 		objectList = self.inputs['Object'].sv_get(deepcopy=True)
-		objectList = flatten(objectList)
-		keyList = self.inputs['Key'].sv_get(deepcopy=True)
-		inputs = [objectList, keyList]
+		objectList = Replication.flatten(objectList)
+		if (self.inputs['Key'].is_linked):
+			keyList = self.inputs['Key'].sv_get(deepcopy=True)
+		else:
+			keyList = [['']]
+		importAllList = self.inputs['Import All'].sv_get(deepcopy=True)
+		importAllList = Replication.flatten(importAllList)
+		inputs = [objectList, keyList, importAllList]
 		if ((self.Replication) == "Default"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
+			inputs = Replication.trim(inputs)
+			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
+			inputs = Replication.repeat(inputs)
+			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
+			inputs = list(Replication.interlace(inputs))
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput))

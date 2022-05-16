@@ -122,7 +122,6 @@ class SvVertexProject(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		vertexList = flatten(vertexList)
 		faceList = self.inputs['Face'].sv_get(deepcopy=False)
 		faceList = flatten(faceList)
 		inputs = [vertexList, faceList]

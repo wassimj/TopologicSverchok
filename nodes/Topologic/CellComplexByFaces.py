@@ -19,7 +19,6 @@ def flatten(element):
 
 def processItem(faces, tol):
 	cellComplex = topologic.CellComplex.ByFaces(faces, tol, False)
-	print("CellComplexByFaces: cellComplex", cellComplex)
 	if not cellComplex:
 		warnings.warn("Warning: Default CellComplex.ByFaces method failed. Attempting to Merge the Faces.", UserWarning)
 		cellComplex = faces[0]
