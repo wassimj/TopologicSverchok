@@ -19,16 +19,22 @@ def flatten(element):
 	return returnList
 
 def processItem(item, tol):
-	#faces = [topologic.Face.ByExternalBoundary(item[0])]
 	faces = []
 	for i in range(len(item)-1):
 		wire1 = item[i]
 		wire2 = item[i+1]
-		#faces.append(topologic.Face.ByExternalBoundary(wire2))
-		w1_edges = []
-		_ = wire1.Edges(None, w1_edges)
-		w2_edges = []
-		_ = wire2.Edges(None, w2_edges)
+		if wire1.Type() < topologic.Edge.Type() or wire2.Type() < topologic.Edge.Type():
+			raise Exception("Shell.ByLoft - Error: the input topology is not the correct type.")
+		if wire1.Type() == topologic.Edge.Type():
+			w1_edges = [wire1]
+		else:
+			w1_edges = []
+			_ = wire1.Edges(None, w1_edges)
+		if wire2.Type() == topologic.Edge.Type():
+			w2_edges = [wire2]
+		else:
+			w2_edges = []
+			_ = wire2.Edges(None, w2_edges)
 		if len(w1_edges) != len(w2_edges):
 			raise Exception("Shell.ByLoft - Error: The two wires do not have the same number of edges.")
 		for j in range (len(w1_edges)):

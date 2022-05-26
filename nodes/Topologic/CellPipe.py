@@ -123,27 +123,33 @@ def processItem(item):
 	endcapA = item[5]
 	endcapB = item[6]
 
+	length = topologic.EdgeUtility.Length(edge)
 	origin = edge.StartVertex()
-	x1 = origin.X()
-	y1 = origin.Y()
-	z1 = origin.Z()
-	x2 = edge.EndVertex().X()
-	y2 = edge.EndVertex().Y()
-	z2 = edge.EndVertex().Z()
+	startU = startOffset / length
+	endU = 1.0 - (endOffset / length)
+	sv = topologic.EdgeUtility.PointAtParameter(edge, startU)
+	ev = topologic.EdgeUtility.PointAtParameter(edge, endU)
+	new_edge = topologic.Edge.ByStartVertexEndVertex(sv, ev)
+	x1 = sv.X()
+	y1 = sv.Y()
+	z1 = sv.Z()
+	x2 = ev.X()
+	y2 = ev.Y()
+	z2 = ev.Z()
 	dx = x2 - x1
 	dy = y2 - y1
-	dz = z2 - z1    
+	dz = z2 - z1
 	dist = math.sqrt(dx**2 + dy**2 + dz**2)
-
 	baseV = []
 	topV = []
+
 	for i in range(sides):
 		angle = math.radians(360/sides)*i
-		x = math.sin(angle)*radius + origin.X()
-		y = math.cos(angle)*radius + origin.Y()
-		z = origin.Z()
-		baseV.append(topologic.Vertex.ByCoordinates(x,y,z+startOffset))
-		topV.append(topologic.Vertex.ByCoordinates(x,y,z+dist-endOffset))
+		x = math.sin(angle)*radius + sv.X()
+		y = math.cos(angle)*radius + sv.Y()
+		z = sv.Z()
+		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
+		topV.append(topologic.Vertex.ByCoordinates(x,y,z+dist))
 
 	baseWire = wireByVertices(baseV)
 	topWire = wireByVertices(topV)
@@ -154,11 +160,27 @@ def processItem(item):
 		theta = 0
 	else:
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
-	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta)
-	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi)
+	cyl = topologic.TopologyUtility.Rotate(cyl, sv, 0, 1, 0, theta)
+	cyl = topologic.TopologyUtility.Rotate(cyl, sv, 0, 0, 1, phi)
 	zzz = topologic.Vertex.ByCoordinates(0,0,0)
 	returnList = [cyl]
 	if endcapA:
+		origin = edge.StartVertex()
+		x1 = origin.X()
+		y1 = origin.Y()
+		z1 = origin.Z()
+		x2 = edge.EndVertex().X()
+		y2 = edge.EndVertex().Y()
+		z2 = edge.EndVertex().Z()
+		dx = x2 - x1
+		dy = y2 - y1
+		dz = z2 - z1    
+		dist = math.sqrt(dx**2 + dy**2 + dz**2)
+		phi = math.degrees(math.atan2(dy, dx)) # Rotation around Y-Axis
+		if dist < 0.0001:
+			theta = 0
+		else:
+			theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 		endcapA = topologic.Topology.DeepCopy(endcapA)
 		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 1, 0, theta)
 		endcapA = topologic.TopologyUtility.Rotate(endcapA, zzz, 0, 0, 1, phi + 180)

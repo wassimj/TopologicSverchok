@@ -15,28 +15,26 @@
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
+from bpy.props import IntProperty, FloatProperty, BoolProperty, StringProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
+from . import Replication, WireByVertices
 
-def wireByVertices(vList):
-	edges = []
-	for i in range(len(vList)-1):
-		edges.append(topologic.Edge.ByStartVertexEndVertex(vList[i], vList[i+1]))
-	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
-	return topologic.Wire.ByEdges(edges)
 
 def processItem(item, originLocation):
-	origin = item[0]
-	radius = item[1]
-	sides = item[2]
-	dirX = item[3]
-	dirY = item[4]
-	dirZ = item[5]
+	origin, \
+	radius, \
+	sides, \
+	fromAngle, \
+	toAngle, \
+	close, \
+	dirX, \
+	dirY, \
+	dirZ = item
 	baseV = []
 	topV = []
 	xOffset = 0
@@ -44,8 +42,16 @@ def processItem(item, originLocation):
 
 	xList = []
 	yList = []
-	for i in range(sides):
-		angle = math.radians(360/sides)*i
+	if toAngle < fromAngle:
+		toAngle += 360
+	elif toAngle == fromAngle:
+		raise Exception("Wire.Circle - Error: To angle cannot be equal to the From Angle")
+	angleRange = toAngle - fromAngle
+	fromAngle = math.radians(fromAngle)
+	toAngle = math.radians(toAngle)
+	sides = int(math.floor(sides))
+	for i in range(sides+1):
+		angle = fromAngle + math.radians(angleRange/sides)*i
 		x = math.sin(angle)*radius + origin.X()
 		y = math.cos(angle)*radius + origin.Y()
 		z = origin.Z()
@@ -53,7 +59,8 @@ def processItem(item, originLocation):
 		yList.append(y)
 		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
 
-	baseWire = wireByVertices(baseV[::-1]) #reversing the list so that the normal points up in Blender
+	baseWire = WireByVertices.processItem([baseV[::-1], close]) #reversing the list so that the normal points up in Blender
+
 	if originLocation == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
@@ -77,22 +84,8 @@ def processItem(item, originLocation):
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
 	return baseWire
 
-def matchLengths(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
 originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -101,20 +94,27 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireCircle'
 	bl_label = 'Wire.Circle'
-	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
-	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
-	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
-	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
-	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	RadiusProp: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
+	SidesProp: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
+	FromProp: FloatProperty(name="From", description="The start angle of the ellipse", default=0, min=0, max=360, precision=4, update=updateNode)
+	ToProp: FloatProperty(name="To", description="The end angle of the ellipse", default=360, min=0, max=360, precision=4, update=updateNode)
+	CloseProp: BoolProperty(name="Close", description="Do you wish to close the returned Wire?", default=True, update=updateNode)
+	DirXProp: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
+	DirYProp: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
+	DirZProp: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
-		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
-		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
-		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
-		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
+		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'RadiusProp'
+		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'SidesProp'
+		self.inputs.new('SvStringsSocket', 'From').prop_name = 'FromProp'
+		self.inputs.new('SvStringsSocket', 'To').prop_name = 'ToProp'
+		self.inputs.new('SvStringsSocket', 'Close').prop_name = 'CloseProp'
+		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirXProp'
+		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirYProp'
+		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZProp'
 		self.outputs.new('SvStringsSocket', 'Wire')
 
 	def draw_buttons(self, context, layout):
@@ -127,15 +127,37 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)[0]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)[0]
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
-		matchLengths([originList, radiusList, sidesList, dirXList, dirYList, dirZList])
-		newInputs = zip(originList, radiusList, sidesList, dirXList, dirYList, dirZList)
+			originList = Replication.flatten(originList)
+		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
+		radiusList = Replication.flatten(radiusList)
+		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
+		sidesList = Replication.flatten(sidesList)
+		fromList = self.inputs['From'].sv_get(deepcopy=True)
+		fromList = Replication.flatten(fromList)
+		toList = self.inputs['To'].sv_get(deepcopy=True)
+		toList = Replication.flatten(toList)
+		closeList = self.inputs['Close'].sv_get(deepcopy=True)
+		closeList = Replication.flatten(closeList)
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
+		dirXList = Replication.flatten(dirXList)
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
+		dirYList = Replication.flatten(dirYList)
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
+		dirZList = Replication.flatten(dirZList)
+		inputs = [originList, radiusList, sidesList, fromList, toList, closeList, dirXList, dirYList, dirZList]
+		if ((self.Replication) == "Trim"):
+			inputs = Replication.trim(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = Replication.repeat(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(Replication.interlace(inputs))
 		outputs = []
-		for anInput in newInputs:
+		for anInput in inputs:
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Wire'].sv_set(outputs)
 

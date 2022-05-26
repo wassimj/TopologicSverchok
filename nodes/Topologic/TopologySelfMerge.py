@@ -7,6 +7,8 @@ import topologic
 import time
 
 def processItem(item):
+	if item.Type() != 128:
+		item = topologic.Cluster.ByTopologies([item])
 	resultingTopologies = []
 	topCC = []
 	_ = item.CellComplexes(None, topCC)
@@ -55,7 +57,7 @@ def processItem(item):
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 1:
 		edge = topEdges[0]
 		ccVertices = []
-		_ = wire.Vertices(None, ccVertices)
+		_ = edge.Vertices(None, ccVertices)
 		if len(topVertices) == len(ccVertices):
 			resultingTopologies.append(edge)
 	if len(topCC) == 0 and len(topCells) == 0 and len(topShells) == 0 and len(topFaces) == 0 and len(topWires) == 0 and len(topEdges) == 0 and len(topVertices) == 1:

@@ -15,13 +15,13 @@
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from bpy.props import IntProperty, FloatProperty, StringProperty, EnumProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-from . import Replication
+from . import Replication, WireByVertices
 import math
 
 def wireByVertices(vList):
@@ -33,25 +33,25 @@ def wireByVertices(vList):
 
 def processItem(item, originLocation, inputMode):
 	if inputMode == "Width and Length":
-		origin, w, l, sides, dirX, dirY, dirZ = item
+		origin, w, l, sides, fromAngle, toAngle, close, dirX, dirY, dirZ = item
 		a = w/2
 		b = l/2
 		c = math.sqrt(abs(b**2 - a**2))
 		e = c/a
 	elif inputMode == "Focal Length and Eccentricity":
-		origin, c, e, sides, dirX, dirY, dirZ = item
+		origin, c, e, sides, fromAngle, toAngle, close, dirX, dirY, dirZ = item
 		a = c/e
 		b = math.sqrt(abs(a**2 - c**2))
 		w = a*2
 		l = b*2
 	elif inputMode == "Focal Length and Minor Axis Length":
-		origin, c, b, sides, dirX, dirY, dirZ = item
+		origin, c, b, sides, fromAngle, toAngle, close, dirX, dirY, dirZ = item
 		a = math.sqrt(abs(b**2 + c**2))
 		e = c/a
 		w = a*2
 		l = b*2
 	elif inputMode == "Major Axis Length and Minor Axis Length":
-		origin, a, b, sides, dirX, dirY, dirZ = item
+		origin, a, b, sides, fromAngle, toAngle, close, dirX, dirY, dirZ = item
 		c = math.sqrt(abs(b**2 - a**2))
 		e = c/a
 		w = a*2
@@ -65,8 +65,17 @@ def processItem(item, originLocation, inputMode):
 	xList = []
 	yList = []
 
-	for i in range(sides):
-		angle = math.radians(360/sides)*i
+	if toAngle < fromAngle:
+		toAngle += 360
+	elif toAngle == fromAngle:
+		raise Exception("Wire.Ellipse - Error: To angle cannot be equal to the From Angle")
+
+	angleRange = toAngle - fromAngle
+	fromAngle = math.radians(fromAngle)
+	toAngle = math.radians(toAngle)
+	sides = int(math.floor(sides))
+	for i in range(sides+1):
+		angle = fromAngle + math.radians(angleRange/sides)*i
 		x = math.sin(angle)*a + origin.X()
 		y = math.cos(angle)*b + origin.Y()
 		z = origin.Z()
@@ -74,7 +83,8 @@ def processItem(item, originLocation, inputMode):
 		yList.append(y)
 		baseV.append(topologic.Vertex.ByCoordinates(x,y,z))
 
-	ellipse = wireByVertices(baseV[::-1]) #reversing the list so that the normal points up in Blender
+	ellipse = WireByVertices.processItem([baseV[::-1], close]) #reversing the list so that the normal points up in Blender
+
 	if originLocation == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
@@ -147,10 +157,13 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 	MinorAxisLengthProp: FloatProperty(name="Minor Axis Length", description="The length of the minor axis of the ellipse", default=0.5, min=0.0001, precision=4, update=updateNode)
 	WidthProp: FloatProperty(name="Width", description="The width of the ellipse", default=2, min=0.0001, precision=4, update=updateNode)
 	LengthProp: FloatProperty(name="Length", description="The length of the ellipse", default=1, min=0.0001, precision=4, update=updateNode)
-	Sides: IntProperty(name="Sides", default=32, min=4, update=updateNode)
-	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
-	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
-	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
+	FromProp: FloatProperty(name="From", description="The start angle of the ellipse", default=0, min=0, max=360, precision=4, update=updateNode)
+	ToProp: FloatProperty(name="To", description="The end angle of the ellipse", default=360, min=0, max=360, precision=4, update=updateNode)
+	SidesProp: IntProperty(name="Sides", default=32, min=4, update=updateNode)
+	CloseProp: BoolProperty(name="Close", description="Do you wish to close the returned Wire?", default=True, update=updateNode)
+	DirXProp: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
+	DirYProp: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
+	DirZProp: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
 	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Width and Length", update=update_sockets)
 
@@ -162,10 +175,13 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Minor Axis Length').prop_name = 'MinorAxisLengthProp'
 		self.inputs.new('SvStringsSocket', 'Width').prop_name = 'WidthProp'
 		self.inputs.new('SvStringsSocket', 'Length').prop_name = 'LengthProp'
-		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
-		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
-		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
-		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
+		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'SidesProp'
+		self.inputs.new('SvStringsSocket', 'From').prop_name = 'FromProp'
+		self.inputs.new('SvStringsSocket', 'To').prop_name = 'ToProp'
+		self.inputs.new('SvStringsSocket', 'Close').prop_name = 'CloseProp'
+		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirXProp'
+		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirYProp'
+		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZProp'
 		self.outputs.new('SvStringsSocket', 'Ellipse')
 		self.outputs.new('SvStringsSocket', 'Foci')
 		self.outputs.new('SvStringsSocket', 'Focal Length')
@@ -213,13 +229,19 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 			inputs = [majorAxisLengthList, minorAxisLengthList]
 		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
 		sidesList = Replication.flatten(sidesList)
+		fromList = self.inputs['From'].sv_get(deepcopy=True)
+		fromList = Replication.flatten(fromList)
+		toList = self.inputs['To'].sv_get(deepcopy=True)
+		toList = Replication.flatten(toList)
+		closeList = self.inputs['Close'].sv_get(deepcopy=True)
+		closeList = Replication.flatten(closeList)
 		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
 		dirXList = Replication.flatten(dirXList)
 		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
 		dirYList = Replication.flatten(dirYList)
 		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
 		dirZList = Replication.flatten(dirZList)
-		inputs = [originList,inputs[0], inputs[1],sidesList,dirXList,dirYList,dirZList]
+		inputs = [originList,inputs[0], inputs[1],sidesList, fromList, toList, closeList, dirXList,dirYList,dirZList]
 		if ((self.Replication) == "Trim"):
 			inputs = Replication.trim(inputs)
 			inputs = Replication.transposeList(inputs)

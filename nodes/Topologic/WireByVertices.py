@@ -29,9 +29,7 @@ def processItem(item):
 				edges.append(e)
 		except:
 			pass
-	print("Edges:", edges)
 	if len(edges) > 0:
-		print(edges)
 		c = topologic.Cluster.ByTopologies(edges, False)
 		return TopologySelfMerge.processItem(c)
 	else:

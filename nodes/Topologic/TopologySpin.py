@@ -5,10 +5,10 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-from . import Replication, ShellByLoft, CellComplexByLoft
+from . import Replication, ShellByLoft, CellComplexByLoft, TopologySelfMerge, WireByVertices
 
 def processItem(item):
-	wire, \
+	topology, \
 	origin, \
 	x, \
 	y, \
@@ -16,14 +16,44 @@ def processItem(item):
 	degree, \
 	sides, \
 	tolerance = item
-	wires = []
+	topologies = []
 	unit_degree = degree / float(sides)
 	for i in range(sides+1):
-		wires.append(topologic.TopologyUtility.Rotate(wire, origin, x, y, z, unit_degree*i))
-	if wire.IsClosed():
-		return CellComplexByLoft.processItem(wires, tolerance)
+		topologies.append(topologic.TopologyUtility.Rotate(topology, origin, x, y, z, unit_degree*i))
+	returnTopology = None
+	if topology.Type() == topologic.Vertex.Type():
+		returnTopology = WireByVertices.processItem([topologies, False])
+	elif topology.Type() == topologic.Edge.Type():
+		try:
+			returnTopology = ShellByLoft.processItem(topologies, tolerance)
+		except:
+			try:
+				returnTopology = topologic.Cluster.ByTopologies(topologies)
+			except:
+				returnTopology = None
+	elif topology.Type() == topologic.Wire.Type():
+		if topology.IsClosed():
+			try:
+				returnTopology = CellComplexByLoft.processItem(topologies, tolerance)
+			except:
+				try:
+					returnTopology = ShellByLoft.processItem(topologies, tolerance)
+				except:
+					try:
+						returnTopology = topologic.Cluster.ByTopologies(topologies)
+					except:
+						returnTopology = None
+		else:
+			try:
+				returnTopology = ShellByLoft.processItem(topologies, tolerance)
+			except:
+				try:
+					returnTopology = topologic.Cluster.ByTopologies(topologies)
+				except:
+					returnTopology = None
 	else:
-		return ShellByLoft.processItem(wires, tolerance)
+		returnTopology = TopologySelfMerge.processItem(topologic.Cluster.ByTopologies(topologies))
+	return returnTopology
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
@@ -43,7 +73,7 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Wire')
+		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Origin')
 		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
 		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
@@ -57,7 +87,7 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 		originList = []
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		wireList = self.inputs['Wire'].sv_get(deepcopy=True)
+		wireList = self.inputs['Topology'].sv_get(deepcopy=True)
 		wireList = Replication.flatten(wireList)
 		if (self.inputs['Origin'].is_linked):
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)

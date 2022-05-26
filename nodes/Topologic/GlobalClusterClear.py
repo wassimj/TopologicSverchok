@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary, Aperture
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -57,6 +57,7 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
+			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -92,62 +93,43 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	face = item[0]
-	vertex = item[1]
-	params = topologic.FaceUtility.ParametersAtVertex(face, vertex)
-	return [params[0], params[1]]
+	gc = topologic.GlobalCluster.GetInstance()
+	subTopologies = []
+	_ = gc.SubTopologies(subTopologies)
+	for aSubTopology in subTopologies:
+		gc.RemoveTopology(aSubTopology)
+	return item
 
-replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
-
-class SvFaceVertexParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvGlobalClusterClear(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the UV parameters of the input Vertex within the input Face    
+	Tooltip: Clears the Global Cluster    
 	"""
-	bl_idname = 'SvFaceVertexParameters'
-	bl_label = 'Face.FaceVertexParameters'
-	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	bl_idname = 'SvGlobalClusterClear'
+	bl_label = 'GlobalCluster.Clear'
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.outputs.new('SvStringsSocket', 'UV').prop_name = 'U'
-
-	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
+		self.inputs.new('SvStringsSocket', 'Wait For')
+		self.outputs.new('SvStringsSocket', 'Pass Through')
 
 	def process(self):
-		if not any(socket.is_linked for socket in self.outputs):
-			return
+		start = time.time()
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['UV'].sv_set([])
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		faceList = flatten(faceList)
-		vertexList = flatten(vertexList)
-		inputs = [faceList, vertexList]
+		waitForList = self.inputs['Wait For'].sv_get(deepcopy=True)
+		waitForList = flatten(waitForList)
 		outputs = []
-		if ((self.Replication) == "Default"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		self.outputs['UV'].sv_set(outputs)
+		if(len(waitForList) > 0):
+			for anInput in waitForList:
+				outputs.append(processItem(anInput))
+		else:
+			outputs.append(processItem(None))
+		self.outputs['Pass Through'].sv_set(outputs)
+		end = time.time()
+		print("GlobalCluster.Clear Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
-	bpy.utils.register_class(SvFaceVertexParameters)
+	bpy.utils.register_class(SvGlobalClusterClear)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceVertexParameters)
+	bpy.utils.unregister_class(SvGlobalClusterClear)

@@ -4,8 +4,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary, Aperture
-import time
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -57,6 +55,7 @@ def iterate(list):
 		base=[]
 		for cur in anItem:
 			base = onestep(cur,y,base)
+			# print(base,y)
 		returnList.append(y)
 	return returnList
 
@@ -73,12 +72,12 @@ def trim(list):
 	return returnList
 
 # Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
+def lace(ar_list):
     if not ar_list:
         yield []
     else:
         for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
+            for prod in lace(ar_list[1:]):
                 yield [a,]+prod
 
 def transposeList(l):
@@ -93,61 +92,64 @@ def transposeList(l):
 
 def processItem(item):
 	face = item[0]
-	vertex = item[1]
-	params = topologic.FaceUtility.ParametersAtVertex(face, vertex)
-	return [params[0], params[1]]
+	u = item[1]
+	v = item[2]
+	vertex = topologic.FaceUtility.VertexAtParameters(face, u, v)
+	return vertex
 
-replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
 
-class SvFaceVertexParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceVertexByParameters(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the UV parameters of the input Vertex within the input Face    
+	Tooltip: Creates a Vertex on the input Face at the input UV parameters    
 	"""
-	bl_idname = 'SvFaceVertexParameters'
-	bl_label = 'Face.FaceVertexParameters'
-	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	bl_idname = 'SvFaceVertexByParameters'
+	bl_label = 'Face.VertexByParameters'
+	U: FloatProperty(name="U", default=0.5, precision=4, update=updateNode)
+	V: FloatProperty(name="V",  default=0.5, precision=4, update=updateNode)
+	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Iterate", items=lacing, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
-		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.outputs.new('SvStringsSocket', 'UV').prop_name = 'U'
+		self.inputs.new('SvStringsSocket', 'U').prop_name = 'U'
+		self.inputs.new('SvStringsSocket', 'V').prop_name = 'V'
+		self.outputs.new('SvStringsSocket', 'Vertex')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
+		layout.prop(self, "Lacing",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['UV'].sv_set([])
+			self.outputs['Vertex'].sv_set([])
 			return
-		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
+		faceList = self.inputs['Face'].sv_get(deepcopy=True)
 		faceList = flatten(faceList)
-		vertexList = flatten(vertexList)
-		inputs = [faceList, vertexList]
+		uList = self.inputs['U'].sv_get(deepcopy=True)
+		uList = flatten(uList)
+		vList = self.inputs['V'].sv_get(deepcopy=True)
+		vList = flatten(vList)
+		inputs = []
+		if ((self.Lacing) == "Trim"):
+			inputs = trim([faceList, uList, vList])
+			inputs = transposeList(inputs)
+		if ((self.Lacing) == "Iterate"):
+			inputs = iterate([faceList, uList, vList])
+			inputs = transposeList(inputs)
+		if ((self.Lacing) == "Repeat"):
+			inputs = repeat([faceList, uList, vList])
+			inputs = transposeList(inputs)
+		if ((self.Lacing) == "Lace"):
+			inputs = list(lace([faceList, uList, vList]))
 		outputs = []
-		if ((self.Replication) == "Default"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
 		for anInput in inputs:
 			outputs.append(processItem(anInput))
-		self.outputs['UV'].sv_set(outputs)
+		self.outputs['Vertex'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvFaceVertexParameters)
+	bpy.utils.register_class(SvFaceVertexByParameters)
 
 def unregister():
-	bpy.utils.unregister_class(SvFaceVertexParameters)
+	bpy.utils.unregister_class(SvFaceVertexByParameters)
