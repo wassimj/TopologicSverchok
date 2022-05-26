@@ -15,16 +15,16 @@
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name": "Topologic",
-    "author": "Wassim Jabi",
-    "version": (0, 8, 1, 5),
-    "blender": (3, 1, 0),
-    "location": "Node Editor",
-    "category": "Node",
-    "description": "Topologic",
-    "warning": "",
-    "wiki_url": "http://topologic.app",
-    "tracker_url": "https://github.com/wassimj/TopologicSverchok/issues"
+	"name": "Topologic",
+	"author": "Wassim Jabi",
+	"version": (0, 8, 1, 5),
+	"blender": (3, 1, 0),
+	"location": "Node Editor",
+	"category": "Node",
+	"description": "Topologic",
+	"warning": "",
+	"wiki_url": "http://topologic.app",
+	"tracker_url": "https://github.com/wassimj/TopologicSverchok/issues"
 }
 
 import sys
@@ -56,12 +56,11 @@ from sverchok.utils.logging import info, debug
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 
-
 #from topologicsverchok import icons
 # make sverchok the root module name, (if sverchok dir not named exactly "sverchok")
 
 if __name__ != "topologicsverchok":
-    sys.modules["topologicsverchok"] = sys.modules[__name__]
+	sys.modules["topologicsverchok"] = sys.modules[__name__]
 
 def nodes_index():
 	coreNodes = [
@@ -105,6 +104,7 @@ def nodes_index():
                 ("Topologic.FaceCompactness", "SvFaceCompactness"),
                 ("Topologic.FaceExternalBoundary", "SvFaceExternalBoundary"),
                 ("Topologic.FaceFacingToward", "SvFaceFacingToward"),
+                ("Topologic.FaceFlatten", "SvFaceFlatten"),
                 ("Topologic.FaceGridByDistances", "SvFaceGridByDistances"),
                 ("Topologic.FaceGridByParameters", "SvFaceGridByParameters"),
                 ("Topologic.FaceInternalVertex", "SvFaceInternalVertex"),
@@ -117,6 +117,7 @@ def nodes_index():
                 ("Topologic.ApertureByTopologyContext", "SvApertureByTopologyContext"),
                 ("Topologic.ApertureTopology", "SvApertureTopology"),
                 ("Topologic.ShellByFaces", "SvShellByFaces"),
+                ("Topologic.ShellByLoft", "SvShellByLoft"),
                 ("Topologic.ShellExternalBoundary", "SvShellExternalBoundary"),
                 ("Topologic.ShellHyperbolicParaboloid", "SvShellHyperbolicParaboloid"),
                 ("Topologic.ShellInternalBoundaries", "SvShellInternalBoundaries"),
@@ -142,6 +143,7 @@ def nodes_index():
                 ("Topologic.CellVolume", "SvCellVolume"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
                 ("Topologic.CellComplexByCells", "SvCellComplexByCells"),
+                ("Topologic.CellComplexByLoft", "SvCellComplexByLoft"),
                 ("Topologic.CellComplexDecompose", "SvCellComplexDecompose"),
                 ("Topologic.CellComplexExternalBoundary", "SvCellComplexExternalBoundary"),
                 ("Topologic.CellComplexInternalBoundaries", "SvCellComplexInternalBoundaries"),
@@ -180,6 +182,7 @@ def nodes_index():
                 ("Topologic.TopologyExportToJSONMK2", "SvTopologyExportToJSONMK2"),
                 ("Topologic.TopologyFilter", "SvTopologyFilter"),
                 ("Topologic.TopologyGeometry", "SvTopologyGeometry"),
+                ("Topologic.TopologyIsPlanar", "SvTopologyIsPlanar"),
                 ("Topologic.TopologyIsSame", "SvTopologyIsSame"),
                 ("Topologic.TopologyMergeAll", "SvTopologyMergeAll"),
                 ("Topologic.TopologyOCCTShape", "SvTopologyOCCTShape"),
@@ -193,6 +196,7 @@ def nodes_index():
                 ("Topologic.TopologySetDictionary", "SvTopologySetDictionary"),
                 ("Topologic.TopologySharedTopologies", "SvTopologySharedTopologies"),
                 ("Topologic.TopologySortBySelectors", "SvTopologySortBySelectors"),
+                ("Topologic.TopologySpin", "SvTopologySpin"),
                 ("Topologic.TopologyString", "SvTopologyString"),
                 ("Topologic.TopologySubTopologies", "SvTopologySubTopologies"),
                 ("Topologic.TopologySuperTopologies", "SvTopologySuperTopologies"),
@@ -313,10 +317,13 @@ def nodes_index():
                 ("Topologic.SpeckleStreamByID", "SvSpeckleStreamByID"),
                 ("Topologic.SpeckleStreamByURL", "SvSpeckleStreamByURL"),
                 ("Topologic.SpeckleStreamsByClient", "SvSpeckleStreamsByClient")]
-
+	hullNodes = [("Topologic.TopologyConvexHull", "SvTopologyConvexHull")]
+	homemakerNodes = [("Topologic.HMIFCByCellComplex", "SvHMIFCByCellComplex"),
+                ("Topologic.HMBlenderBIMByIFC", "SvHMBlenderBIMByIFC")]
+	pandasNodes = [("Topologic.GraphExportToCSV", "SvGraphExportToCSV")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
 	osifc = 0
-	pandasNodes = [("Topologic.GraphExportToCSV", "SvGraphExportToCSV")]
+
 	try:
 		import numpy
 		coreNodes = coreNodes+numpyNodes
@@ -369,30 +376,40 @@ def nodes_index():
 		coreNodes = coreNodes+osifcNodes
 	else:
 		print("Topologic - Warning: Could not import either openstudio/ifcopenshell so some related nodes that require both to be installed are not available.")
-
 	try:
 		import specklepy
 		import bpy_speckle
 		coreNodes = coreNodes+speckleNodes
 	except:
 		print("Topologic - Warning: Could not import speckle so Speckle are not available.")
-
-	return [("Topologic", coreNodes)]
+	try:
+		import numpy
+		import scipy
+		coreNodes = coreNodes+hullNodes
+	except:
+		print("Topologic - Warning: Could not import numpy/scipy so Convex Hull node is not available.")
+	try:
+		import ifcopenshell
+		from blenderbim.bim import import_ifc
+		coreNodes = coreNodes+homemakerNodes
+	except:
+		print("Topologic - Warning: Could not import ifcopenshell/molior so Homemaker nodes are not available.")
 	try:
 		import pandas as pd
 		coreNodes = coreNodes+pandasNodes
 	except:
-		print("Topologic - Warning: Could not import pandas so GraphExporttoCSV is not available.")
+		print("Topologic - Warning: Could not import pandas so Homemaker nodes are not available.")
+	return [("Topologic", coreNodes)]
 
 def make_node_list():
-    modules = []
-    base_name = "topologicsverchok.nodes"
-    index = nodes_index()
-    for category, items in index:
-        for module_name, node_name in items:
-            module = importlib.import_module(f".{module_name}", base_name)
-            modules.append(module)
-    return modules
+	modules = []
+	base_name = "topologicsverchok.nodes"
+	index = nodes_index()
+	for category, items in index:
+		for module_name, node_name in items:
+			module = importlib.import_module(f".{module_name}", base_name)
+			modules.append(module)
+	return modules
 
 #imported_modules = [icons] + make_node_list()
 imported_modules = make_node_list()
@@ -411,57 +428,57 @@ def unregister_nodes():
 		module.unregister()
 
 def make_menu():
-    menu = []
-    index = nodes_index()
-    for category, items in index:
-        identifier = "TOPOLOGIC_" + category.replace(' ', '_')
-        node_items = []
-        for item in items:
-            nodetype = item[1]
-            rna = get_node_class_reference(nodetype)
-            if not rna:
-                info("Node `%s' is not available (probably due to missing dependencies).", nodetype)
-            else:
-                node_item = SverchNodeItem.new(nodetype)
-                node_items.append(node_item)
-        if node_items:
-            cat = SverchNodeCategory(
+	menu = []
+	index = nodes_index()
+	for category, items in index:
+		identifier = "TOPOLOGIC_" + category.replace(' ', '_')
+		node_items = []
+		for item in items:
+			nodetype = item[1]
+			rna = get_node_class_reference(nodetype)
+			if not rna:
+				info("Node `%s' is not available (probably due to missing dependencies).", nodetype)
+			else:
+				node_item = SverchNodeItem.new(nodetype)
+				node_items.append(node_item)
+		if node_items:
+			cat = SverchNodeCategory(
                         identifier,
                         category,
                         items=node_items
-                    )
-            menu.append(cat)
-    return menu
+		)
+			menu.append(cat)
+	return menu
 
 class SvExCategoryProvider(object):
-    def __init__(self, identifier, menu):
-        self.identifier = identifier
-        self.menu = menu
+	def __init__(self, identifier, menu):
+		self.identifier = identifier
+		self.menu = menu
 
-    def get_categories(self):
-        return self.menu
+	def get_categories(self):
+		return self.menu
 
 topologic_menu_classes = []
 
 class NODEVIEW_MT_AddTPSubcategoryAbout(bpy.types.Menu):
-    bl_label = "TPSubcategoryAbout"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAbout'
+	bl_label = "TPSubcategoryAbout"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAbout'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvTopologicVersion'],
         ])
 
 make_class('TPSubcategoryAbout', 'Topologic @ About')
 
 class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
-    bl_label = "TPSubcategoryVertex"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryVertex'
+	bl_label = "TPSubcategoryVertex"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryVertex'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvVertexByCoordinates'],
             ['SvVertexByObjectLocation'],
             ['SvVertexCoordinates'],
@@ -469,17 +486,17 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
             ['SvVertexEnclosingCell'],
             ['SvVertexNearestVertex'],
             ['SvVertexProject'],
-        ])
+		])
 
 make_class('TPSubcategoryVertex', 'Topologic @ Vertex')
 
 class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
-    bl_label = "TPSubcategoryEdge"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryEdge'
+	bl_label = "TPSubcategoryEdge"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryEdge'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvEdgeByStartVertexEndVertex'],
             ['SvEdgeByVertices'],
             ['SvEdgeDirection'],
@@ -489,17 +506,17 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
             ['SvEdgeStartVertex'],
             ['SvEdgeVertexByDistance'],
             ['SvEdgeVertexByParameter'],
-        ])
+		])
 
 make_class('TPSubcategoryEdge', 'Topologic @ Edge')
 
 class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
-    bl_label = "TPSubcategoryWire"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryWire'
+	bl_label = "TPSubcategoryWire"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryWire'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvWireByEdges'],
             ['SvWireByVertices'],
             ['SvWireCircle'],
@@ -512,17 +529,17 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvWireProject'],
             ['SvWireRectangle'],
             ['SvWireStar'],
-        ])
+		])
 
 make_class('TPSubcategoryWire', 'Topologic @ Wire')
 
 class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
-    bl_label = "TPSubcategoryFace"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryFace'
+	bl_label = "TPSubcategoryFace"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryFace'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvFaceAddFaceAsAperture'],
             ['SvFaceAddInternalBoundary'],
             ['SvFaceArea'],
@@ -535,6 +552,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceCompactness'],
             ['SvFaceExternalBoundary'],
             ['SvFaceFacingToward'],
+            ['SvFaceFlatten'],
             ['SvFaceGridByDistances'],
             ['SvFaceGridByParameters'],
             ['SvFaceInternalBoundaries'],
@@ -544,34 +562,35 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceTrimByWire'],
             ['SvFaceVertexByParameters'],
             ['SvFaceVertexParameters'],
-        ])
+		])
 
 make_class('TPSubcategoryFace', 'Topologic @ Face')
 
 class NODEVIEW_MT_AddTPSubcategoryShell(bpy.types.Menu):
-    bl_label = "TPSubcategoryShell"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryShell'
+	bl_label = "TPSubcategoryShell"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryShell'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvShellByFaces'],
+            ['SvShellByLoft'],
             ['SvShellExternalBoundary'],
             ['SvShellHyperbolicParaboloid'],
             ['SvShellInternalBoundaries'],
             ['SvShellIsClosed'],
             ['SvShellTessellatedDisk'],
-        ])
+		])
 
 make_class('TPSubcategoryShell', 'Topologic @ Shell')
 
 class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
-    bl_label = "TPSubcategoryCell"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCell'
+	bl_label = "TPSubcategoryCell"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCell'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvCellByFaces'],
             ['SvCellCone'],
             ['SvCellCylinder'],
@@ -590,59 +609,60 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellSuperCells'],
             ['SvCellSurfaceArea'],
             ['SvCellVolume'],
-        ])
+		])
 
 make_class('TPSubcategoryCell', 'Topologic @ Cell')
 
 class NODEVIEW_MT_AddTPSubcategoryCellComplex(bpy.types.Menu):
-    bl_label = "TPSubcategoryCellComplex"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCellComplex'
+	bl_label = "TPSubcategoryCellComplex"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCellComplex'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvCellComplexByCells'],
             ['SvCellComplexByFaces'],
+            ['SvCellComplexByLoft'],
             ['SvCellComplexDecompose'],
             ['SvCellComplexExternalBoundary'],
             ['SvCellComplexInternalBoundaries'],
             ['SvCellComplexNonManifoldFaces'],
-        ])
+		])
 
 make_class('TPSubcategoryCellComplex', 'Topologic @ CellComplex')
 
 class NODEVIEW_MT_AddTPSubcategoryCluster(bpy.types.Menu):
-    bl_label = "TPSubcategoryCluster"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCluster'
+	bl_label = "TPSubcategoryCluster"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryCluster'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvClusterByTopologies'],
-        ])
+		])
 
 make_class('TPSubcategoryCluster', 'Topologic @ Cluster')
 
 class NODEVIEW_MT_AddTPSubcategoryAperture(bpy.types.Menu):
-    bl_label = "TPSubcategoryAperture"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAperture'
+	bl_label = "TPSubcategoryAperture"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAperture'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvApertureByTopologyContext'],
             ['SvApertureTopology'],
-        ])
+		])
 
 make_class('TPSubcategoryAperture', 'Topologic @ Aperture')
 
 class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
-    bl_label = "TPSubcategoryGraph"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryGraph'
+	bl_label = "TPSubcategoryGraph"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryGraph'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvGraphAddEdge'],
             ['SvGraphAddVertex'],
             ['SvGraphAdjacentVertices'],
@@ -659,6 +679,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphDiameter'],
             ['SvGraphEdge'],
             ['SvGraphEdges'],
+            ['SvGraphExportToCSV'],
             ['SvGraphExportToDGCNN'],
             ['SvGraphIsComplete'],
             ['SvGraphIsErdoesGallai'],
@@ -678,17 +699,17 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphVertices'],
             ['SvGraphVerticesAtKeyValue'],
             ['SvGraphVisibilityGraph'],
-        ])
+		])
 
 make_class('TPSubcategoryGraph', 'Topologic @ Graph')
 
 class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
-    bl_label = "TPSubcategoryDictionary"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryDictionary'
+	bl_label = "TPSubcategoryDictionary"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryDictionary'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvDictionaryByKeysValues'],
             ['SvDictionaryByMergedDictionaries'],
             ['SvDictionaryByObjectProperties'],
@@ -696,46 +717,46 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
             ['SvDictionaryValueAtKey'],
             ['SvDictionaryKeys'],
             ['SvDictionaryValues'],
-        ])
+		])
 
 make_class('TPSubcategoryDictionary', 'Topologic @ Dictionary')
 
 class NODEVIEW_MT_AddTPSubcategoryContext(bpy.types.Menu):
-    bl_label = "TPSubcategoryContext"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryContext'
+	bl_label = "TPSubcategoryContext"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryContext'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvContextByTopologyParameters'],
             ['SvContextTopology'],
-        ])
+		])
 
 make_class('TPSubcategoryContext', 'Topologic @ Context')
 
 class NODEVIEW_MT_AddTPSubcategoryMatrix(bpy.types.Menu):
-    bl_label = "TPSubcategoryMatrix"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryMatrix'
+	bl_label = "TPSubcategoryMatrix"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryMatrix'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvMatrixByRotation'],
             ['SvMatrixByScaling'],
             ['SvMatrixByTranslation'],
             ['SvMatrixMultiply'],
 
-        ])
+		])
 
 make_class('TPSubcategoryMatrix', 'Topologic @ Matrix')
 
 class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
-    bl_label = "TPSubcategoryTopology"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryTopology'
+	bl_label = "TPSubcategoryTopology"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryTopology'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvTopologyAddApertures'],
             ['SvTopologyAddContent'],
             ['SvTopologyAdjacentTopologies'],
@@ -754,6 +775,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyCentroid'],
             ['SvTopologyContent'],
             ['SvTopologyContext'],
+            ['SvTopologyConvexHull'],
             ['SvTopologyCopy'],
             ['SvTopologyDecodeInformation'],
             ['SvTopologyDictionary'],
@@ -766,6 +788,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyExportToJSONMK2'],
             ['SvTopologyFilter'],
             ['SvTopologyGeometry'],
+            ['SvTopologyIsPlanar'],
             ['SvTopologyIsSame'],
             ['SvTopologyMergeAll'],
             ['SvTopologyOCCTShape'],
@@ -780,6 +803,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologySetDictionary'],
             ['SvTopologySharedTopologies'],
             ['SvTopologySortBySelectors'],
+            ['SvTopologySpin'],
             ['SvTopologyString'],
             ['SvTopologySubTopologies'],
             ['SvTopologySuperTopologies'],
@@ -791,29 +815,29 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyType'],
             ['SvTopologyTypeID'],
             ['SvTopologicRun'],
-        ])
+		])
 make_class('TPSubcategoryTopology', 'Topologic @ Topology')
 
 class NODEVIEW_MT_AddTPSubcategoryColor(bpy.types.Menu):
-    bl_label = "TPSubcategoryColor"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryColor'
+	bl_label = "TPSubcategoryColor"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryColor'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvColorByObjectColor'],
             ['SvColorByValueInRange'],
-        ])
+		])
 
 make_class('TPSubcategoryColor', 'Topologic @ Color')
 
 class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
-    bl_label = "TPSubcategoryEnergyModel"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryEnergyModel'
+	bl_label = "TPSubcategoryEnergyModel"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryEnergyModel'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvEnergyModelByImportedIFC'],
             ['SvEnergyModelByImportedOSM'],
             ['SvEnergyModelByTopology'],
@@ -834,17 +858,17 @@ class NODEVIEW_MT_AddTPSubcategoryEnergyModel(bpy.types.Menu):
             ['SvEnergyModelTableNames'],
             ['SvEnergyModelTopologies'],
             ['SvEnergyModelUnits'],
-        ])
+		])
 
 make_class('TPSubcategoryEnergyModel', 'Topologic @ Openstudio')
 
 class NODEVIEW_MT_AddTPSubcategoryHBModel(bpy.types.Menu):
-    bl_label = "TPSubcategoryHBModel"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryHBModel'
+	bl_label = "TPSubcategoryHBModel"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryHBModel'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvHBModelByTopology'],
             ['SvHBModelExportToHBJSON'],
             ['SvHBModelString'],
@@ -852,17 +876,17 @@ class NODEVIEW_MT_AddTPSubcategoryHBModel(bpy.types.Menu):
             ['SvHBConstructionSets'],
             ['SvHBProgramTypeByIdentifier'],
             ['SvHBProgramTypes']
-        ])
+		])
 
 make_class('TPSubcategoryHBModel', 'Topologic @ Honeybee')
 
 class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
-    bl_label = "TPSubcategoryIFC"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryIFC'
+	bl_label = "TPSubcategoryIFC"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryIFC'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvIFCAdd2ndLevelBoundaries'],
             ['SvIFCBuildingElements'],
             ['SvEnergyModelByImportedIFC'],
@@ -873,48 +897,48 @@ class NODEVIEW_MT_AddTPSubcategoryIFC(bpy.types.Menu):
             ['SvIFCReadFile'],
             ['SvIFCWriteFile'],
             ['SvTopologyByImportedIFC'],
-        ])
+		])
 
 make_class('TPSubcategoryIFC', 'Topologic @ IFC')
 
 class NODEVIEW_MT_AddTPSubcategoryBlockchain(bpy.types.Menu):
-    bl_label = "TPSubcategoryBlockchain"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryBlockchain'
+	bl_label = "TPSubcategoryBlockchain"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryBlockchain'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvContractByParameters'],
             ['SvTopologyByImportedIPFS'],
             ['SvTopologyExportToIPFS'],
-        ])
+		])
 
 make_class('TPSubcategoryBlockchain', 'Topologic @ Blockchain')
 
 class NODEVIEW_MT_AddTPSubcategoryNeo4j(bpy.types.Menu):
-    bl_label = "TPSubcategoryNeo4j"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategoryNeo4j'
+	bl_label = "TPSubcategoryNeo4j"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryNeo4j'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvGraphByNeo4jGraph'],
             ['SvNeo4jGraphByParameters'],
             ['SvNeo4jGraphDeleteAll'],
             ['SvNeo4jGraphNodeLabels'],
             ['SvNeo4jGraphSetGraph'],
 
-        ])
+		])
 
 make_class('TPSubcategoryNeo4j', 'Topologic @ Neo4j')
 
 class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
-    bl_label = "TPSubcategorySpeckle"
-    bl_idname = 'NODEVIEW_MT_AddTPSubcategorySpeckle'
+	bl_label = "TPSubcategorySpeckle"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategorySpeckle'
 
-    def draw(self, context):
-        layout = self.layout
-        layout_draw_categories(self.layout, self.bl_label, [
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
             ['SvSpeckleBranchByID'],
             ['SvSpeckleBranchesByStream'],
             ['SvSpeckleClientByHost'],
@@ -931,16 +955,29 @@ class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
             ['SvSpeckleStreamByID'],
             ['SvSpeckleStreamByURL'],
             ['SvSpeckleStreamsByClient'],
-        ])
+		])
 
 make_class('TPSubcategorySpeckle', 'Topologic @ Speckle')
 
+class NODEVIEW_MT_AddTPSubcategoryHomemaker(bpy.types.Menu):
+	bl_label = "TPSubcategoryHomemaker"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryHomemaker'
+
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
+            ['SvHMIFCByCellComplex'],
+            ['SvHMBlenderBIMByIFC'],
+		])
+
+make_class('TPSubcategoryHomemaker', 'Topologic @ Homemaker')
+
 # Main menu
 class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
-    bl_label = 'Topologic'
+	bl_label = 'Topologic'
 
-    def draw(self, context):
-        layout_draw_categories(self.layout, 'Topologic', [
+	def draw(self, context):
+		layout_draw_categories(self.layout, 'Topologic', [
             ['@ Vertex'],
             ['@ Edge'],
             ['@ Wire'],
@@ -962,83 +999,86 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Blockchain'],
             ['@ Neo4j'],
             ['@ Speckle'],
+            ['@ Homemaker'],
             ['@ About'],
-        ])
+		])
 
 def register():
-    global topologic_menu_classes
+	global topologic_menu_classes
 
     #debug("Registering Topologic")
 
     #settings.register()
     #icons.register()
     #sockets.register()
-    bpy.utils.register_class(NODEVIEW_MT_EX_TOPOLOGIC_Topologic)
-    register_nodes()
-    extra_nodes = importlib.import_module(".nodes", "topologicsverchok")
-    auto_gather_node_classes(extra_nodes)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryVertex)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEdge)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryWire)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryFace)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryShell)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCell)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCluster)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryTopology)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAperture)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryColor)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryIFC)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
-    bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
-    menu = make_menu()
-    menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
-    register_extra_category_provider(menu_category_provider)
-    nodeitems_utils.register_node_categories("TOPOLOGIC", menu)
+	bpy.utils.register_class(NODEVIEW_MT_EX_TOPOLOGIC_Topologic)
+	register_nodes()
+	extra_nodes = importlib.import_module(".nodes", "topologicsverchok")
+	auto_gather_node_classes(extra_nodes)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryVertex)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEdge)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryWire)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryFace)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryShell)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCell)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryTopology)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAperture)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryColor)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryContext)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryIFC)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryHomemaker)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
+	menu = make_menu()
+	menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
+	register_extra_category_provider(menu_category_provider)
+	nodeitems_utils.register_node_categories("TOPOLOGIC", menu)
 
 def unregister():
-    global topologic_menu_classes
-    if 'TOPOLOGIC' in nodeitems_utils._node_categories:
-        #unregister_node_panels()
-        nodeitems_utils.unregister_node_categories("TOPOLOGIC")
-    for clazz in topologic_menu_classes:
-        try:
-            bpy.utils.unregister_class(clazz)
-        except Exception as e:
-            print("Can't unregister menu class %s" % clazz)
-            print(e)
-    unregister_extra_category_provider("TOPOLOGIC")
-    unregister_nodes()
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryVertex)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEdge)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryWire)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryFace)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryShell)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCell)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCluster)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryTopology)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAperture)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryColor)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryIFC)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
-    bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
-    #sockets.unregister()
-    #icons.unregister()
-    #settings.unregister()
+	global topologic_menu_classes
+	if 'TOPOLOGIC' in nodeitems_utils._node_categories:
+		#unregister_node_panels()
+		nodeitems_utils.unregister_node_categories("TOPOLOGIC")
+	for clazz in topologic_menu_classes:
+		try:
+			bpy.utils.unregister_class(clazz)
+		except Exception as e:
+			print("Can't unregister menu class %s" % clazz)
+			print(e)
+	unregister_extra_category_provider("TOPOLOGIC")
+	unregister_nodes()
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryVertex)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEdge)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryWire)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryFace)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryShell)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCell)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCellComplex)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryCluster)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryTopology)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAperture)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryColor)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryContext)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryMatrix)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDictionary)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryGraph)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryEnergyModel)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryHBModel)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryIFC)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryHomemaker)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
+	#sockets.unregister()
+	#icons.unregister()
+	#settings.unregister()
