@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-from . import CellComplexByFaces
+from . import Replication, CellComplexByFaces
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -17,11 +17,12 @@ def flatten(element):
 		returnList = [element]
 	return returnList
 
-def processItem(item, tol):
-	faces = [topologic.Face.ByExternalBoundary(item[0])]
-	for i in range(len(item)-1):
-		wire1 = item[i]
-		wire2 = item[i+1]
+def processItem(item):
+	wires, tolerance = item 
+	faces = [topologic.Face.ByExternalBoundary(wires[0])]
+	for i in range(len(wires)-1):
+		wire1 = wires[i]
+		wire2 = wires[i+1]
 		faces.append(topologic.Face.ByExternalBoundary(wire2))
 		w1_edges = []
 		_ = wire1.Edges(None, w1_edges)
@@ -54,7 +55,9 @@ def processItem(item, tol):
 				e5 = topologic.Edge.ByStartVertexEndVertex(e1.StartVertex(), e2.EndVertex())
 				faces.append(topologic.Face.ByExternalBoundary(topologic.Wire.ByEdges([e1, e5, e4])))
 				faces.append(topologic.Face.ByExternalBoundary(topologic.Wire.ByEdges([e2, e5, e3])))
-	return CellComplexByFaces.processItem(faces, tol)
+	return CellComplexByFaces.processItem(faces, tolerance)
+
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvCellComplexByLoft(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -63,23 +66,36 @@ class SvCellComplexByLoft(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellComplexByLoft'
 	bl_label = 'CellComplex.ByLoft'
-	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wires')
-		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'CellComplex')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		wiresList = self.inputs['Wires'].sv_get(deepcopy=False)
-		if isinstance(wiresList[0], list) == False:
+		if not isinstance(wiresList[0], list):
 			wiresList = [wiresList]
-		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
+		toleranceList = Replication.flatten(toleranceList)
+		inputs = [wiresList, toleranceList]
+		if ((self.Replication) == "Trim"):
+			inputs = Replication.trim(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Iterate"):
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = Replication.repeat(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(Replication.interlace(inputs))
 		outputs = []
-		for wireList in wiresList:
-			outputs.append(processItem(wireList, tol))
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
 		self.outputs['CellComplex'].sv_set(outputs)
 
 def register():

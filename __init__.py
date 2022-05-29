@@ -17,7 +17,7 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 1, 5),
+	"version": (0, 8, 1, 6),
 	"blender": (3, 1, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -138,8 +138,10 @@ def nodes_index():
                 ("Topologic.CellPipe", "SvCellPipe"),
                 ("Topologic.CellPrism", "SvCellPrism"),
                 ("Topologic.CellSets", "SvCellSets"),
+                ("Topologic.CellSphere", "SvCellSphere"),
                 ("Topologic.CellSuperCells", "SvCellSuperCells"),
                 ("Topologic.CellSurfaceArea", "SvCellSurfaceArea"),
+                ("Topologic.CellTorus", "SvCellTorus"),
                 ("Topologic.CellVolume", "SvCellVolume"),
                 ("Topologic.CellComplexByFaces", "SvCellComplexByFaces"),
                 ("Topologic.CellComplexByCells", "SvCellComplexByCells"),
@@ -606,8 +608,10 @@ class NODEVIEW_MT_AddTPSubcategoryCell(bpy.types.Menu):
             ['SvCellPipe'],
             ['SvCellPrism'],
             ['SvCellSets'],
+            ['SvCellSphere'],
             ['SvCellSuperCells'],
             ['SvCellSurfaceArea'],
+            ['SvCellTorus'],
             ['SvCellVolume'],
 		])
 

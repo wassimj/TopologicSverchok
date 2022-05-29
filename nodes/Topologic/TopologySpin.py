@@ -10,22 +10,22 @@ from . import Replication, ShellByLoft, CellComplexByLoft, TopologySelfMerge, Wi
 def processItem(item):
 	topology, \
 	origin, \
-	x, \
-	y, \
-	z, \
+	dirX, \
+	dirY, \
+	dirZ, \
 	degree, \
 	sides, \
 	tolerance = item
 	topologies = []
 	unit_degree = degree / float(sides)
 	for i in range(sides+1):
-		topologies.append(topologic.TopologyUtility.Rotate(topology, origin, x, y, z, unit_degree*i))
+		topologies.append(topologic.TopologyUtility.Rotate(topology, origin, dirX, dirY, dirZ, unit_degree*i))
 	returnTopology = None
 	if topology.Type() == topologic.Vertex.Type():
 		returnTopology = WireByVertices.processItem([topologies, False])
 	elif topology.Type() == topologic.Edge.Type():
 		try:
-			returnTopology = ShellByLoft.processItem(topologies, tolerance)
+			returnTopology = ShellByLoft.processItem([topologies, tolerance])
 		except:
 			try:
 				returnTopology = topologic.Cluster.ByTopologies(topologies)
@@ -34,18 +34,42 @@ def processItem(item):
 	elif topology.Type() == topologic.Wire.Type():
 		if topology.IsClosed():
 			try:
-				returnTopology = CellComplexByLoft.processItem(topologies, tolerance)
+				returnTopology = CellByLoft.processItem([topologies, tolerance])
 			except:
 				try:
-					returnTopology = ShellByLoft.processItem(topologies, tolerance)
+					returnTopology = CellComplexByLoft.processItem(topologies, tolerance)
+					print("Success!")
+					try:
+						print("Trying to convert CellComplex to Cell")
+						returnTopology = returnTopology.ExternalBoundary()
+						print("Success!")
+					except:
+						pass
 				except:
 					try:
-						returnTopology = topologic.Cluster.ByTopologies(topologies)
+						returnTopology = ShellByLoft.processItem([topologies, tolerance])
 					except:
-						returnTopology = None
+						try:
+							returnTopology = topologic.Cluster.ByTopologies(topologies)
+						except:
+							returnTopology = None
 		else:
 			try:
-				returnTopology = ShellByLoft.processItem(topologies, tolerance)
+				returnTopology = ShellByLoft.processItem([topologies, tolerance])
+			except:
+				try:
+					returnTopology = topologic.Cluster.ByTopologies(topologies)
+				except:
+					returnTopology = None
+	elif topology.Type() == topologic.Face.Type():
+		external_wires = []
+		for t in topologies:
+			external_wires.append(topologic.Face.ExternalBoundary(t))
+		try:
+			returnTopology = CellComplexByLoft.processItem([external_wires, tolerance])
+		except:
+			try:
+				returnTopology = ShellByLoft.processItem([external_wires, tolerance])
 			except:
 				try:
 					returnTopology = topologic.Cluster.ByTopologies(topologies)
@@ -53,6 +77,13 @@ def processItem(item):
 					returnTopology = None
 	else:
 		returnTopology = TopologySelfMerge.processItem(topologic.Cluster.ByTopologies(topologies))
+	if returnTopology.Type() == topologic.Shell.Type():
+		try:
+			new_t = topologic.Cell.ByShell(returnTopology)
+			if new_t:
+				returnTopology = new_t
+		except:
+			pass
 	return returnTopology
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
@@ -64,9 +95,9 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologySpin'
 	bl_label = 'Topology.Spin'
-	X: FloatProperty(name="X", default=0, precision=4, update=updateNode)
-	Y: FloatProperty(name="Y",  default=0, precision=4, update=updateNode)
-	Z: FloatProperty(name="Z",  default=1, precision=4, update=updateNode)
+	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
+	DirY: FloatProperty(name="Dir Y",  default=0, precision=4, update=updateNode)
+	DirZ: FloatProperty(name="Dir Z",  default=1, precision=4, update=updateNode)
 	Degree: FloatProperty(name="Degree",  default=0, precision=4, update=updateNode)
 	Sides: IntProperty(name="Sides", default=16, min=1, update=updateNode)
 	Tolerance: FloatProperty(name="Tolerance",  default=0.001, precision=4, update=updateNode)
@@ -75,9 +106,9 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'X').prop_name = 'X'
-		self.inputs.new('SvStringsSocket', 'Y').prop_name = 'Y'
-		self.inputs.new('SvStringsSocket', 'Z').prop_name = 'Z'
+		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
+		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
+		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.inputs.new('SvStringsSocket', 'Degree').prop_name = 'Degree'
 		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
@@ -96,19 +127,19 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 			originList = []
 			for aTopology in wireList:
 				originList.append(aTopology.CenterOfMass())
-		xList = self.inputs['X'].sv_get(deepcopy=True)
-		yList = self.inputs['Y'].sv_get(deepcopy=True)
-		zList = self.inputs['Z'].sv_get(deepcopy=True)
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
 		degreeList = self.inputs['Degree'].sv_get(deepcopy=True)
 		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		xList = Replication.flatten(xList)
-		yList = Replication.flatten(yList)
-		zList = Replication.flatten(zList)
+		dirXList = Replication.flatten(dirXList)
+		dirYList = Replication.flatten(dirYList)
+		dirZList = Replication.flatten(dirZList)
 		degreeList = Replication.flatten(degreeList)
 		sidesList = Replication.flatten(sidesList)
 		toleranceList = Replication.flatten(toleranceList)
-		inputs = [wireList, originList, xList, yList, zList, degreeList, sidesList, toleranceList]
+		inputs = [wireList, originList, dirXList, dirYList, dirZList, degreeList, sidesList, toleranceList]
 		if ((self.Replication) == "Trim"):
 			inputs = Replication.trim(inputs)
 			inputs = Replication.transposeList(inputs)

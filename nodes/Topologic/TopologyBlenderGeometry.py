@@ -211,14 +211,26 @@ def processItem(item):
 					fVertexIndex = len(vertices)-1
 				f.append(fVertexIndex)
 			faces.append(f)
-
+	try:
+		bpy.ops.object.select_all(action='DESELECT')
+		bpy.data.objects[name].select_set(True)
+		bpy.ops.object.delete(use_global=True)
+		bpy.data.objects.remove(bpy.data.objects[name])
+	except:
+		pass
+	
 	new_mesh = bpy.data.meshes.new(name+"_mesh")
 	new_mesh.from_pydata(vertices, edges, faces)
 	new_mesh.update()
 	new_object = bpy.data.objects.new(name, new_mesh)
+
+
+	view_layer = bpy.context.view_layer
+	view_layer.active_layer_collection.collection.objects.link(new_object)
 	if display:
-		view_layer = bpy.context.view_layer
-		view_layer.active_layer_collection.collection.objects.link(new_object)
+		bpy.data.objects[name].hide_set(False)
+	else:
+		bpy.data.objects[name].hide_set(True)
 	return new_object
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]

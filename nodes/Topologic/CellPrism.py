@@ -22,6 +22,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
+from . import WireRectangle
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -115,14 +116,43 @@ def wireByVertices(vList):
 	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
+def sliceCell(cell, width, length, height, uSides, vSides, wSides):
+	origin = cell.Centroid()
+	shells = []
+	_ = cell.Shells(None, shells)
+	shell = shells[0]
+	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1], "Center")
+	wFaces = []
+	for i in range(1, wSides):
+		wFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(wRect), 0, 0, height/wSides*i - height*0.5))
+	wCluster = topologic.Cluster.ByTopologies(wFaces)
+	shell = shell.Slice(wCluster, False)
+	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0], "Center")
+	uFaces = []
+	for i in range(1, uSides):
+		uFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(uRect), width/uSides*i - width*0.5, 0, 0))
+	uCluster = topologic.Cluster.ByTopologies(uFaces)
+	shell = shell.Slice(uCluster, False)
+	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0], "Center")
+	vFaces = []
+	for i in range(1, vSides):
+		vFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(vRect), 0, length/vSides*i - length*0.5, 0))
+	vCluster = topologic.Cluster.ByTopologies(vFaces)
+	shell = shell.Slice(vCluster, False)
+	#return topologic.Cell.ByShell(shell)
+	return topologic.Cell.ByShell(shell)
+
 def processItem(item, originLocation):
-	origin = item[0]
-	width = item[1]
-	length = item[2]
-	height = item[3]
-	dirX = item[4]
-	dirY = item[5]
-	dirZ = item[6]
+	origin, \
+	width, \
+	length, \
+	height, \
+	uSides, \
+	vSides, \
+	wSides, \
+	dirX, \
+	dirY, \
+	dirZ = item
 	baseV = []
 	topV = []
 	xOffset = 0
@@ -147,6 +177,7 @@ def processItem(item, originLocation):
 	topWire = wireByVertices([vt1, vt2, vt3, vt4])
 	wires = [baseWire, topWire]
 	prism =  topologic.CellUtility.ByLoft(wires)
+	prism = sliceCell(prism, width, length, height, uSides, vSides, wSides)
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -179,6 +210,9 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	Width: FloatProperty(name="Width", default=1, min=0.0001, precision=4, update=updateNode)
 	Length: FloatProperty(name="Length", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
+	USides: IntProperty(name="U Sides", default=1, min=1, update=updateNode)
+	VSides: IntProperty(name="V Sides", default=1, min=1, update=updateNode)
+	WSides: IntProperty(name="W Sides", default=1, min=1, update=updateNode)
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
@@ -191,6 +225,9 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Width').prop_name = 'Width'
 		self.inputs.new('SvStringsSocket', 'Length').prop_name = 'Length'
 		self.inputs.new('SvStringsSocket', 'Height').prop_name = 'Height'
+		self.inputs.new('SvStringsSocket', 'U Sides').prop_name = 'USides'
+		self.inputs.new('SvStringsSocket', 'V Sides').prop_name = 'VSides'
+		self.inputs.new('SvStringsSocket', 'W Sides').prop_name = 'WSides'
 		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
@@ -210,6 +247,9 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 		widthList = self.inputs['Width'].sv_get(deepcopy=True)
 		lengthList = self.inputs['Length'].sv_get(deepcopy=True)
 		heightList = self.inputs['Height'].sv_get(deepcopy=True)
+		uSidesList = self.inputs['U Sides'].sv_get(deepcopy=True)
+		vSidesList = self.inputs['V Sides'].sv_get(deepcopy=True)
+		wSidesList = self.inputs['W Sides'].sv_get(deepcopy=True)
 		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
 		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
 		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
@@ -218,10 +258,13 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 		widthList = flatten(widthList)
 		lengthList = flatten(lengthList)
 		heightList = flatten(heightList)
+		uSidesList = flatten(uSidesList)
+		vSidesList = flatten(vSidesList)
+		wSidesList = flatten(wSidesList)
 		dirXList = flatten(dirXList)
 		dirYList = flatten(dirYList)
 		dirZList = flatten(dirZList)
-		inputs = [originList, widthList, lengthList, heightList, dirXList, dirYList, dirZList]
+		inputs = [originList, widthList, lengthList, heightList, uSidesList, vSidesList, wSidesList, dirXList, dirYList, dirZList]
 		if ((self.Replication) == "Default"):
 			inputs = iterate(inputs)
 			inputs = transposeList(inputs)

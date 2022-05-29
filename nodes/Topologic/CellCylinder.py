@@ -22,6 +22,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
+from . import Replication, CellByLoft
 
 def wireByVertices(vList):
 	edges = []
@@ -31,13 +32,15 @@ def wireByVertices(vList):
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item, originLocation):
-	origin = item[0]
-	radius = item[1]
-	height = item[2]
-	sides = item[3]
-	dirX = item[4]
-	dirY = item[5]
-	dirZ = item[6]
+	origin, \
+	radius, \
+	height, \
+	uSides, \
+	vSides, \
+	dirX, \
+	dirY, \
+	dirZ, \
+	tolerance = item
 	baseV = []
 	topV = []
 	xOffset = 0
@@ -49,8 +52,8 @@ def processItem(item, originLocation):
 		xOffset = radius
 		yOffset = radius
 
-	for i in range(sides):
-		angle = math.radians(360/sides)*i
+	for i in range(uSides):
+		angle = math.radians(360/uSides)*i
 		x = math.sin(angle)*radius + origin.X() + xOffset
 		y = math.cos(angle)*radius + origin.Y() + yOffset
 		z = origin.Z() + zOffset
@@ -58,9 +61,11 @@ def processItem(item, originLocation):
 		topV.append(topologic.Vertex.ByCoordinates(x,y,z+height))
 
 	baseWire = wireByVertices(baseV)
-	topWire = wireByVertices(topV)
-	wires = [baseWire, topWire]
-	cyl = topologic.CellUtility.ByLoft(wires)
+	topologies = []
+	for i in range(vSides+1):
+		topologies.append(topologic.TopologyUtility.Translate(baseWire, 0, 0, height/float(vSides)*i))
+	cyl = CellByLoft.processItem([topologies, tolerance])
+
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -78,24 +83,11 @@ def processItem(item, originLocation):
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
 	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 1, 0, theta)
 	cyl = topologic.TopologyUtility.Rotate(cyl, origin, 0, 0, 1, phi)
-	return topologic.CellUtility.ByLoft(wires)
+	return cyl
 
-def matchLengths(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
+replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -106,20 +98,25 @@ class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Cell.Cylinder'
 	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
-	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
+	USides: IntProperty(name="U Sides", default=16, min=3, update=updateNode)
+	VSides: IntProperty(name="V Sides", default=1, min=1, update=updateNode)
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Bottom", items=originLocations, update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
 		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
 		self.inputs.new('SvStringsSocket', 'Height').prop_name = 'Height'
-		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
+		self.inputs.new('SvStringsSocket', 'U Sides').prop_name = 'USides'
+		self.inputs.new('SvStringsSocket', 'V Sides').prop_name = 'VSides'
 		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name='Tolerance'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def draw_buttons(self, context, layout):
@@ -132,16 +129,37 @@ class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)[0]
-		heightList = self.inputs['Height'].sv_get(deepcopy=True)[0]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)[0]
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
-		matchLengths([originList, radiusList, heightList, sidesList, dirXList, dirYList, dirZList])
-		newInputs = zip(originList, radiusList, heightList, sidesList, dirXList, dirYList, dirZList)
+			originList = Replication.flatten(originList)
+		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
+		heightList = self.inputs['Height'].sv_get(deepcopy=True)
+		uSidesList = self.inputs['U Sides'].sv_get(deepcopy=True)
+		vSidesList = self.inputs['V Sides'].sv_get(deepcopy=True)
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
+		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
+		radiusList = Replication.flatten(radiusList)
+		heightList = Replication.flatten(heightList)
+		uSidesList = Replication.flatten(uSidesList)
+		vSidesList = Replication.flatten(vSidesList)
+		dirXList = Replication.flatten(dirXList)
+		dirYList = Replication.flatten(dirYList)
+		dirZList = Replication.flatten(dirZList)
+		toleranceList = Replication.flatten(toleranceList)
+		inputs = [originList, radiusList, heightList, uSidesList, vSidesList, dirXList, dirYList, dirZList, toleranceList]
+		if ((self.Replication) == "Trim"):
+			inputs = Replication.trim(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Iterate"):
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Repeat"):
+			inputs = Replication.repeat(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Interlace"):
+			inputs = list(Replication.interlace(inputs))
 		outputs = []
-		for anInput in newInputs:
+		for anInput in inputs:
 			outputs.append(processItem(anInput, self.originLocation))
 		self.outputs['Cell'].sv_set(outputs)
 

@@ -33,8 +33,7 @@ def wireByVertices(vList):
 
 def processItem(item, originLocation):
 	origin, \
-	majorRadius, \
-	minorRadius, \
+	radius, \
 	uSides, \
 	vSides, \
 	dirX, \
@@ -42,8 +41,7 @@ def processItem(item, originLocation):
 	dirZ, \
 	tolerance = item
 
-	c = WireCircle.processItem([origin, minorRadius, vSides, 0, 360, False, 0, 1, 0], "Center")
-	c = topologic.TopologyUtility.Translate(c, majorRadius, 0, 0)
+	c = WireCircle.processItem([origin, radius, vSides, 90, 270, False, 0, 1, 0], "Center")
 	s = TopologySpin.processItem([c, origin, 0, 0, 1, 360, uSides, tolerance])
 	if s.Type() == topologic.Shell.Type():
 		s = topologic.Cell.ByShell(s)
@@ -73,17 +71,16 @@ def processItem(item, originLocation):
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "Lower Left", "", 3)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvCellTorus(bpy.types.Node, SverchCustomTreeNode):
+class SvCellSphere(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Torus (Cell) from the input parameters    
+	Tooltip: Creates a Sphere (Cell) from the input parameters    
 	"""
-	bl_idname = 'SvCellTorus'
-	bl_label = 'Cell.Torus'
-	MajorRadius: FloatProperty(name="Major Radius", default=1, min=0.0001, precision=4, update=updateNode)
-	MinorRadius: FloatProperty(name="Minor Radius", default=0.2, min=0.0001, precision=4, update=updateNode)
-	USides: IntProperty(name="U Sides", default=32, min=3, update=updateNode)
-	VSides: IntProperty(name="V Sides", default=16, min=3, update=updateNode)
+	bl_idname = 'SvCellSphere'
+	bl_label = 'Cell.Sphere'
+	Radius: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
+	USides: IntProperty(name="U Sides", default=16, min=3, update=updateNode)
+	VSides: IntProperty(name="V Sides", default=8, min=3, update=updateNode)
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
@@ -93,8 +90,7 @@ class SvCellTorus(bpy.types.Node, SverchCustomTreeNode):
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
-		self.inputs.new('SvStringsSocket', 'Major Radius').prop_name = 'MajorRadius'
-		self.inputs.new('SvStringsSocket', 'Minor Radius').prop_name = 'MinorRadius'
+		self.inputs.new('SvStringsSocket', 'Radius').prop_name = 'Radius'
 		self.inputs.new('SvStringsSocket', 'U Sides').prop_name = 'USides'
 		self.inputs.new('SvStringsSocket', 'V Sides').prop_name = 'VSides'
 		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
@@ -115,23 +111,21 @@ class SvCellTorus(bpy.types.Node, SverchCustomTreeNode):
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
 			originList = Replication.flatten(originList)
 		print("OriginList", originList)
-		majorRadiusList = self.inputs['Major Radius'].sv_get(deepcopy=True)
-		minorRadiusList = self.inputs['Minor Radius'].sv_get(deepcopy=True)
+		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
 		uSidesList = self.inputs['U Sides'].sv_get(deepcopy=True)
 		vSidesList = self.inputs['V Sides'].sv_get(deepcopy=True)
 		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
 		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
 		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		majorRadiusList = Replication.flatten(majorRadiusList)
-		minorRadiusList = Replication.flatten(minorRadiusList)
+		radiusList = Replication.flatten(radiusList)
 		uSidesList = Replication.flatten(uSidesList)
 		vSidesList = Replication.flatten(vSidesList)
 		dirXList = Replication.flatten(dirXList)
 		dirYList = Replication.flatten(dirYList)
 		dirZList = Replication.flatten(dirZList)
 		toleranceList = Replication.flatten(toleranceList)
-		inputs = [originList, majorRadiusList, minorRadiusList, uSidesList, vSidesList, dirXList, dirYList, dirZList, toleranceList]
+		inputs = [originList, radiusList, uSidesList, vSidesList, dirXList, dirYList, dirZList, toleranceList]
 		if ((self.Replication) == "Trim"):
 			inputs = Replication.trim(inputs)
 			inputs = Replication.transposeList(inputs)
@@ -150,7 +144,7 @@ class SvCellTorus(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
-	bpy.utils.register_class(SvCellTorus)
+	bpy.utils.register_class(SvCellSphere)
 
 def unregister():
-	bpy.utils.unregister_class(SvCellTorus)
+	bpy.utils.unregister_class(SvCellSphere)
