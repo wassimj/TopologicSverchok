@@ -393,6 +393,7 @@ def nodes_index():
 	try:
 		import ifcopenshell
 		from blenderbim.bim import import_ifc
+		import molior
 		coreNodes = coreNodes+homemakerNodes
 	except:
 		print("Topologic - Warning: Could not import ifcopenshell/molior so Homemaker nodes are not available.")
@@ -400,7 +401,7 @@ def nodes_index():
 		import pandas as pd
 		coreNodes = coreNodes+pandasNodes
 	except:
-		print("Topologic - Warning: Could not import pandas so Homemaker nodes are not available.")
+		print("Topologic - Warning: Could not import pandas so Topologic.GraphExportToCSV is not available.")
 	return [("Topologic", coreNodes)]
 
 def make_node_list():
