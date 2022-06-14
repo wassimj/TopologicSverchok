@@ -93,13 +93,18 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	vector = item.matrix_world.translation
-	vert = None
-	try:
-		vert = topologic.Vertex.ByCoordinates(vector[0], vector[1], vector[2])
-	except:
+	# hack to get an updated item from the scene. Might not be needed.
+	if item:
+		item = bpy.data.objects[item.name]
+		vector = item.matrix_world.translation
 		vert = None
-	return vert
+		try:
+			vert = topologic.Vertex.ByCoordinates(vector[0], vector[1], vector[2])
+		except:
+			vert = None
+		return vert
+	else:
+		return None
 
 class SvVertexByObjectLocation(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -113,8 +118,13 @@ class SvVertexByObjectLocation(bpy.types.Node, SverchCustomTreeNode):
 		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'Object')
 		self.outputs.new('SvStringsSocket', 'Vertex')
+		# remove all previous handlers
+		for h in bpy.app.handlers.depsgraph_update_post:
+			bpy.app.handlers.depsgraph_update_post.remove(h)
+		bpy.app.handlers.depsgraph_update_post.append(self.process())
 
 	def process(self):
+		print("Calling Self.Process")
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		objList = self.inputs['Object'].sv_get(deepcopy=True)

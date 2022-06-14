@@ -17,8 +17,8 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 1, 6),
-	"blender": (3, 1, 0),
+	"version": (0, 8, 1, 7),
+	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
 	"description": "Topologic",
@@ -256,7 +256,8 @@ def nodes_index():
                 ("Topologic.MatrixByScaling", "SvMatrixByScaling"),
                 ("Topologic.MatrixByTranslation", "SvMatrixByTranslation"),
                 ("Topologic.MatrixMultiply", "SvMatrixMultiply"),
-                ("Topologic.Run", "SvTopologicRun")]
+                ("Topologic.Run", "SvTopologicRun"),
+                ("Topologic.InstallDependencies", "SvTopologicInstallDependencies")]
 
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces"),
@@ -266,7 +267,6 @@ def nodes_index():
                 ("Topologic.IFCClashDetection", "SvIFCClashDetection"),
                 ("Topologic.IFCConnectBuildingElements", "SvIFCConnectBuildingElements"),
                 ("Topologic.IFCCreateSpaces", "SvIFCCreateSpaces"),
-                ("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON"),
                 ("Topologic.IFCReadFile", "SvIFCReadFile"),
                 ("Topologic.IFCWriteFile", "SvIFCWriteFile"),
                 ("Topologic.TopologyByImportedIFC", "SvTopologyByImportedIFC")]
@@ -319,10 +319,23 @@ def nodes_index():
                 ("Topologic.SpeckleStreamByID", "SvSpeckleStreamByID"),
                 ("Topologic.SpeckleStreamByURL", "SvSpeckleStreamByURL"),
                 ("Topologic.SpeckleStreamsByClient", "SvSpeckleStreamsByClient")]
+	dglNodes = [("Topologic.DGLAccuracy", "SvDGLAccuracy"),
+                ("Topologic.DGLClassifierByFilePath", "SvDGLClassifierByFilePath"),
+                ("Topologic.DGLDatasetByDGLGraphs", "SvDGLDatasetByDGLGraphs"),
+                ("Topologic.DGLDatasetBySamples", "SvDGLDatasetBySamples"),
+                ("Topologic.DGLGraphByGraph", "SvDGLGraphByGraph"),
+                ("Topologic.DGLGraphByImportedCSV", "SvDGLGraphByImportedCSV"),
+                ("Topologic.DGLGraphByImportedDGCNN", "SvDGLGraphByImportedDGCNN"),
+                ("Topologic.DGLHyperparameters", "SvDGLHyperparameters"),
+                ("Topologic.DGLOptimizer", "SvDGLOptimizer"),
+                ("Topologic.DGLPredict", "SvDGLPredict"),
+                ("Topologic.DGLTrainClassifier", "SvDGLTrainClassifier")]
 	hullNodes = [("Topologic.TopologyConvexHull", "SvTopologyConvexHull")]
 	homemakerNodes = [("Topologic.HMIFCByCellComplex", "SvHMIFCByCellComplex"),
                 ("Topologic.HMBlenderBIMByIFC", "SvHMBlenderBIMByIFC")]
 	pandasNodes = [("Topologic.GraphExportToCSV", "SvGraphExportToCSV")]
+	plotlyNodes = [("Topologic.DGLPlot", "SvDGLPlot")]
+	ifchoneybeeNodes = [("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
 	osifc = 0
 
@@ -362,6 +375,7 @@ def nodes_index():
 	try:
 		import openstudio
 		import honeybee
+		from honeybee.model import Model
 		import honeybee_energy
 		import honeybee_radiance
 		import ladybug
@@ -369,6 +383,16 @@ def nodes_index():
 		coreNodes = coreNodes+honeybeeNodes
 	except:
 		print("Topologic - Warning: Could not import ladybug/honeybee/json so Honeybee nodes are not available.")
+	try:
+		import honeybee
+		import honeybee_energy
+		from honeybee.model import Model
+		import ifcopenshell
+		import numpy
+		import scipy
+		coreNodes = coreNodes+ifchoneybeeNodes
+	except:
+		print("Topologic - Warning: Could not import honeybee/ifcopenshell/numpy/scipy so IFCHoneybee nodes are not available.")
 	try:
 		import py2neo
 		coreNodes = coreNodes+neo4jNodes
@@ -378,12 +402,31 @@ def nodes_index():
 		coreNodes = coreNodes+osifcNodes
 	else:
 		print("Topologic - Warning: Could not import either openstudio/ifcopenshell so some related nodes that require both to be installed are not available.")
+
 	try:
 		import specklepy
 		import bpy_speckle
 		coreNodes = coreNodes+speckleNodes
 	except:
 		print("Topologic - Warning: Could not import speckle so Speckle are not available.")
+
+	try:
+		import numpy
+		import scipy
+		import pandas
+		import torch
+		import networkx
+		import tqdm
+		import sklearn
+		import dgl
+		coreNodes = coreNodes+dglNodes
+	except:
+		print("Topologic - Warning: Could not import numpy/scipy/pandas/torch/networkx/dgl/tqdm/sklearn so DGL nodes are not available.")
+	try:
+		import plotly
+		coreNodes = coreNodes+plotlyNodes
+	except:
+		print("Topologic - Warning: Could not import plotly so plot-related nodes are not available.")
 	try:
 		import numpy
 		import scipy
@@ -393,7 +436,6 @@ def nodes_index():
 	try:
 		import ifcopenshell
 		from blenderbim.bim import import_ifc
-		import molior
 		coreNodes = coreNodes+homemakerNodes
 	except:
 		print("Topologic - Warning: Could not import ifcopenshell/molior so Homemaker nodes are not available.")
@@ -463,17 +505,18 @@ class SvExCategoryProvider(object):
 
 topologic_menu_classes = []
 
-class NODEVIEW_MT_AddTPSubcategoryAbout(bpy.types.Menu):
-	bl_label = "TPSubcategoryAbout"
-	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryAbout'
+class NODEVIEW_MT_AddTPSubcategoryUtilities(bpy.types.Menu):
+	bl_label = "TPSubcategoryUtilities"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryUtilities'
 
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
             ['SvTopologicVersion'],
+            ['SvTopologicInstallDependencies'],
         ])
 
-make_class('TPSubcategoryAbout', 'Topologic @ About')
+make_class('TPSubcategoryUtilities', 'Topologic @ Utilities')
 
 class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
 	bl_label = "TPSubcategoryVertex"
@@ -964,6 +1007,29 @@ class NODEVIEW_MT_AddTPSubcategorySpeckle(bpy.types.Menu):
 
 make_class('TPSubcategorySpeckle', 'Topologic @ Speckle')
 
+class NODEVIEW_MT_AddTPSubcategoryDGL(bpy.types.Menu):
+	bl_label = "TPSubcategoryDGL"
+	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryDGL'
+
+	def draw(self, context):
+		layout = self.layout
+		layout_draw_categories(self.layout, self.bl_label, [
+            ['SvDGLAccuracy'],
+            ['SvDGLClassifierByFilePath'],
+            ['SvDGLDatasetByDGLGraphs'],
+            ['SvDGLDatasetBySamples'],
+            ['SvDGLGraphByGraph'],
+            ['SvDGLGraphByImportedCSV'],
+            ['SvDGLGraphByImportedDGCNN'],
+            ['SvDGLHyperparameters'],
+            ['SvDGLOptimizer'],
+            ['SvDGLPlot'],
+            ['SvDGLPredict'],
+            ['SvDGLTrainClassifier'],
+		])
+
+make_class('TPSubcategoryDGL', 'Topologic @ DGL')
+
 class NODEVIEW_MT_AddTPSubcategoryHomemaker(bpy.types.Menu):
 	bl_label = "TPSubcategoryHomemaker"
 	bl_idname = 'NODEVIEW_MT_AddTPSubcategoryHomemaker'
@@ -992,7 +1058,7 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ CellComplex'],
             ['@ Cluster'],
             ['@ Topology'],
-			['@ Aperture'],
+            ['@ Aperture'],
             ['@ Color'],
             ['@ Context'],
             ['@ Dictionary'],
@@ -1004,8 +1070,9 @@ class NODEVIEW_MT_EX_TOPOLOGIC_Topologic(bpy.types.Menu):
             ['@ Blockchain'],
             ['@ Neo4j'],
             ['@ Speckle'],
+            ['@ DGL'],
             ['@ Homemaker'],
-            ['@ About'],
+            ['@ Utilities'],
 		])
 
 def register():
@@ -1041,8 +1108,9 @@ def register():
 	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
 	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
 	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryDGL)
 	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryHomemaker)
-	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryAbout)
+	bpy.utils.register_class(NODEVIEW_MT_AddTPSubcategoryUtilities)
 	menu = make_menu()
 	menu_category_provider = SvExCategoryProvider("TOPOLOGIC", menu)
 	register_extra_category_provider(menu_category_provider)
@@ -1082,8 +1150,9 @@ def unregister():
 	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryBlockchain)
 	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryNeo4j)
 	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategorySpeckle)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryDGL)
 	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryHomemaker)
-	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryAbout)
+	bpy.utils.unregister_class(NODEVIEW_MT_AddTPSubcategoryUtilities)
 	#sockets.unregister()
 	#icons.unregister()
 	#settings.unregister()

@@ -2,7 +2,8 @@ import bpy
 from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
-from sverchok.core.update_system import make_tree_from_nodes, do_update
+#from sverchok.core.update_system import make_tree_from_nodes, do_update
+from sverchok.core.update_system import UpdateTree
 from sverchok.utils.sv_operator_mixins import SvGenericNodeLocator
 import time
 
@@ -15,8 +16,9 @@ class SvExecuteRun(bpy.types.Operator, SvGenericNodeLocator):
 		#node.do_run = True
 		node.outputs['Status'].sv_set([True])
 		tree = node.id_data
-		update_list = make_tree_from_nodes([node.name], tree)
-		do_update(update_list, tree.nodes)
+		UpdateTree.get(tree)
+		#update_list = make_tree_from_nodes([node.name], tree)
+		#do_update(update_list, tree.nodes)
 		#time.sleep(4)
 		#node.outputs['Status'].sv_set([False])
 		#update_list = make_tree_from_nodes([node.name], tree)
@@ -30,8 +32,9 @@ class SvExecuteReset(bpy.types.Operator, SvGenericNodeLocator):
 		#node.do_run = True
 		node.outputs['Status'].sv_set([False])
 		tree = node.id_data
-		update_list = make_tree_from_nodes([node.name], tree)
-		do_update(update_list, tree.nodes)
+		UpdateTree.get(tree)
+		#update_list = make_tree_from_nodes([node.name], tree)
+		#do_update(update_list, tree.nodes)
 		#time.sleep(4)
 		#node.outputs['Status'].sv_set([False])
 		#update_list = make_tree_from_nodes([node.name], tree)
@@ -55,6 +58,9 @@ class SvTopologicRun(bpy.types.Node, SverchCustomTreeNode):
 		row = layout.row(align=True)
 		row.scale_y = 2
 		self.wrapper_tracked_ui_draw_op(row, "topologic.run", icon='PLAY', text="RUN")
+
+	def process(self):
+		pass
 
 def register():
 	bpy.utils.register_class(SvTopologicRun)

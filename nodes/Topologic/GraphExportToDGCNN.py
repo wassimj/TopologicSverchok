@@ -2,7 +2,7 @@ import bpy
 from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
-from sverchok.core.socket_data import SvGetSocketInfo
+#from sverchok.core.socket_data import SvGetSocketInfo
 
 import topologic
 from . import Replication, DictionaryValueAtKey
@@ -98,7 +98,8 @@ class SvGraphExportToDGCNN(bpy.types.Node, SverchCustomTreeNode):
 	def SvGraphExportToDGCNN_draw_socket(self, socket, context, layout):
 		row = layout.row()
 		split = row.split(factor=0.6)
-		split.row().label(text=socket.name+ '. ' + SvGetSocketInfo(socket))
+		#split.row().label(text=socket.name+ '. ' + SvGetSocketInfo(socket))
+		split.row().label(text=socket.name + f". {socket.objects_number or ''}")
 		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):

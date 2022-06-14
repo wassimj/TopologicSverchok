@@ -2,7 +2,8 @@ import bpy
 from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode, list_match_func, list_match_modes
-from sverchok.core.update_system import make_tree_from_nodes, do_update
+#from sverchok.core.update_system import make_tree_from_nodes, do_update
+from sverchok.core.update_system import UpdateTree
 from sverchok.utils.sv_operator_mixins import SvGenericNodeLocator
 
 from specklepy.api.client import SpeckleClient
@@ -258,9 +259,10 @@ class SvSpeckleReset(bpy.types.Operator, SvGenericNodeLocator):
 			resetItem(anInput)
 		node.outputs['Objects'].sv_set([None])
 		tree = node.id_data
-		update_list = make_tree_from_nodes([node.name], tree)
-		update_list = update_list[1:]
-		do_update(update_list, tree.nodes)
+		UpdateTree.get(tree)
+		#update_list = make_tree_from_nodes([node.name], tree)
+		#update_list = update_list[1:]
+		#do_update(update_list, tree.nodes)
 
 class SvSpeckleRun(bpy.types.Operator, SvGenericNodeLocator):
 

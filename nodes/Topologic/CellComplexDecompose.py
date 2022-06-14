@@ -72,25 +72,25 @@ def processItem(item):
 	return9 = []
 	return10 = []
 	if len(externalVerticalFaces) > 0:
-		return1 = topologic.Cluster.ByTopologies(flatten(externalVerticalFaces))
+		return1 = flatten(externalVerticalFaces)
 	if len(internalVerticalFaces) > 0:
-		return2 = topologic.Cluster.ByTopologies(flatten(internalVerticalFaces))
+		return2 = flatten(internalVerticalFaces)
 	if len(topHorizontalFaces) > 0:
-		return3 = topologic.Cluster.ByTopologies(flatten(topHorizontalFaces))
+		return3 = flatten(topHorizontalFaces)
 	if len(bottomHorizontalFaces) > 0:
-		return4 = topologic.Cluster.ByTopologies(flatten(bottomHorizontalFaces))
+		return4 = flatten(bottomHorizontalFaces)
 	if len(internalHorizontalFaces) > 0:
-		return5 = topologic.Cluster.ByTopologies(flatten(internalHorizontalFaces))
+		return5 = flatten(internalHorizontalFaces)
 	if len(externalVerticalApertures) > 0:
-		return6 = topologic.Cluster.ByTopologies(flatten(externalVerticalApertures))
+		return6 = flatten(externalVerticalApertures)
 	if len(internalVerticalApertures) > 0:
-		return7 = topologic.Cluster.ByTopologies(flatten(internalVerticalApertures))
+		return7 = flatten(internalVerticalApertures)
 	if len(topHorizontalApertures) > 0:
-		return8 = topologic.Cluster.ByTopologies(flatten(topHorizontalApertures))
+		return8 = flatten(topHorizontalApertures)
 	if len(bottomHorizontalApertures) > 0:
-		return9 = topologic.Cluster.ByTopologies(flatten(bottomHorizontalApertures))
+		return9 = flatten(bottomHorizontalApertures)
 	if len(internalHorizontalApertures) > 0:
-		return10 = topologic.Cluster.ByTopologies(flatten(internalHorizontalApertures))
+		return10 = flatten(internalHorizontalApertures)
 
 	return [return1, return2, return3, return4, return5, return6, return7, return8, return9, return10]
 
