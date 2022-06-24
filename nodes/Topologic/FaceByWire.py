@@ -72,7 +72,7 @@ class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
 			level = int(level[0])
 		wireList = list(list_level_iter(wireList,level))
 		wireList = [flatten(t) for t in wireList]
-		outputs = []s
+		outputs = []
 		for t in range(len(wireList)):
 			outputs.append(recur(wireList[t]))
 		self.outputs['Face'].sv_set(outputs)
