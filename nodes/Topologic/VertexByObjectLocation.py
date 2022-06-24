@@ -1,7 +1,5 @@
 import bpy
-from bpy.props import EnumProperty, FloatProperty
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, list_match_func, list_match_modes
 
 import topologic
 import faulthandler
@@ -118,13 +116,8 @@ class SvVertexByObjectLocation(bpy.types.Node, SverchCustomTreeNode):
 		#self.inputs[0].label = 'Auto'
 		self.inputs.new('SvStringsSocket', 'Object')
 		self.outputs.new('SvStringsSocket', 'Vertex')
-		# remove all previous handlers
-		for h in bpy.app.handlers.depsgraph_update_post:
-			bpy.app.handlers.depsgraph_update_post.remove(h)
-		bpy.app.handlers.depsgraph_update_post.append(self.process())
 
 	def process(self):
-		print("Calling Self.Process")
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		objList = self.inputs['Object'].sv_get(deepcopy=True)

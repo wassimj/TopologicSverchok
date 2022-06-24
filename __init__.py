@@ -17,7 +17,7 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 1, 7),
+	"version": (0, 8, 1, 8),
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -247,6 +247,7 @@ def nodes_index():
                 ("Topologic.GraphShortestPaths", "SvGraphShortestPaths"),
                 ("Topologic.GraphTopologicalDistance", "SvGraphTopologicalDistance"),
                 ("Topologic.GraphTopology", "SvGraphTopology"),
+                ("Topologic.GraphTree", "SvGraphTree"),
                 ("Topologic.GraphVertexDegree", "SvGraphVertexDegree"),
                 ("Topologic.GraphVertices", "SvGraphVertices"),
                 ("Topologic.GraphVerticesAtKeyValue", "SvGraphVerticesAtKeyValue"),
@@ -436,6 +437,7 @@ def nodes_index():
 	try:
 		import ifcopenshell
 		from blenderbim.bim import import_ifc
+		from molior import Molior
 		coreNodes = coreNodes+homemakerNodes
 	except:
 		print("Topologic - Warning: Could not import ifcopenshell/molior so Homemaker nodes are not available.")
@@ -512,8 +514,8 @@ class NODEVIEW_MT_AddTPSubcategoryUtilities(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
-            ['SvTopologicVersion'],
             ['SvTopologicInstallDependencies'],
+            ['SvTopologicVersion'],
         ])
 
 make_class('TPSubcategoryUtilities', 'Topologic @ Utilities')
@@ -743,6 +745,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphShortestPaths'],
             ['SvGraphTopologicalDistance'],
             ['SvGraphTopology'],
+            ['SvGraphTree'],
             ['SvGraphVertexDegree'],
             ['SvGraphVertices'],
             ['SvGraphVerticesAtKeyValue'],

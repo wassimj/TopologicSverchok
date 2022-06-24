@@ -8,7 +8,6 @@ from . import Replication
 from . import DictionaryByKeysValues, DictionaryValues, DictionaryValueAtKey
 
 def processItem(sources):
-	print("Sources", sources)
 	sinkKeys = []
 	sinkValues = []
 	d = sources[0]

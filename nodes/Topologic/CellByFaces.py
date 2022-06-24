@@ -15,7 +15,7 @@
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from bpy.props import StringProperty, FloatProperty
+from bpy.props import StringProperty, FloatProperty, IntProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
@@ -30,6 +30,25 @@ def flatten(element):
 	else:
 		returnList = [element]
 	return returnList
+
+def list_level_iter(lst, level, _current_level: int= 1):
+    """
+    Iterate over all lists with given nesting
+    With level 1 it will return the given list
+    With level 2 it will iterate over all nested lists in the main one
+    If a level does not have lists on that level it will return empty list
+    _current_level - for internal use only
+    """
+    if _current_level < level:
+        try:
+            for nested_lst in lst:
+                if not isinstance(nested_lst, list):
+                    raise TypeError
+                yield from list_level_iter(nested_lst, level, _current_level + 1)
+        except TypeError:
+            yield []
+    else:
+        yield lst
 
 def processItem(item, tol):
 	cell = topologic.Cell.ByFaces(item, tol)
@@ -46,10 +65,12 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvCellByFaces'
 	bl_label = 'Cell.ByFaces'
 	Tol: FloatProperty(name='Tol', default=0.0001, min=0, precision=4, update=updateNode)
+	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Faces')
 		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
+		self.inputs.new('SvStringsSocket', 'Level').prop_name='Level'
 		self.outputs.new('SvStringsSocket', 'Cell')
 
 	def process(self):
@@ -58,12 +79,14 @@ class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
 			return
 		faceList = self.inputs['Faces'].sv_get(deepcopy=True)
 		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
-
-		if isinstance(faceList[0], list) == False:
-			faceList = [faceList]
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		if isinstance(level,list):
+			level = int(level[0])
+		faceList = list(list_level_iter(faceList,level))
+		faceList = [flatten(t) for t in faceList]
 		outputs = []
-		for faces in faceList:
-			outputs.append(processItem(faces, tol))
+		for t in range(len(faceList)):
+			outputs.append(processItem(faceList[t], tol))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():

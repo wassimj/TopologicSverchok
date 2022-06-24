@@ -26,10 +26,7 @@ def processItem(item, targetType):
 		t = topologic.CellComplex.Type()
 	elif targetType == "Host Topology":
 		t = 0
-	returnTopology = topology.AddContents(contents, t)
-	testList = []
-	_ = returnTopology.Contents(testList)
-	return returnTopology
+	return topology.AddContents(contents, t)
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Host Topology", "Host Topology", "", 8)]

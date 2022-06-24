@@ -304,7 +304,7 @@ def processCellComplex(item):
 						apertureExists = False
 						for x in sharedt:
 							apList = []
-							_ = x.Apertures(ap)
+							_ = x.Apertures(apList)
 							if len(apList) > 0:
 								apTopList = []
 								for ap in apList:

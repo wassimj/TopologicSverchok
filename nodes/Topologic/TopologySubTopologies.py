@@ -25,6 +25,8 @@ def processItem(item):
 		_ = topology.Cells(None, subtopologies)
 	elif topologyType == "CellComplex":
 		_ = topology.CellComplexes(None, subtopologies)
+	elif topologyType == "Cluster":
+		_ = topology.Clusters(None, subtopologies)
 	elif topologyType == "Aperture":
 		_ = topology.Apertures(None, subtopologies)
 	else:
@@ -42,7 +44,7 @@ def recur(topology, topologyType):
 		output = processItem([topology, topologyType])
 	return output
 
-topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Aperture", "Aperture", "", 8)]
+topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Cluster", "Cluster", "", 8), ("Aperture", "Aperture", "", 9)]
 
 class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""

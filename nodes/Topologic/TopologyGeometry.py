@@ -144,9 +144,12 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		face_list = []
 		for anInput in inputs:
 			v, e, f = processItem(anInput)
-			vertex_list.append(v)
-			edge_list.append(e)
-			face_list.append(f)
+			if v:
+				vertex_list.append(v)
+			if e:
+				edge_list.append(e)
+			if f:
+				face_list.append(f)
 		self.outputs['Vertices'].sv_set(vertex_list)
 		self.outputs['Edges'].sv_set(edge_list)
 		self.outputs['Faces'].sv_set(face_list)
