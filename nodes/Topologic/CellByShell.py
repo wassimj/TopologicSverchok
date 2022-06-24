@@ -74,7 +74,7 @@ class SvCellByShell(bpy.types.Node, SverchCustomTreeNode):
 		shellList = [flatten(t) for t in shellList]
 		outputs = []
 		for t in range(len(shellList)):
-			outputs.append(processItem(shellList[t]))
+			outputs.append(recur(shellList[t]))
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():
