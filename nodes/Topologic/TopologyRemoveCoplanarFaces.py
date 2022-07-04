@@ -39,27 +39,28 @@ def processItem(item):
 		_ = aCluster.Faces(None, faces)
 		shells.append(ShellByFaces.processItem((faces, tolerance)))
 	faces = []
-	print("SHELLS", shells)
 	shells = Replication.flatten(shells)
 	for aShell in shells:
-		print("ASHELL", aShell)
 		faces.append(FaceByPlanarShell.processItem([aShell, angTol]))
 	returnTopology = None
 	if t == 16:
-		try:
-			returnTopology = topologic.Shell.ByFaces(faces)
-		except:
-			returnTopology = topologic.Cluster.ByTopologies(faces)
+		returnTopology = topologic.Shell.ByFaces(faces, tolerance)
+		if not returnTopology:
+			returnTopology = topologic.Cluster.ByTopologies(faces, False)
 	elif t == 32:
-		try:
-			returnTopology = topologic.Cell.ByFaces(faces)
-		except:
-			returnTopology = topologic.Cluster.ByTopologies(faces)
+		returnTopology = topologic.Cell.ByFaces(faces, tolerance)
+		if not returnTopology:
+			returnTopology = topologic.Shell.ByFaces(faces, tolerance)
+		if not returnTopology:
+			returnTopology = topologic.Cluster.ByTopologies(faces, False)
 	elif t == 64:
-		try:
-			returnTopology = topologic.CellComplex.ByFaces(faces)
-		except:
-			returnTopology = topologic.Cluster.ByTopologies(faces)
+		returnTopology = topologic.CellComplex.ByFaces(faces, tolerance, False)
+		if not returnTopology:
+			returnTopology = topologic.Cell.ByFaces(faces, tolerance)
+		if not returnTopology:
+			returnTopology = topologic.Shell.ByFaces(faces, tolerance)
+		if not returnTopology:
+			returnTopology = topologic.Cluster.ByTopologies(faces, False)
 	return returnTopology
 
 def recur(input, angTol, tolerance):
@@ -108,7 +109,7 @@ class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
 			outputs.append(recur(topologyList[t], angTol, tol))
 		self.outputs['Topology'].sv_set(outputs)
 		end = time.time()
-		print("Topology.RemoveCoplanarFaces MK2 Operation consumed "+str(round(end - start,2))+" seconds")
+		print("Topology.RemoveCoplanarFaces Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
     bpy.utils.register_class(SvTopologyRemoveCoplanarFaces)
