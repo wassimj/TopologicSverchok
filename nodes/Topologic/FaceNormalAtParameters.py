@@ -91,9 +91,7 @@ def transposeList(l):
 	return returnList
 
 def processItem(item, outputType, decimals):
-	face = item[0]
-	u = item[1]
-	v = item[2]
+	face, u, v = item
 	try:
 		coords = topologic.FaceUtility.NormalAtParameters(face, u, v)
 		x = round(coords[0], decimals)

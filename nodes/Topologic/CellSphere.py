@@ -69,7 +69,7 @@ def processItem(item, originLocation):
 	return s
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "Lower Left", "", 3)]
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvCellSphere(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -126,7 +126,10 @@ class SvCellSphere(bpy.types.Node, SverchCustomTreeNode):
 		dirZList = Replication.flatten(dirZList)
 		toleranceList = Replication.flatten(toleranceList)
 		inputs = [originList, radiusList, uSidesList, vSidesList, dirXList, dirYList, dirZList, toleranceList]
-		if ((self.Replication) == "Trim"):
+		if ((self.Replication) == "Default"):
+			inputs = Replication.iterate(inputs)
+			inputs = Replication.transposeList(inputs)
+		elif ((self.Replication) == "Trim"):
 			inputs = Replication.trim(inputs)
 			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
@@ -140,7 +143,6 @@ class SvCellSphere(bpy.types.Node, SverchCustomTreeNode):
 		outputs = []
 		for anInput in inputs:
 			outputs.append(processItem(anInput, self.originLocation))
-		print(outputs)
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():

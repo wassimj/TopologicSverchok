@@ -17,7 +17,7 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 1, 8),
+	"version": (0, 8, 1, 9),
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -92,12 +92,15 @@ def nodes_index():
                 ("Topologic.WireLength", "SvWireLength"),
                 ("Topologic.WireProject", "SvWireProject"),
                 ("Topologic.WireRectangle", "SvWireRectangle"),
+                ("Topologic.WireRemoveCollinearEdges", "SvWireRemoveCollinearEdges"),
+                ("Topologic.WireSplit", "SvWireSplit"),
                 ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
                 ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
                 ("Topologic.FaceArea", "SvFaceArea"),
                 ("Topologic.FaceBoundingFace", "SvFaceBoundingFace"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
+                ("Topologic.FaceByPlanarShell", "SvFaceByPlanarShell"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
                 ("Topologic.FaceByVertices", "SvFaceByVertices"),
@@ -262,7 +265,12 @@ def nodes_index():
 
 	visgraphNodes = [("Topologic.GraphVisibilityGraph", "SvGraphVisibilityGraph")]
 	numpyNodes = [("Topologic.TopologyRemoveCoplanarFaces", "SvTopologyRemoveCoplanarFaces"),
-                  ("Topologic.FaceByOffset", "SvFaceByOffset")]
+                  ("Topologic.FaceByOffset", "SvFaceByOffset"),
+                  ("Topologic.EdgeAngle", "SvEdgeAngle"),
+                  ("Topologic.EdgeIsCollinear", "SvEdgeIsCollinear"),
+                  ("Topologic.FaceAngle", "SvFaceAngle"),
+                  ("Topologic.FaceIsCoplanar", "SvFaceIsCoplanar"),
+                  ("Topologic.TopologyClusterFaces", "SvTopologyClusterFaces")]
 	ifcNodes = [("Topologic.IFCAdd2ndLevelBoundaries", "SvIFCAdd2ndLevelBoundaries"),
                 ("Topologic.IFCBuildingElements", "SvIFCBuildingElements"),
                 ("Topologic.IFCClashDetection", "SvIFCClashDetection"),
@@ -545,10 +553,12 @@ class NODEVIEW_MT_AddTPSubcategoryEdge(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
+            ['SvEdgeAngle'],
             ['SvEdgeByStartVertexEndVertex'],
             ['SvEdgeByVertices'],
             ['SvEdgeDirection'],
             ['SvEdgeEndVertex'],
+            ['SvEdgeIsCollinear'],
             ['SvEdgeLength'],
             ['SvEdgeParameterAtVertex'],
             ['SvEdgeStartVertex'],
@@ -576,6 +586,8 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvWireLength'],
             ['SvWireProject'],
             ['SvWireRectangle'],
+            ['SvRemoveCollinearEdges'],
+            ['SvWireSplit'],
             ['SvWireStar'],
 		])
 
@@ -590,9 +602,11 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
 		layout_draw_categories(self.layout, self.bl_label, [
             ['SvFaceAddFaceAsAperture'],
             ['SvFaceAddInternalBoundary'],
+            ['SvFaceAngle'],
             ['SvFaceArea'],
             ['SvFaceBoundingFace'],
             ['SvFaceByEdges'],
+            ['SvFaceByPlanarShell'],
             ['SvFaceByOffset'],
             ['SvFaceByVertices'],
             ['SvFaceByWire'],
@@ -605,6 +619,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
             ['SvFaceGridByParameters'],
             ['SvFaceInternalBoundaries'],
             ['SvFaceInternalVertex'],
+            ['SvFaceIsCoplanar'],
             ['SvFaceIsInside'],
             ['SvFaceNormalAtParameters'],
             ['SvFaceTrimByWire'],
@@ -824,6 +839,7 @@ class NODEVIEW_MT_AddTPSubcategoryTopology(bpy.types.Menu):
             ['SvTopologyByString'],
             ['SvTopologyCenterOfMass'],
             ['SvTopologyCentroid'],
+            ['SvTopologyClusterFaces'],
             ['SvTopologyContent'],
             ['SvTopologyContext'],
             ['SvTopologyConvexHull'],

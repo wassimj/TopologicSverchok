@@ -30,7 +30,16 @@ def processItem(item):
 	fig.layout.xaxis.dtick=x_spacing
 	fig.layout.yaxis.title=y_title
 	fig.layout.yaxis.dtick= y_spacing
-	fig.show()
+	#fig.show()
+	import os
+	from os.path import expanduser
+	home = expanduser("~")
+	filePath = os.path.join(home, "dgl_result.html")
+	html = fig.to_html(full_html=True, include_plotlyjs=True)
+	# save html file
+	with open(filePath, "w") as f:
+		f.write(html)
+	os.system("start "+filePath)
 
 def sv_execute(node):
 	dataList = node.inputs['Data'].sv_get(deepcopy=True)
@@ -113,8 +122,8 @@ class SvDGLPlot(bpy.types.Node, SverchCustomTreeNode):
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
 		row = layout.row(align=True)
-		row.scale_y = 2
-		self.wrapper_tracked_ui_draw_op(row, "dgl.plotrun", icon='PLAY', text="RUN")
+		#row.scale_y = 2
+		#self.wrapper_tracked_ui_draw_op(row, "dgl.plotrun", icon='PLAY', text="RUN")
 
 	def process(self):
 		autorun = self.inputs['Auto-Run'].sv_get(deepcopy=True)[0][0]

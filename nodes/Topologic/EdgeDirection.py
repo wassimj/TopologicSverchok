@@ -26,7 +26,6 @@ def unitizeVector(vector):
 
 def processItem(item, outputType, decimals):
 	coords = None
-	print(item)
 	ev = item.EndVertex()
 	sv = item.StartVertex()
 	x = ev.X() - sv.X()

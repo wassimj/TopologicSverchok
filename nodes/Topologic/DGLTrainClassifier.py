@@ -197,20 +197,21 @@ def reset_weights(self):
 
 class ClassifierSplit:
 	def __init__(self, hparams, trainingDataset):
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		self.trainingDataset = trainingDataset
 		self.hparams = hparams
 		if hparams.conv_layer_type == 'GINConv':
 			self.model = GCN_GINConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'GraphConv':
 			self.model = GCN_GraphConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'SAGEConv':
 			self.model = GCN_SAGEConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'TAGConv':
 			self.model = GCN_TAGConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		else:
 			raise NotImplementedError
 
@@ -243,6 +244,7 @@ class ClassifierSplit:
 												batch_size=hparams.batch_size,
 												drop_last=False)
 	def train(self):
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		# Init the loss and accuracy reporting lists
 		self.training_accuracy_list = []
 		self.training_loss_list = []
@@ -262,8 +264,7 @@ class ClassifierSplit:
 				self.optimizer.zero_grad()
 
 				# Perform forward pass
-				pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float())
-
+				pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float()).to(device)
 				# Compute loss
 				if self.hparams.loss_function == "Negative Log Likelihood":
 					logp = F.log_softmax(pred, 1)
@@ -293,11 +294,12 @@ class ClassifierSplit:
 			torch.save(self.model, self.hparams.checkpoint_path)
 
 	def test(self):
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		num_correct = 0
 		num_tests = 0
 		temp_testing_loss = []
 		for batched_graph, labels in self.test_dataloader:
-			pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float())
+			pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float()).to(device)
 			if self.hparams.loss_function == "Negative Log Likelihood":
 				logp = F.log_softmax(pred, 1)
 				loss = F.nll_loss(logp, labels)
@@ -315,18 +317,20 @@ class ClassifierKFold:
 		self.trainingDataset = trainingDataset
 		self.validationDataset = validationDataset
 		self.hparams = hparams
+		# at beginning of the script
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		if hparams.conv_layer_type == 'GINConv':
 			self.model = GCN_GINConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'GraphConv':
 			self.model = GCN_GraphConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'SAGEConv':
 			self.model = GCN_SAGEConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'TAGConv':
 			self.model = GCN_TAGConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
-                            trainingDataset.gclasses, hparams.pooling)
+                            trainingDataset.gclasses, hparams.pooling).to(device)
 		else:
 			raise NotImplementedError
 
@@ -455,10 +459,10 @@ class ClassifierKFold:
 			if dgl_predictions[i] == dgl_labels[i]:
 				num_correct = num_correct + 1
 		size = len(dgl_predictions)
-		print("ACCURACY:", (num_correct / len(dgl_predictions)))
 		return (num_correct / len(dgl_predictions))
 
 	def predict(self):
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		predicted_labels = []
 		idx = torch.randperm(len(self.validationDataset))
 		num_train = int(len(self.validationDataset))
@@ -469,13 +473,14 @@ class ClassifierKFold:
 		num_correct = 0
 		num_tests = 0
 		for batched_graph, labels in dataloader:
-			pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float())
+			pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float()).to(device)
 			num_correct += (pred.argmax(1) == labels).sum().item()
 			num_tests += len(labels)
 		accuracy = num_correct / num_tests
 		return accuracy
 
 	def validate(self):
+		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 		# Set training to 100% of the data, validate, and save a final model
 		idx = torch.randperm(len(self.trainingDataset))
 		num_train = int(len(self.trainingDataset))
@@ -489,7 +494,7 @@ class ClassifierKFold:
 			num_tests = 0
 			for batched_graph, labels in dataloader:
 				#pred = self.model(batched_graph, batched_graph.ndata['attr'].float()).to(device)
-				pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float())
+				pred = self.model(batched_graph, batched_graph.ndata[self.node_attr_key].float()).to(device)
 				if self.hparams.loss_function == "Negative Log Likelihood":
 					logp = F.log_softmax(pred, 1)
 					loss = F.nll_loss(logp, labels)
@@ -502,8 +507,6 @@ class ClassifierKFold:
 				self.optimizer.step()
 			training_accuracy = num_correct / num_tests
 			validation_accuracy = self.predict()
-			print("TRAINING ACCURACY", training_accuracy)
-			print("VALIDATION ACCURACY", validation_accuracy)
 			if validation_accuracy >= training_accuracy and validation_accuracy > 0.6:
 				break
 		print("Validation - Stopped at Epoch:", e+1)
@@ -528,7 +531,6 @@ def runItem(i, item):
 		tr_a_l = []
 		for l in temp_list:
 			tr_a_l.append((sum(l) / len(l)))
-			#print("Training Accuracy Standard Deviation:", np.std(l))
 		temp_list = Replication.transposeList(classifier.training_loss_list)
 		tr_l_l = []
 		for l in temp_list:
@@ -661,11 +663,24 @@ def sv_execute(node):
 	node.outputs['Training Loss'].sv_set(training_lossList)
 	node.outputs['Testing Loss'].sv_set(testing_lossList)
 
+	'''
 	tree = node.id_data
 	UpdateTree.get(tree)
+	tree.sv_process = True
+	from_nodes = tree.inputs
+	to_nodes = tree.outputs 
+	loop_nodes = from_nodes.intersection(to_nodes)
+	sort_loop_nodes = tree.sort_nodes(loop_nodes)
+	for node in sort_loop_nodes[1:-1]:
+		try:
+			tree.update_node(node, suppress=False)
+		except Exception:
+			raise Exception(f"Iteration number: {i+1}") 
+
 	#update_list = make_tree_from_nodes([node.name], tree)
 	#update_list = update_list[1:]
 	#do_update(update_list, tree.nodes)
+	'''
 	end = time.time()
 	print("DGL.TrainClassifier Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
@@ -728,9 +743,9 @@ class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
-		row = layout.row(align=True)
-		row.scale_y = 2
-		self.wrapper_tracked_ui_draw_op(row, "dgl.trainclassifierrun", icon='PLAY', text="RUN")
+		#srow = layout.row(align=True)
+		#row.scale_y = 2
+		#self.wrapper_tracked_ui_draw_op(row, "dgl.trainclassifierrun", icon='PLAY', text="RUN")
 
 	def process(self):
 		for socket in self.outputs:

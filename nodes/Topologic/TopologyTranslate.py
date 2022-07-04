@@ -7,6 +7,8 @@ import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 from mathutils import Vector
 
+from . import Replication
+
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
 	returnList = []
@@ -165,6 +167,7 @@ class SvTopologyTranslate(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['Topology'].sv_set([])
 			return
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
+		topologyList = flatten(topologyList)
 		if self.inputMode == "XYZ":
 			xList = self.inputs['X'].sv_get(deepcopy=True)
 			yList = self.inputs['Y'].sv_get(deepcopy=True)

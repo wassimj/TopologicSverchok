@@ -35,16 +35,15 @@ def list_level_iter(lst, level, _current_level: int= 1):
     else:
         yield lst
 
-def processItem(faces, tol):
+def processItem(item):
+	faces, tol = item
 	shell = topologic.Shell.ByFaces(faces, tol)
 	if not shell:
 		warnings.warn("Warning: Default Shell.ByFaces method failed. Attempting to Merge the Faces.", UserWarning)
 		result = faces[0]
 		remainder = faces[1:]
 		cluster = topologic.Cluster.ByTopologies(remainder, False)
-		print("Cluster", cluster)
 		result = result.Merge(cluster, False)
-		print("Result Type", result.Type())
 		if result.Type() != 16: #16 is the type of a Shell
 			warnings.warn("Warning: Input Faces do not form a Shell", UserWarning)
 			if result.Type() > 16:
@@ -84,7 +83,7 @@ class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 		faceList = [flatten(t) for t in faceList]
 		outputs = []
 		for t in range(len(faceList)):
-			outputs.append(processItem(faceList[t], tol))
+			outputs.append(processItem([faceList[t], tol]))
 		self.outputs['Shell'].sv_set(outputs)
 
 def register():
