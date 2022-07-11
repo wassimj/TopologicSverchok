@@ -65,6 +65,7 @@ if __name__ != "topologicsverchok":
 def nodes_index():
 	coreNodes = [
                 ("Topologic.Version", "SvTopologicVersion"),
+                ("Topologic.OpenFilePath", "SvTopologicOpenFilePath"),
                 ("Topologic.VertexByCoordinates", "SvVertexByCoordinates"),
                 ("Topologic.VertexByObjectLocation", "SvVertexByObjectLocation"),
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
@@ -523,6 +524,7 @@ class NODEVIEW_MT_AddTPSubcategoryUtilities(bpy.types.Menu):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
             ['SvTopologicInstallDependencies'],
+            ['SvTopologicOpenFilePath'],
             ['SvTopologicVersion'],
         ])
 

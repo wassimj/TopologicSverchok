@@ -63,7 +63,7 @@ class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvShellByFaces'
 	bl_label = 'Shell.ByFaces'
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Faces')
@@ -76,7 +76,7 @@ class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
 			return
 		faceList = self.inputs['Faces'].sv_get(deepcopy=False)
 		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		if isinstance(level,list):
 			level = int(level[0])
 		faceList = list(list_level_iter(faceList,level))

@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from . import ShellExternalBoundary, WireByVertices, VertexProject, WireRemoveCollinearEdges
+from . import ShellExternalBoundary, WireByVertices, VertexProject, WireRemoveCollinearEdges, Replication
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
 def flatten(element):
@@ -113,7 +113,7 @@ class SvFaceByPlanarShell(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceByPlanarShell'
 	bl_label = 'Face.ByPlanarShell'
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 	AngTol: FloatProperty(name='AngTol', default=0.1, min=0, precision=4, update=updateNode)
 
 	def sv_init(self, context):
@@ -126,12 +126,12 @@ class SvFaceByPlanarShell(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		shellList = self.inputs['Shell'].sv_get(deepcopy=True)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = Replication.flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		angTol = self.inputs['Angular Tolerance'].sv_get(deepcopy=False)[0][0]
 		if isinstance(level,list):
 			level = int(level[0])
 		shellList = list(list_level_iter(shellList,level))
-		shellList = [flatten(t) for t in shellList]
+		shellList = [Replication.flatten(t) for t in shellList]
 		outputs = []
 		for t in range(len(shellList)):
 			outputs.append(recur(shellList[t], angTol))

@@ -1,23 +1,43 @@
 import bpy
-from bpy.props import FloatProperty, StringProperty
+from bpy.props import FloatProperty, StringProperty, IntProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
 import numpy as np
 from scipy.spatial import ConvexHull
-from . import ShellByFaces, ShellExternalBoundary, TopologySelfMerge
+from . import ShellByFaces, ShellExternalBoundary, TopologySelfMerge, Replication
 import math
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
+def list_level_iter(lst, level, _current_level: int= 1):
+	"""
+	Iterate over all lists with given nesting
+	With level 1 it will return the given list
+	With level 2 it will iterate over all nested lists in the main one
+	If a level does not have lists on that level it will return empty list
+	_current_level - for internal use only
+	"""
+	if _current_level < level:
+		try:
+			for nested_lst in lst:
+				if not isinstance(nested_lst, list):
+					raise TypeError
+				yield from list_level_iter(nested_lst, level, _current_level + 1)
+		except TypeError:
+			yield []
 	else:
-		returnList = [element]
-	return returnList
+		yield lst
+
+def recur(input, tol):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem, tol))
+	else:
+		output = processItem([input, tol])
+	return output
 
 def convexHull3D(item, tol, option):
 	if item:
@@ -84,7 +104,6 @@ def convexHull2D(item, tol):
 		theta = 0
 	else:
 		theta = math.degrees(math.acos(dz/dist)) # Rotation around Z-Axis
-		print("Phi and Theta", phi, theta)
 		base_item = topologic.TopologyUtility.Translate(new_item, -cm.X(), -cm.Y(), -cm.Z())
 		base_item = topologic.TopologyUtility.Rotate(base_item, origin, 0, 0, 1, -phi)
 		bse_item = topologic.TopologyUtility.Rotate(base_item, origin, 0, 1, 0, -theta)
@@ -117,12 +136,13 @@ def convexHull2D(item, tol):
 	clus = topologic.TopologyUtility.Translate(clus, cm.X(), cm.Y(), cm.Z())
 	return [clus, base_item]
 
-def processItem(item, tol):
+def processItem(item):
+	topology, tol = item
 	returnObject = None
 	try:
-		returnObject = convexHull3D(item, tol, None)
+		returnObject = convexHull3D(topology, tol, None)
 	except:
-		returnObject = convexHull3D(item, tol, 'QJ')
+		returnObject = convexHull3D(topology, tol, 'QJ')
 	return returnObject
 
 class SvTopologyConvexHull(bpy.types.Node, SverchCustomTreeNode):
@@ -133,21 +153,27 @@ class SvTopologyConvexHull(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvTopologyConvexHull'
 	bl_label = 'Topology.ConvexHull'
 	Tol: FloatProperty(name='Tol', default=0.0001, min=0, precision=4, update=updateNode)
+	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
+		self.inputs.new('SvStringsSocket', 'Level').prop_name='Level'
 		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Convex Hull')
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Topology'].sv_get(deepcopy=False)
-		inputs = flatten(inputs)
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
+		level = Replication.flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
+		if isinstance(level,list):
+			level = int(level[0])
+		topologyList = list(list_level_iter(topologyList,level))
+		topologyList = [Replication.flatten(t) for t in topologyList]
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput, tol))
+		for t in range(len(topologyList)):
+			outputs.append(recur(topologyList[t], tol))
 		self.outputs['Convex Hull'].sv_set(outputs)
 
 def register():

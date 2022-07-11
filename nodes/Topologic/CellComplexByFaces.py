@@ -68,7 +68,7 @@ class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvCellComplexByFaces'
 	bl_label = 'CellComplex.ByFaces'
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Faces')
@@ -82,7 +82,7 @@ class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 			self.outputs['CellComplex'].sv_set([])
 			return
 		faceList = self.inputs['Faces'].sv_get(deepcopy=True)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
 		if isinstance(level,list):
 			level = int(level[0])

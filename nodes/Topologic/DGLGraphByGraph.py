@@ -62,7 +62,7 @@ def oneHotEncode(item, categories):
     return returnList
 
 def processItem(item):
-	graph, bidirectional, key, categories, tolerance = item
+	graph, bidirectional, key, categories, node_attr_key, tolerance = item
 	graph_dict = {}
 	vertices = graphVertices(graph)
 	edges = graphEdges(graph)
@@ -104,8 +104,8 @@ def processItem(item):
 	# Create a graph
 	dgl_graph = dgl.graph((src, dst), num_nodes=num_nodes)
 	
-	# Setting the node features as 'attr' using onehotencoding of vlabel
-	dgl_graph.ndata['attr'] = torch.stack(graph_dict["node_features"])
+	# Setting the node features as node_attr_key using onehotencoding of vlabel
+	dgl_graph.ndata[node_attr_key] = torch.stack(graph_dict["node_features"])
 	
 	if bidirectional:
 		dgl_graph = dgl.add_reverse_edges(dgl_graph)
@@ -124,11 +124,13 @@ class SvDGLGraphByGraph(bpy.types.Node, SverchCustomTreeNode):
 	Key: StringProperty(name='Vertex Label Key', default="ID", update=updateNode)
 	Bidirectional: BoolProperty(name="Bidirectional", default=True, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, min=0, precision=4, update=updateNode)
+	NodeAttrKeyLabel: StringProperty(name='Node Attr Key', default='node_attr', update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Graph')
 		self.inputs.new('SvStringsSocket', 'Bidirectional').prop_name = 'Bidirectional'
 		self.inputs.new('SvStringsSocket', 'Vertex Label Key').prop_name='Key'
+		self.inputs.new('SvStringsSocket', 'Node Attr Key').prop_name='NodeAttrKeyLabel'
 		self.inputs.new('SvStringsSocket', 'Vertex Categories')
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'DGL Graph')
@@ -142,13 +144,15 @@ class SvDGLGraphByGraph(bpy.types.Node, SverchCustomTreeNode):
 		graphList = self.inputs['Graph'].sv_get(deepcopy=True)
 		bidirectionalList = self.inputs['Bidirectional'].sv_get(deepcopy=True)
 		keyList = self.inputs['Vertex Label Key'].sv_get(deepcopy=True)
+		node_attr_keyList = self.inputs['Node Attr Key'].sv_get(deepcopy=True)
 		categoriesList = self.inputs['Vertex Categories'].sv_get(deepcopy=True)
 		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
 		graphList = Replication.flatten(graphList)
 		bidirectionalList = Replication.flatten(bidirectionalList)
 		keyList = Replication.flatten(keyList)
+		node_attr_keyList = Replication.flatten(node_attr_keyList)
 		toleranceList = Replication.flatten(toleranceList)
-		inputs = [graphList, bidirectionalList, keyList, categoriesList, toleranceList]
+		inputs = [graphList, bidirectionalList, keyList, categoriesList, node_attr_keyList, toleranceList]
 		if ((self.Replication) == "Default"):
 			inputs = Replication.iterate(inputs)
 			inputs = Replication.transposeList(inputs)

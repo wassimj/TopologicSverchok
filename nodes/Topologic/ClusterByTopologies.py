@@ -46,7 +46,7 @@ class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvClusterByTopologies'
 	bl_label = 'Cluster.ByTopologies'
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topologies')
@@ -58,7 +58,7 @@ class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		topologyList = self.inputs['Topologies'].sv_get(deepcopy=False)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		if isinstance(level,list):
 			level = int(level[0])
 		topologyList = list(list_level_iter(topologyList,level))

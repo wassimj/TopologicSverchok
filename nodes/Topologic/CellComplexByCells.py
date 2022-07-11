@@ -64,7 +64,7 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvCellComplexByCells'
 	bl_label = 'CellComplex.ByCells'
 	Tol: FloatProperty(name='Tol', default=0.0001, precision=4, update=updateNode)
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Cells')
@@ -77,7 +77,7 @@ class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		cellList = self.inputs['Cells'].sv_get(deepcopy=False)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		tol = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)[0][0]
 		if isinstance(level,list):
 			level = int(level[0])
