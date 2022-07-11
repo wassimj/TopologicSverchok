@@ -98,9 +98,9 @@ class SvDGLGraphByImportedCSV(bpy.types.Node, SverchCustomTreeNode):
 
 	def sv_init(self, context):
 		self.width = 300
-		self.inputs.new('SvFilePathSocket', 'Graphs File Path').prop_name = 'GraphsFilePathProp'
-		self.inputs.new('SvFilePathSocket', 'Edges File Path').prop_name = 'EdgesFilePathProp'
-		self.inputs.new('SvFilePathSocket', 'Nodes File Path').prop_name = 'NodesFilePathProp'
+		self.inputs.new('SvStringsSocket', 'Graphs File Path').prop_name = 'GraphsFilePathProp'
+		self.inputs.new('SvStringsSocket', 'Edges File Path').prop_name = 'EdgesFilePathProp'
+		self.inputs.new('SvStringsSocket', 'Nodes File Path').prop_name = 'NodesFilePathProp'
 		self.inputs.new('SvStringsSocket', 'Graph ID Header').prop_name = 'GraphIDHeaderProp'
 		self.inputs.new('SvStringsSocket', 'Graph Label Header').prop_name = 'GraphLabelHeaderProp'
 		self.inputs.new('SvStringsSocket', 'Graph Num Nodes Header').prop_name = 'GraphNumNodesHeaderProp'
