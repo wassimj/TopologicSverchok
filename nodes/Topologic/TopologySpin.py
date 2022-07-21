@@ -38,11 +38,8 @@ def processItem(item):
 			except:
 				try:
 					returnTopology = CellComplexByLoft.processItem(topologies, tolerance)
-					print("Success!")
 					try:
-						print("Trying to convert CellComplex to Cell")
 						returnTopology = returnTopology.ExternalBoundary()
-						print("Success!")
 					except:
 						pass
 				except:

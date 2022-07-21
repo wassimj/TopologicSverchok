@@ -19,7 +19,8 @@ loss_functions = [("Negative Log Likelihood", "Negative Log Likelihood", "", 1),
 conv_layer_types = [("GINConv", "GINConv", "", 1),
 				  ("GraphConv", "GraphConv", "", 2),
 				  ("SAGEConv", "SAGEConv", "", 3),
-				  ("TAGConv", "TAGConv", "", 4)]
+				  ("TAGConv", "TAGConv", "", 4),
+				  ("Classic", "Classic", "", 5)]
 pooling = [("AvgPooling", "AvgPooling", "", 1),
 				  ("MaxPooling", "MaxPooling", "", 2),
 				  ("SumPooling", "SumPooling", "", 3)]
@@ -104,7 +105,8 @@ def processItem(item):
 	hl_str_list = hidden_layers_str.split()
 	hidden_layers = []
 	for hl in hl_str_list:
-		hidden_layers.append(int(hl))
+		if hl != None and hl.isnumeric():
+			hidden_layers.append(int(hl))
 	# Classifier: Make sure the file extension is .pt
 	ext = checkpoint_path[len(checkpoint_path)-3:len(checkpoint_path)]
 	if ext.lower() != ".pt":
@@ -194,6 +196,8 @@ class SvDGLHyperparameters(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
+		if not (self.inputs['Optimizer'].is_linked):
+			raise Exception("DGL.Hyperparameters - Error: No optimizer has been linked. Please add a DGL.Optimizer Node.")
 		optimizerList = self.inputs['Optimizer'].sv_get(deepcopy=True)
 		cvTypeList = [self.CVType]
 		splitList = self.inputs['Split'].sv_get(deepcopy=True)

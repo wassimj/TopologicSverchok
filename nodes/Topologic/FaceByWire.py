@@ -56,7 +56,7 @@ class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceByWire'
 	bl_label = 'Face.ByWire'
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wire')
@@ -67,7 +67,7 @@ class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		wireList = self.inputs['Wire'].sv_get(deepcopy=True)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		if isinstance(level,list):
 			level = int(level[0])
 		wireList = list(list_level_iter(wireList,level))

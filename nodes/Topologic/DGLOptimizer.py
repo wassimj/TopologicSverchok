@@ -120,7 +120,7 @@ class SvDGLOptimizer(bpy.types.Node, SverchCustomTreeNode):
 		row = layout.row()
 		split = row.split(factor=0.45)
 		#split.row().label(text=socket.name+ '. ' + SvGetSocketInfo(socket))
-		split.row().label(text=(socket.label or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
 		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):

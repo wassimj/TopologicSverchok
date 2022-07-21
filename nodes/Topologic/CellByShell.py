@@ -56,7 +56,7 @@ class SvCellByShell(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellByShell'
 	bl_label = 'Cell.ByShell'
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Shell')
@@ -67,7 +67,7 @@ class SvCellByShell(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		shellList = self.inputs['Shell'].sv_get(deepcopy=False)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		if isinstance(level,list):
 			level = int(level[0])
 		shellList = list(list_level_iter(shellList,level))

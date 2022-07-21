@@ -83,7 +83,7 @@ class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Topology.RemoveCoplanarFaces'
 	AngTol: FloatProperty(name='AngTol', default=0.1, min=0, precision=4, update=updateNode)
 	Tol: FloatProperty(name='Tol', default=0.0001, min=0, precision=4, update=updateNode)
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
@@ -99,7 +99,7 @@ class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
 		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
 		angTol = self.inputs['Angular Tolerance'].sv_get(deepcopy=False)[0][0]
 		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
-		level = Replication.flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
+		level = Replication.flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
 		if isinstance(level,list):
 			level = int(level[0])
 		topologyList = list(list_level_iter(topologyList,level))

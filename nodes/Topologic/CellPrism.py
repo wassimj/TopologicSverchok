@@ -122,24 +122,17 @@ def sliceCell(cell, width, length, height, uSides, vSides, wSides):
 	_ = cell.Shells(None, shells)
 	shell = shells[0]
 	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1], "Center")
-	wFaces = []
+	sliceFaces = []
 	for i in range(1, wSides):
-		wFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(wRect), 0, 0, height/wSides*i - height*0.5))
-	wCluster = topologic.Cluster.ByTopologies(wFaces)
-	shell = shell.Slice(wCluster, False)
+		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(wRect), 0, 0, height/wSides*i - height*0.5))
 	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0], "Center")
-	uFaces = []
 	for i in range(1, uSides):
-		uFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(uRect), width/uSides*i - width*0.5, 0, 0))
-	uCluster = topologic.Cluster.ByTopologies(uFaces)
-	shell = shell.Slice(uCluster, False)
+		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(uRect), width/uSides*i - width*0.5, 0, 0))
 	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0], "Center")
-	vFaces = []
 	for i in range(1, vSides):
-		vFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(vRect), 0, length/vSides*i - length*0.5, 0))
-	vCluster = topologic.Cluster.ByTopologies(vFaces)
-	shell = shell.Slice(vCluster, False)
-	#return topologic.Cell.ByShell(shell)
+		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(vRect), 0, length/vSides*i - length*0.5, 0))
+	sliceCluster = topologic.Cluster.ByTopologies(sliceFaces)
+	shell = shell.Slice(sliceCluster, False)
 	return topologic.Cell.ByShell(shell)
 
 def processItem(item, originLocation):

@@ -41,8 +41,11 @@ def processItem(item, originLocation):
 	dirZ, \
 	tolerance = item
 
-	c = WireCircle.processItem([origin, radius, vSides, 90, 270, False, 0, 1, 0], "Center")
+	c = WireCircle.processItem([origin, radius, vSides, 90, 270, True, 0, 1, 0], "Center")
+	c = topologic.Face.ByExternalBoundary(c)
 	s = TopologySpin.processItem([c, origin, 0, 0, 1, 360, uSides, tolerance])
+	if s.Type() == topologic.CellComplex.Type():
+		s = s.ExternalBoundary()
 	if s.Type() == topologic.Shell.Type():
 		s = topologic.Cell.ByShell(s)
 	if originLocation == "Bottom":
@@ -110,7 +113,6 @@ class SvCellSphere(bpy.types.Node, SverchCustomTreeNode):
 		else:
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
 			originList = Replication.flatten(originList)
-		print("OriginList", originList)
 		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
 		uSidesList = self.inputs['U Sides'].sv_get(deepcopy=True)
 		vSidesList = self.inputs['V Sides'].sv_get(deepcopy=True)

@@ -232,7 +232,7 @@ class SvCellCone(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvCellCone'
 	bl_label = 'Cell.Cone'
 	BaseRadius: FloatProperty(name="Base Radius", default=1, min=0, precision=4, update=updateNode)
-	TopRadius: FloatProperty(name="Top Radius", default=1, min=0, precision=4, update=updateNode)
+	TopRadius: FloatProperty(name="Top Radius", default=0, min=0, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
 	Sides: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)

@@ -27,6 +27,43 @@ import numpy as np
 from . import Replication
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
+
+class GCN_Classic(nn.Module):
+	def __init__(self, in_feats, h_feats, num_classes):
+		"""
+
+        Parameters
+        ----------
+        in_feats : int
+            Input dimension in the form of integer
+        h_feats : list
+            List of hidden neurons for each hidden layer
+        num_classes : int
+            Number of output classes
+
+        Returns
+        -------
+        None.
+
+		"""
+		super(GCN_Classic, self).__init__()
+		assert isinstance(h_feats, list), "h_feats must be a list"
+		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
+		self.list_of_layers = []
+		dim = [in_feats] + h_feats
+		for i in range(1, len(dim)):
+			self.list_of_layers.append(GraphConv(dim[i-1], dim[i]))
+		self.final = GraphConv(dim[-1], num_classes)
+
+	def forward(self, g, in_feat):
+		h = in_feat
+		for i in range(len(self.list_of_layers)):
+			h = self.list_of_layers[i](g, h)
+			h = F.relu(h)
+		h = self.final(g, h)
+		g.ndata['h'] = h
+		return dgl.mean_nodes(g, 'h')
+
 class GCN_GINConv(nn.Module):
 	def __init__(self, in_feats, h_feats, num_classes, pooling):
 		super(GCN_GINConv, self).__init__()
@@ -197,10 +234,14 @@ def reset_weights(self):
 
 class ClassifierSplit:
 	def __init__(self, hparams, trainingDataset):
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
 		self.trainingDataset = trainingDataset
 		self.hparams = hparams
-		if hparams.conv_layer_type == 'GINConv':
+		if hparams.conv_layer_type == 'Classic':
+			self.model = GCN_Classic(trainingDataset.dim_nfeats, hparams.hidden_layers, 
+                            trainingDataset.gclasses).to(device)
+		elif hparams.conv_layer_type == 'GINConv':
 			self.model = GCN_GINConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
                             trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'GraphConv':
@@ -212,6 +253,9 @@ class ClassifierSplit:
 		elif hparams.conv_layer_type == 'TAGConv':
 			self.model = GCN_TAGConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
                             trainingDataset.gclasses, hparams.pooling).to(device)
+		elif hparams.conv_layer_type == 'GCN':
+			self.model = GCN(trainingDataset.dim_nfeats, hparams.hidden_layers, 
+                            trainingDataset.gclasses).to(device)
 		else:
 			raise NotImplementedError
 
@@ -244,7 +288,8 @@ class ClassifierSplit:
 												batch_size=hparams.batch_size,
 												drop_last=False)
 	def train(self):
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
 		# Init the loss and accuracy reporting lists
 		self.training_accuracy_list = []
 		self.training_loss_list = []
@@ -294,7 +339,8 @@ class ClassifierSplit:
 			torch.save(self.model, self.hparams.checkpoint_path)
 
 	def test(self):
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
 		num_correct = 0
 		num_tests = 0
 		temp_testing_loss = []
@@ -318,8 +364,12 @@ class ClassifierKFold:
 		self.validationDataset = validationDataset
 		self.hparams = hparams
 		# at beginning of the script
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-		if hparams.conv_layer_type == 'GINConv':
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
+		if hparams.conv_layer_type == 'Classic':
+			self.model = GCN_Classic(trainingDataset.dim_nfeats, hparams.hidden_layers, 
+                            trainingDataset.gclasses).to(device)
+		elif hparams.conv_layer_type == 'GINConv':
 			self.model = GCN_GINConv(trainingDataset.dim_nfeats, hparams.hidden_layers, 
                             trainingDataset.gclasses, hparams.pooling).to(device)
 		elif hparams.conv_layer_type == 'GraphConv':
@@ -462,7 +512,8 @@ class ClassifierKFold:
 		return (num_correct / len(dgl_predictions))
 
 	def predict(self):
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
 		predicted_labels = []
 		idx = torch.randperm(len(self.validationDataset))
 		num_train = int(len(self.validationDataset))
@@ -480,7 +531,8 @@ class ClassifierKFold:
 		return accuracy
 
 	def validate(self):
-		device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+		device = torch.device("cpu")
 		# Set training to 100% of the data, validate, and save a final model
 		idx = torch.randperm(len(self.trainingDataset))
 		num_train = int(len(self.trainingDataset))
@@ -662,7 +714,7 @@ def sv_execute(node):
 	node.outputs['Testing Accuracy'].sv_set(testing_accuracyList)
 	node.outputs['Training Loss'].sv_set(training_lossList)
 	node.outputs['Testing Loss'].sv_set(testing_lossList)
-
+	
 	'''
 	tree = node.id_data
 	UpdateTree.get(tree)
@@ -692,6 +744,7 @@ class SvDGLTrainClassifierRun(bpy.types.Operator, SvGenericNodeLocator):
 
 	def sv_execute(self, context, node):
 		sv_execute(node)
+		node.outputs['Auto-Run'].sv_set(False)
 
 
 class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
@@ -743,7 +796,7 @@ class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
 
 	def draw_buttons(self, context, layout):
 		layout.prop(self, "Replication",text="")
-		#srow = layout.row(align=True)
+		#row = layout.row(align=True)
 		#row.scale_y = 2
 		#self.wrapper_tracked_ui_draw_op(row, "dgl.trainclassifierrun", icon='PLAY', text="RUN")
 
@@ -753,6 +806,8 @@ class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
 		autorun = self.inputs['Auto-Run'].sv_get(deepcopy=True)[0][0]
 		if autorun:
 			sv_execute(self)
+		
+
 
 def register():
 	bpy.utils.register_class(SvDGLTrainClassifier)
