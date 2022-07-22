@@ -14,23 +14,16 @@ class SvExecuteRun(bpy.types.Operator, SvGenericNodeLocator):
 	bl_idname = "topologic.run"
 	bl_label = "Run"
 	def sv_execute(self, context, node):
-		node.outputs['Status'].sv_set([[True]])
+		output = True
+		if not (node.inputs['Input'].is_linked):
+			output = [True]
+		else:
+			output = node.inputs['Input'].sv_get(deepcopy=False)[0]
+		node.outputs['Output'].sv_set(output)
 		tree = node.id_data
 		stree = UpdateTree.get(tree)
 		nodes = stree.nodes_from([node])
 		tree.update_nodes(nodes)
-
-class SvExecuteReset(bpy.types.Operator, SvGenericNodeLocator):
-
-	bl_idname = "topologic.reset"
-	bl_label = "Reset"
-	def sv_execute(self, context, node):
-		node.outputs['Status'].sv_set([[False]])
-		tree = node.id_data
-		stree = UpdateTree.get(tree)
-		nodes = stree.nodes_from([node])
-		tree.update_nodes(nodes)
-	
 		
 class SvTopologicRun(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -41,12 +34,10 @@ class SvTopologicRun(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Topologic.Run'
 
 	def sv_init(self, context):
-		self.outputs.new('SvStringsSocket', 'Status')
+		self.inputs.new('SvStringsSocket', 'Input')
+		self.outputs.new('SvStringsSocket', 'Output')
 
 	def draw_buttons(self, context, layout):
-		row = layout.row(align=True)
-		row.scale_y = 2
-		self.wrapper_tracked_ui_draw_op(row, "topologic.reset", icon='CANCEL', text="RESET")
 		row = layout.row(align=True)
 		row.scale_y = 2
 		self.wrapper_tracked_ui_draw_op(row, "topologic.run", icon='PLAY', text="RUN")
@@ -58,10 +49,8 @@ class SvTopologicRun(bpy.types.Node, SverchCustomTreeNode):
 def register():
 	bpy.utils.register_class(SvTopologicRun)
 	bpy.utils.register_class(SvExecuteRun)
-	bpy.utils.register_class(SvExecuteReset)
 
 
 def unregister():
 	bpy.utils.unregister_class(SvTopologicRun)
 	bpy.utils.unregister_class(SvExecuteRun)
-	bpy.utils.unregister_class(SvExecuteReset)

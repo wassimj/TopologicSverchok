@@ -48,6 +48,7 @@ class GCN_Classic(nn.Module):
 		"""
 		super(GCN_Classic, self).__init__()
 		assert isinstance(h_feats, list), "h_feats must be a list"
+		h_feats = [x for x in h_feats if x is not None]
 		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
 		self.list_of_layers = []
 		dim = [in_feats] + h_feats
@@ -68,6 +69,7 @@ class GCN_GINConv(nn.Module):
 	def __init__(self, in_feats, h_feats, num_classes, pooling):
 		super(GCN_GINConv, self).__init__()
 		assert isinstance(h_feats, list), "h_feats must be a list"
+		h_feats = [x for x in h_feats if x is not None]
 		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
 		self.list_of_layers = []
 		dim = [in_feats] + h_feats
@@ -108,6 +110,7 @@ class GCN_GraphConv(nn.Module):
 	def __init__(self, in_feats, h_feats, num_classes, pooling):
 		super(GCN_GraphConv, self).__init__()
 		assert isinstance(h_feats, list), "h_feats must be a list"
+		h_feats = [x for x in h_feats if x is not None]
 		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
 		self.list_of_layers = []
 		dim = [in_feats] + h_feats
@@ -148,6 +151,7 @@ class GCN_SAGEConv(nn.Module):
 	def __init__(self, in_feats, h_feats, num_classes, pooling):
 		super(GCN_SAGEConv, self).__init__()
 		assert isinstance(h_feats, list), "h_feats must be a list"
+		h_feats = [x for x in h_feats if x is not None]
 		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
 		self.list_of_layers = []
 		dim = [in_feats] + h_feats
@@ -187,6 +191,7 @@ class GCN_TAGConv(nn.Module):
 	def __init__(self, in_feats, h_feats, num_classes, pooling):
 		super(GCN_TAGConv, self).__init__()
 		assert isinstance(h_feats, list), "h_feats must be a list"
+		h_feats = [x for x in h_feats if x is not None]
 		assert len(h_feats) !=0, "h_feats is empty. unable to add hidden layers"
 		self.list_of_layers = []
 		dim = [in_feats] + h_feats
@@ -639,10 +644,14 @@ def runItem(i, item):
 	return data_list
 
 def sv_execute(node):
+	autorunList = node.inputs['Auto-Run'].sv_get(deepcopy=True)
+	autorunList = Replication.flatten(autorunList)
+	if not autorunList[0]:
+		return
 	start = time.time()
-	hyperparametersList = node.inputs['Hyperparameters'].sv_get(deepcopy=True)
-	trainingDatasetList = node.inputs['Training Dataset'].sv_get(deepcopy=True)
-	validationDatasetList = node.inputs['Validation Dataset'].sv_get(deepcopy=True)
+	hyperparametersList = node.inputs['Hyperparameters'].sv_get(deepcopy=False)
+	trainingDatasetList = node.inputs['Training Dataset'].sv_get(deepcopy=False)
+	validationDatasetList = node.inputs['Validation Dataset'].sv_get(deepcopy=False)
 	hyperparametersList = Replication.flatten(hyperparametersList)
 	trainingDatasetList = Replication.flatten(trainingDatasetList)
 	validationDatasetList = Replication.flatten(validationDatasetList)
@@ -744,7 +753,6 @@ class SvDGLTrainClassifierRun(bpy.types.Operator, SvGenericNodeLocator):
 
 	def sv_execute(self, context, node):
 		sv_execute(node)
-		node.outputs['Auto-Run'].sv_set(False)
 
 
 class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
@@ -755,9 +763,9 @@ class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvDGLTrainClassifier'
 	bl_label = 'DGL.TrainClassifier'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
-	HyperparametersProp: StringProperty(name="Hyperparameters", update=None)
-	TrainingDatasetProp: StringProperty(name="Training Dataset", update=None)
-	ValidationDatasetProp: StringProperty(name="Validation Dataset", update=None)
+	HyperparametersProp: StringProperty(name="Hyperparameters", update=updateNode)
+	TrainingDatasetProp: StringProperty(name="Training Dataset", update=updateNode)
+	ValidationDatasetProp: StringProperty(name="Validation Dataset", update=updateNode)
 	AutoRunProp: BoolProperty(name="Auto Run", description="Automatically train and test the classifier", default=False, update=updateNode)
 
 	def sv_init(self, context):
@@ -803,8 +811,9 @@ class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
 	def process(self):
 		for socket in self.outputs:
 			socket.sv_set([[0]])
-		autorun = self.inputs['Auto-Run'].sv_get(deepcopy=True)[0][0]
-		if autorun:
+		autorunList = self.inputs['Auto-Run'].sv_get(deepcopy=True)
+		autorunList = Replication.flatten(autorunList)
+		if autorunList[0]:
 			sv_execute(self)
 		
 
