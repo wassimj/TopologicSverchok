@@ -1,20 +1,12 @@
 import bpy
 from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, FloatVectorProperty, EnumProperty
-from mathutils import Matrix
 
 from sverchok.node_tree import SverchCustomTreeNode
-from sverchok.data_structure import updateNode, repeat_last
-from sverchok.utils.nodes_mixins.generating_objects import SvMeshData, SvViewerNode
-from sverchok.utils.handle_blender_data import correct_collection_length
-from sverchok.utils.nodes_mixins.show_3d_properties import Show3DProperties
-import sverchok.utils.meshes
+from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Graph, Dictionary
-from itertools import cycle
+from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster
 import uuid
-import time
-import warnings
 
 from . import Replication
 from . import DictionaryByKeysValues, TopologySelfMerge
@@ -39,7 +31,7 @@ def vertexIndex(v, vertices, tolerance):
     i = 0
     for aVertex in vertices:
         aVertex.__class__ = Vertex
-        d = VertexUtility.Distance(v, aVertex)
+        d = topologic.VertexUtility.Distance(v, aVertex)
         if d <= tolerance:
             index = i
             break
@@ -228,7 +220,6 @@ def processVEF(item, tol, outputMode):
 			elif isinstance(color, list):
 				if isinstance(color[0], tuple):
 					color = list(color[0])
-			print(color)
 			values.append(color)
 		else:
 			values.append([1.0,1.0,1.0,1.0])
@@ -247,7 +238,7 @@ def processVEF(item, tol, outputMode):
 	return returnTopology
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
-input_items = [("Object", "Object", "", 1),("Vertex/Edge/Face", "Vertex/Edge/Face", "", 2)]
+input_items = [("Object", "Object", "", 1),("Mesh", "Mesh", "", 2)]
 output_items = [("Default", "Default", "", 1),("CellComplex", "CellComplex", "", 2),("Cell", "Cell", "", 3), ("Shell", "Shell", "", 4), ("Wire", "Wire", "", 5)]
 
 def update_sockets(self, context):
@@ -278,6 +269,8 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyByGeometry'
 	bl_label = 'Topology.ByGeometry'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Object", update=update_sockets)
 	outputMode : EnumProperty(name='Output Mode', description='The desired output format', items=output_items, default="Default", update=updateNode)
@@ -297,15 +290,33 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvColorSocket', 'Color').prop_name='Color'
 		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Topology')
+		self.width = 200
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
 		update_sockets(self, context)
-	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
-		layout.prop(self, "inputMode", expand=False, text="")
-		layout.prop(self, "outputMode", expand=False, text="")
 
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Input Mode")
+		split.row().prop(self, "inputMode", expand=False, text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Output Mode")
+		split.row().prop(self, "outputMode", expand=False, text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not (self.inputs['Matrix'].is_linked):
@@ -363,8 +374,6 @@ class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
 			for anInput in inputs:
 				outputs.append(processVEF(anInput, tol, self.outputMode))
 		self.outputs['Topology'].sv_set(outputs)
-		end = time.time()
-		print("Topology.ByGeometry Operation consumed "+str(round(end - start,2)*1000)+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologyByGeometry)

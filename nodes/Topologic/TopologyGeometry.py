@@ -115,7 +115,15 @@ def processItem(item):
 					fVertexIndex = len(vertices)-1
 				f.append(fVertexIndex)
 			faces.append(f)
+	if len(vertices) == 0:
+		vertices = [[]]
+	if len(edges) == 0:
+		edges = [[]]
+	if len(faces) == 0:
+		faces = [[]]
 	return [vertices, edges, faces]
+
+
 
 class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -124,12 +132,23 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyGeometry'
 	bl_label = 'Topology.Geometry'
+	bl_icon = 'SELECT_DIFFERENCE'
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.outputs.new('SvVerticesSocket', 'Vertices')
 		self.outputs.new('SvStringsSocket', 'Edges')
 		self.outputs.new('SvStringsSocket', 'Faces')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		start = time.time()
@@ -144,12 +163,17 @@ class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
 		face_list = []
 		for anInput in inputs:
 			v, e, f = processItem(anInput)
+			vertex_list.append(v)
+			edge_list.append(e)
+			face_list.append(f)
+			'''
 			if v:
 				vertex_list.append(v)
 			if e:
 				edge_list.append(e)
 			if f:
 				face_list.append(f)
+			'''
 		self.outputs['Vertices'].sv_set(vertex_list)
 		self.outputs['Edges'].sv_set(edge_list)
 		self.outputs['Faces'].sv_set(face_list)

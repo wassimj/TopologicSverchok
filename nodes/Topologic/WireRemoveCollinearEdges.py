@@ -43,23 +43,41 @@ def removeCollinearEdges(wire, angTol):
 		else:
 			wire_verts.append(aVertex)
 	if len(wire_verts) > 2:
+		clus = topologic.Cluster.ByTopologies(wire_verts)
 		if wire.IsClosed():
-			final_wire = WireByVertices.processItem([wire_verts, True])
+			final_wire = WireByVertices.processItem([clus, True])
 		else:
-			final_wire = WireByVertices.processItem([wire_verts, False])
+			final_wire = WireByVertices.processItem([clus, False])
 	elif len(wire_verts) == 2:
 		final_wire = topologic.Edge.ByStartVertexEndVertex(wire_verts[0], wire_verts[1])
 	return final_wire
 
-def processItem(item, angTol):
-	if not topologic.Topology.IsManifold(item, item):
-		wires = WireSplit.processItem(item)
+def processItem(item):
+	wire, angTol = item
+	if not topologic.Topology.IsManifold(wire, wire):
+		wires = WireSplit.processItem(wire)
 	else:
-		wires = [item]
+		wires = [wire]
 	returnWires = []
 	for aWire in wires:
 		returnWires.append(removeCollinearEdges(aWire, angTol))
-	return topologic.Cluster.ByTopologies(returnWires).SelfMerge()
+	if len(returnWires) == 1:
+		return returnWires[0]
+	elif len(returnWires) > 1:
+		return topologic.Cluster.ByTopologies(returnWires).SelfMerge()
+	else:
+		return None
+
+def recur(input, angTol):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem, angTol))
+	else:
+		output = processItem([input, angTol])
+	return output
 
 class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -80,12 +98,7 @@ class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 			return
 		wires = self.inputs['Wire'].sv_get(deepcopy=False)
 		angTol = self.inputs['Angular Tolerance'].sv_get(deepcopy=False)[0]
-
-		wires = flatten(wires)
-		output = []
-		for aWire in wires:
-			output.append(processItem(aWire, angTol))
-		self.outputs['Wire'].sv_set(output)
+		self.outputs['Wire'].sv_set(recur(wires, angTol))
 
 def register():
     bpy.utils.register_class(SvWireRemoveCollinearEdges)

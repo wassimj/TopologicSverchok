@@ -36,7 +36,10 @@ def list_level_iter(lst, level, _current_level: int= 1):
     else:
         yield lst
 
-def processItem(faces, tol):
+def processItem(item):
+	faces, tol = item
+	assert isinstance(faces, list), "CellComplex.ByFaces - Error: Input is not a list"
+	faces = [x for x in faces if isinstance(x, topologic.Face)]
 	cellComplex = topologic.CellComplex.ByFaces(faces, tol, False)
 	if not cellComplex:
 		warnings.warn("Warning: Default CellComplex.ByFaces method failed. Attempting to Merge the Faces.", UserWarning)
@@ -90,7 +93,7 @@ class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
 		faceList = [flatten(t) for t in faceList]
 		outputs = []
 		for t in range(len(faceList)):
-			outputs.append(processItem(faceList[t], tol))
+			outputs.append(processItem([faceList[t], tol]))
 		self.outputs['CellComplex'].sv_set(outputs)
 		end = time.time()
 		print("CellComplex.ByFaces Operation consumed "+str(round(end - start,2)*1000)+" ms")

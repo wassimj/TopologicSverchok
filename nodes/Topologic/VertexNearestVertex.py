@@ -5,6 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 import time
+from . import Replication
 
 def matchLengths(list):
 	maxLength = len(list[0])
@@ -59,8 +60,13 @@ def sortList(vertices, index):
 		vertices.sort(key=thirdItem)
 	return vertices
 
-def kdtree(vertices):
-	"""Construct a k-d tree from an iterable of faces.
+def kdtree(topology):
+	assert isinstance(topology, topologic.Topology), "Vertex.NearestVertex: The input is not a Topology."
+	vertices = []
+	_ = topology.Vertices(None, vertices)
+	assert (len(vertices) > 0), "Vertex.NearestVertex: Could not find any vertices in the input Topology"
+
+	"""Construct a k-d tree from an iterable of vertices.
 
     This algorithm is taken from Wikipedia. For more details,
 
@@ -129,19 +135,22 @@ def find_nearest_neighbor(*, tree, vertex):
 	return best.vertex
 
 def processItem(input):
-	vertex = input[0]
-	vertices = input[1]
-	minDistance = SED(vertex, vertices[0])
-	nearestVertex = vertices[0]
-	for v in vertices:
-		d = SED(vertex, v)
-		if d < minDistance:
-			minDistance = d
-			nearestVertex = v
-	return nearestVertex
+	vertex, topology, useKDTree = input
+	if useKDTree:
+		tree = kdtree(topology)
+		return find_nearest_neighbor(tree=tree, vertex=vertex)
+	else:
+		vertices = []
+		_ = topology.Vertices(None, vertices)
+		distances = []
+		indices = []
+		for i in range(len(vertices)):
+			distances.append(SED(vertex, vertices[i]))
+			indices.append(i)
+		sorted_indices = [x for _, x in sorted(zip(distances, indices))]
+	return vertices[sorted_indices[0]]
 
-def processItemKDTree(input):
-	return find_nearest_neighbor(tree=input[1], vertex=input[0])
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvVertexNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -150,42 +159,57 @@ class SvVertexNearestVertex(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvVertexNearestVertex'
 	bl_label = 'Vertex.NearestVertex'
+	bl_icon = 'SELECT_DIFFERENCE'
 	UseKDTree: BoolProperty(name="UseKDTree", default=False, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Vertices')
+		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Use k-d Tree').prop_name = 'UseKDTree'
 		self.outputs.new('SvStringsSocket', 'Vertex')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=True)
-		verticesList = self.inputs['Vertices'].sv_get(deepcopy=True)
-		useKDTreeList = self.inputs['Use k-d Tree'].sv_get(deepcopy=True)[0]
-		if verticesList:
-			if isinstance(verticesList[0], list) == False:
-				verticesList = [verticesList]
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		trees = []
-		for i in range(len(verticesList)):
-			if useKDTreeList[i] == True:
-				trees.append(kdtree(verticesList[i]))
-			else:
-				trees.append(verticesList[i])
-		matchLengths([vertexList, trees, useKDTreeList])
-		inputs = zip(vertexList, trees, useKDTreeList)
-		for anInput in inputs:
-			useKDTree = anInput[2]
-			if useKDTree == True:
-				outputs.append(processItemKDTree(anInput))
-			else:
-				outputs.append(processItem(anInput))
-		end = time.time()
-		print("Use k-d tree: "+str(useKDTree)+". Nearest Vertex Operation consumed "+str(round(end - start,4))+" seconds")
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Vertex'].sv_set(outputs)
 
 def register():

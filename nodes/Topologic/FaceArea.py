@@ -5,21 +5,24 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
 def processItem(item):
-	if item:
-		return topologic.FaceUtility.Area(item)
+	face = item[0]
+	area = 0.0
+	if isinstance(face, topologic.Face):
+		area = topologic.FaceUtility.Area(face)
+	return area
+
+def recur(input):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem))
 	else:
-		return None
-		
+		output = processItem([input])
+	return output
+	
 class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -35,13 +38,10 @@ class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Face'].sv_set([])
+			self.outputs['Area'].sv_set([0.0])
 			return
 		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		faceList = flatten(faceList)
-		outputs = []
-		for face in faceList:
-			outputs.append(processItem(face))
+		outputs = recur(faceList)
 		self.outputs['Area'].sv_set(outputs)
 
 def register():

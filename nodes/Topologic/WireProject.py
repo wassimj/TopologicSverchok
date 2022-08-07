@@ -50,15 +50,6 @@ def processItem(item):
 							except:
 								continue
 	w = topologic.Wire.ByEdges(projected_edges)
-	if w and w.IsClosed():
-		f = topologic.Face.ByExternalBoundary(w)
-		f = f.Intersect(face, False)
-		faces = []
-		_ = f.Faces(None, faces)
-		f = faces[0]
-		if f:
-			edges = []
-			w = f.ExternalBoundary()
 	return w
 
 lacing = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Lace", "Lace", "", 5)]

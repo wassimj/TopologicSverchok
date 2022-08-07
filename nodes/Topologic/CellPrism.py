@@ -22,92 +22,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
-from . import WireRectangle
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-			# print(base,y)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
+from . import Replication, WireRectangle
 
 def wireByVertices(vList):
 	edges = []
@@ -121,21 +36,21 @@ def sliceCell(cell, width, length, height, uSides, vSides, wSides):
 	shells = []
 	_ = cell.Shells(None, shells)
 	shell = shells[0]
-	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1], "Center")
+	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1, "Center"])
 	sliceFaces = []
 	for i in range(1, wSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(wRect), 0, 0, height/wSides*i - height*0.5))
-	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0], "Center")
+	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0, "Center"])
 	for i in range(1, uSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(uRect), width/uSides*i - width*0.5, 0, 0))
-	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0], "Center")
+	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0, "Center"])
 	for i in range(1, vSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(vRect), 0, length/vSides*i - length*0.5, 0))
 	sliceCluster = topologic.Cluster.ByTopologies(sliceFaces)
 	shell = shell.Slice(sliceCluster, False)
 	return topologic.Cell.ByShell(shell)
 
-def processItem(item, originLocation):
+def processItem(item):
 	origin, \
 	width, \
 	length, \
@@ -145,15 +60,14 @@ def processItem(item, originLocation):
 	wSides, \
 	dirX, \
 	dirY, \
-	dirZ = item
-	baseV = []
-	topV = []
+	dirZ, \
+    placement = item
 	xOffset = 0
 	yOffset = 0
 	zOffset = 0
-	if originLocation == "Center":
+	if placement == "Center":
 		zOffset = -height*0.5
-	elif originLocation == "LowerLeft":
+	elif placement == "LowerLeft":
 		xOffset = width*0.5
 		yOffset = length*0.5
 
@@ -190,7 +104,7 @@ def processItem(item, originLocation):
 	prism = topologic.TopologyUtility.Rotate(prism, origin, 0, 0, 1, phi)
 	return prism
 
-originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "Lower Left", "", 3)]
+placements = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "Lower Left", "", 3)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
@@ -200,6 +114,7 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvCellPrism'
 	bl_label = 'Cell.Prism'
+	bl_icon = 'SELECT_DIFFERENCE'
 	Width: FloatProperty(name="Width", default=1, min=0.0001, precision=4, update=updateNode)
 	Length: FloatProperty(name="Length", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
@@ -210,10 +125,11 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 
-	originLocation: EnumProperty(name="Origin Location", description="Origing Location", default="Bottom", items=originLocations, update=updateNode)
+	Placement: EnumProperty(name="Placement", description="Placement", default="Bottom", items=placements, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
+		self.width = 150
 		self.inputs.new('SvStringsSocket', 'Origin')
 		self.inputs.new('SvStringsSocket', 'Width').prop_name = 'Width'
 		self.inputs.new('SvStringsSocket', 'Length').prop_name = 'Length'
@@ -225,56 +141,65 @@ class SvCellPrism(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.outputs.new('SvStringsSocket', 'Cell')
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
-		layout.prop(self, "originLocation",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Placement")
+		split.row().prop(self, "Placement",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		widthList = self.inputs['Width'].sv_get(deepcopy=True)
-		lengthList = self.inputs['Length'].sv_get(deepcopy=True)
-		heightList = self.inputs['Height'].sv_get(deepcopy=True)
-		uSidesList = self.inputs['U Sides'].sv_get(deepcopy=True)
-		vSidesList = self.inputs['V Sides'].sv_get(deepcopy=True)
-		wSidesList = self.inputs['W Sides'].sv_get(deepcopy=True)
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-
-		originList = flatten(originList)
-		widthList = flatten(widthList)
-		lengthList = flatten(lengthList)
-		heightList = flatten(heightList)
-		uSidesList = flatten(uSidesList)
-		vSidesList = flatten(vSidesList)
-		wSidesList = flatten(wSidesList)
-		dirXList = flatten(dirXList)
-		dirYList = flatten(dirYList)
-		dirZList = flatten(dirZList)
-		inputs = [originList, widthList, lengthList, heightList, uSidesList, vSidesList, wSidesList, dirXList, dirYList, dirZList]
-		if ((self.Replication) == "Default"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		if ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
+		
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput, self.originLocation))
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput+[self.Placement]))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():

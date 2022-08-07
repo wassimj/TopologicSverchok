@@ -126,8 +126,9 @@ class SvDGLPlot(bpy.types.Node, SverchCustomTreeNode):
 		#self.wrapper_tracked_ui_draw_op(row, "dgl.plotrun", icon='PLAY', text="RUN")
 
 	def process(self):
-		autorun = self.inputs['Auto-Run'].sv_get(deepcopy=True)[0][0]
-		if autorun:
+		autorunList = self.inputs['Auto-Run'].sv_get(deepcopy=True)
+		autorunList = Replication.flatten(autorunList)
+		if autorunList[0]:
 			sv_execute(self)
 
 

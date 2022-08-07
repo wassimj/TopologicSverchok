@@ -5,21 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 import time
-
-def matchLengths(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
+from . import Replication
 
 def boundingBox(cell):
 	vertices = []
@@ -34,10 +20,16 @@ def boundingBox(cell):
 	return ([min(x), min(y), min(z), max(x), max(y), max(z)])
 
 def processItem(input):
-	vertex = input[0]
-	cells = input[1]
-	exclusive = input[2]
-	tolerance = input[3]
+	vertex, topology, exclusive, tolerance = input
+	if isinstance(topology, topologic.Cell):
+		cells = [topology]
+	elif isinstance(topology, topologic.Cluster) or isinstance(topology, topologic.CellComplex):
+		cells = []
+		_ = topology.Cells(None, cells)
+	else:
+		raise Exception("Vertex.EnclosingCell - Error: Input topology does not contain any Cells.")
+	if len(cells) < 1:
+		raise Exception("Vertex.EnclosingCell - Error: Input topology does not contain any Cells.")
 	enclosingCells = []
 	for i in range(len(cells)):
 		bbox = boundingBox(cells[i])
@@ -50,43 +42,74 @@ def processItem(input):
 					enclosingCells.append(cells[i])
 	return enclosingCells
 
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
+
 class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the Cell that contains the input Vertex from the list of input Cells
+	Tooltip: Outputs the Cell that contains the input Vertex from the list of input CellCluster
 	"""
 	bl_idname = 'SvVertexEnclosingCell'
 	bl_label = 'Vertex.EnclosingCell'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Exclusive: BoolProperty(name="Exclusive", default=True, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
-
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
+		self.width = 175
 		self.inputs.new('SvStringsSocket', 'Vertex')
-		self.inputs.new('SvStringsSocket', 'Cells')
+		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Exclusive').prop_name = 'Exclusive'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Cell')
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-
-		vertexList = self.inputs['Vertex'].sv_get(deepcopy=False)
-		cellsList = self.inputs['Cells'].sv_get(deepcopy=False)
-		exclusiveList = self.inputs['Exclusive'].sv_get(deepcopy=False)[0]
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=False)[0]
-
-		if isinstance(cellsList[0], list) == False:
-			cellsList = [cellsList]
+		if not any(socket.is_linked for socket in self.inputs):
+			for anOutput in self.ouputs:
+				anOutput.sv_set([])
+			return
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		matchLengths([vertexList, cellsList, exclusiveList, toleranceList])
-		inputs = zip(vertexList, cellsList, exclusiveList, toleranceList)
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
-		end = time.time()
-		print("Enclosing Cell Operation consumed "+str(round(end - start,4))+" seconds")
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Cell'].sv_set(outputs)
 
 def register():

@@ -5,39 +5,13 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology, Dictionary
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def list_level_iter(lst, level, _current_level: int= 1):
-    """
-    Iterate over all lists with given nesting
-    With level 1 it will return the given list
-    With level 2 it will iterate over all nested lists in the main one
-    If a level does not have lists on that level it will return empty list
-    _current_level - for internal use only
-    """
-    if _current_level < level:
-        try:
-            for nested_lst in lst:
-                if not isinstance(nested_lst, list):
-                    raise TypeError
-                yield from list_level_iter(nested_lst, level, _current_level + 1)
-        except TypeError:
-            yield []
-    else:
-        yield lst
+from . import Replication
 
 def processItem(item):
+	assert isinstance(item, list), "Cluster.ByTopologies - Error: Input is not a list"
+	edges = [x for x in item if isinstance(x, topologic.Edge)]
 	wire = None
-	for anEdge in item:
+	for anEdge in edges:
 		if anEdge.Type() == 2:
 			if wire == None:
 				wire = anEdge
@@ -50,15 +24,15 @@ def processItem(item):
 		raise Exception("Error: Could not create Wire. Please check input")
 	return wire
 
-def recur(input):
+def recur(item):
 	output = []
-	if input == None:
+	if item == None:
 		return []
-	if isinstance(input[0], list):
-		for anItem in input:
-			output.append(recur(anItem))
+	if isinstance(item[0], list):
+		for subItem in item:
+			output.append(recur(subItem))
 	else:
-		output = processItem(input)
+		output = processItem(item)
 	return output
 
 class SvWireByEdges(bpy.types.Node, SverchCustomTreeNode):
@@ -68,26 +42,30 @@ class SvWireByEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireByEdges'
 	bl_label = 'Wire.ByEdges'
-	Level: IntProperty(name='Level', default =2,min=1, update = updateNode)
+	bl_icon = 'SELECT_DIFFERENCE'
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Edges')
-		self.inputs.new('SvStringsSocket', 'Level').prop_name='Level'
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 150
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		edgeList = self.inputs['Edges'].sv_get(deepcopy=False)
-		level = flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 2))
-		if isinstance(level,list):
-			level = int(level[0])
-		edgeList = list(list_level_iter(edgeList,level))
-		edgeList = [flatten(t) for t in edgeList]
-		outputs = []
-		for t in range(len(edgeList)):
-			outputs.append(processItem(edgeList[t]))
-		self.outputs['Wire'].sv_set(outputs)
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input)
+		if not isinstance(output, list):
+			output = [output]
+		self.outputs['Wire'].sv_set(output)
 
 def register():
     bpy.utils.register_class(SvWireByEdges)

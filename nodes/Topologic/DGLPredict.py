@@ -26,6 +26,7 @@ def processItem(item):
 	probabilities = []
 	for item in test_dataset:
 		graph = item[0]
+		print("Node Label:", graph.ndata[node_attr_key].float())
 		pred = classifier(graph, graph.ndata[node_attr_key].float())
 		labels.append(pred.argmax(1).item())
 		probability = (torch.nn.functional.softmax(pred, dim=1).tolist())

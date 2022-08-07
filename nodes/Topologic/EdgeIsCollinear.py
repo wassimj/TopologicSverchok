@@ -8,40 +8,18 @@ from numpy.linalg import norm
 import math
 
 import topologic
-from . import Replication, EdgeDirection
-
-def angle_between(v1, v2):
-	u1 = v1 / norm(v1)
-	u2 = v2 / norm(v2)
-	y = u1 - u2
-	x = u1 + u2
-	a0 = 2 * arctan(norm(y) / norm(x))
-	if (not signbit(a0)) or signbit(pi - a0):
-		return a0
-	elif signbit(a0):
-		return 0
-	else:
-		return pi
-
-def collinear(v1, v2, tol):
-	ang = angle_between(v1, v2)
-	if math.isnan(ang) or math.isinf(ang):
-		raise Exception("Edge.IsCollinear - Error: Could not determine the angle between the input edges")
-	elif abs(ang) < tol or abs(pi - ang) < tol:
-		return True
-	return False
+from . import Replication, EdgeDirection, EdgeAngle
 
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 def processItem(item):
 	edgeA, edgeB, tol = item
-	if not edgeA or not isinstance(edgeA, topologic.Edge):
-		raise Exception("Edge.IsCollinear - Error: Edge A is not valid")
-	if not edgeB or not isinstance(edgeB, topologic.Edge):
-		raise Exception("Edge.IsCollinear - Error: Edge B is not valid")
-	dirA = EdgeDirection.processItem(edgeA, "XYZ", 3)[0]
-	dirB = EdgeDirection.processItem(edgeB, "XYZ", 3)[0]
-	return collinear(dirA, dirB, tol)
+	assert isinstance(edgeA, topologic.Edge), "Edge.Angle - Error: Edge A is not a Topologic Edge."
+	assert isinstance(edgeB, topologic.Edge), "Edge.Angle - Error: Edge B is not a Topologic Edge."
+	ang = EdgeAngle.processItem([edgeA, edgeB, 8, True])
+	if abs(ang) < tol:
+		return True
+	return False
 		
 class SvEdgeIsCollinear(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -58,40 +36,48 @@ class SvEdgeIsCollinear(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Edge B')
 		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Status')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Status'].sv_set([])
-			return
-		edgeAList = self.inputs['Edge A'].sv_get(deepcopy=True)
-		edgeAList = Replication.flatten(edgeAList)
-		edgeBList = self.inputs['Edge B'].sv_get(deepcopy=True)
-		edgeBList = Replication.flatten(edgeBList)
-		toleranceList = self.inputs['Tol'].sv_get(deepcopy=True, default=0.0001)
-		toleranceList = Replication.flatten(toleranceList)
-		inputs = [edgeAList, edgeBList, toleranceList]
-		if ((self.Replication) == "Default"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Status'].sv_set(outputs)
 
 def register():

@@ -118,14 +118,14 @@ def wireByVertices(vList):
 
 def sliceCell(cell, width, length, height, uSides, vSides, wSides):
 	origin = cell.Centroid()
-	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1], "Center")
+	wRect = WireRectangle.processItem([origin, width*1.2, length*1.2, 0, 0, 1, "Center"])
 	sliceFaces = []
 	for i in range(1, wSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(wRect), 0, 0, height/wSides*i - height*0.5))
-	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0], "Center")
+	uRect = WireRectangle.processItem([origin, height*1.2, length*1.2, 1, 0, 0, "Center"])
 	for i in range(1, uSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(uRect), width/uSides*i - width*0.5, 0, 0))
-	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0], "Center")
+	vRect = WireRectangle.processItem([origin, height*1.2, width*1.2, 0, 1, 0, "Center"])
 	for i in range(1, vSides):
 		sliceFaces.append(topologic.TopologyUtility.Translate(topologic.Face.ByExternalBoundary(vRect), 0, length/vSides*i - length*0.5, 0))
 	sliceCluster = topologic.Cluster.ByTopologies(sliceFaces)
@@ -135,7 +135,7 @@ def sliceCell(cell, width, length, height, uSides, vSides, wSides):
 	cellComplex = topologic.CellComplex.ByFaces(sliceFaces, 0.0001)
 	return cellComplex
 
-def processItem(item, originLocation):
+def processItem(item):
 	origin, \
 	width, \
 	length, \
@@ -145,7 +145,8 @@ def processItem(item, originLocation):
 	wSides, \
 	dirX, \
 	dirY, \
-	dirZ = item
+	dirZ, \
+	originLocation = item
 	baseV = []
 	topV = []
 	xOffset = 0
@@ -274,7 +275,7 @@ class SvCellComplexPrism(bpy.types.Node, SverchCustomTreeNode):
 			inputs = list(interlace(inputs))
 		outputs = []
 		for anInput in inputs:
-			outputs.append(processItem(anInput, self.originLocation))
+			outputs.append(processItem(anInput+[self.originLocation]))
 		self.outputs['CellComplex'].sv_set(outputs)
 
 def register():

@@ -4,6 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
+from . import Replication
 import time
 
 def processItem(item):
@@ -33,17 +34,6 @@ def processItem(item):
 		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies of type "+topologyType)
 	return subtopologies
 
-def recur(topology, topologyType):
-	output = []
-	if topology == None:
-		return []
-	if isinstance(topology, list):
-		for anItem in topology:
-			output.append(recur(anItem, topologyType))
-	else:
-		output = processItem([topology, topologyType])
-	return output
-
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Cluster", "Cluster", "", 8), ("Aperture", "Aperture", "", 9)]
 
 class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
@@ -53,29 +43,31 @@ class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologySubTopologies'
 	bl_label = 'Topology.SubTopologies'
-	subtopologyType: EnumProperty(name="Subtopology Type", description="Specify subtopology type", default="Vertex", items=topologyTypes, update=updateNode)
+	SubtopologyType: EnumProperty(name="Subtopology Type", description="Specify subtopology type", default="Vertex", items=topologyTypes, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.outputs.new('SvStringsSocket', 'SubTopologies')
 	
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "subtopologyType",text="")
+		layout.prop(self, "SubtopologyType",text="")
 
 	def process(self):
 		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['SubTopologies'].sv_set([])
+			self.outputs['SubTopologies'].sv_set([[]])
 			return
-		inputs = self.inputs[0].sv_get(deepcopy=False)
-		outputs = recur(inputs, self.subtopologyType)
-		if(len(outputs) == 1):
-			outputs = outputs[0]
+		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
+		topologyList_flat = Replication.flatten(topologyList)
+		outputs = []
+		for anInput in topologyList_flat:
+			outputs.append(processItem([anInput, self.SubtopologyType]))
+		outputs = Replication.unflatten(outputs, topologyList)
 		self.outputs['SubTopologies'].sv_set(outputs)
 		end = time.time()
-		print("Topology.SubTopologies ("+self.subtopologyType+") Operation consumed "+str(round((end - start)*1000,0))+" ms")
+		print("Topology.SubTopologies ("+self.SubtopologyType+") Operation consumed "+str(round((end - start)*1000,0))+" ms")
 
 def register():
 	bpy.utils.register_class(SvTopologySubTopologies)

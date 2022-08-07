@@ -22,6 +22,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
+from . import Replication
 
 def wireByVertices(vList):
 	edges = []
@@ -30,13 +31,9 @@ def wireByVertices(vList):
 	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
-def processItem(item, originLocation):
-	origin = item[0]
-	width = item[1]
-	length = item[2]
-	dirX = item[3]
-	dirY = item[4]
-	dirZ = item[5]
+def processItem(item):
+	origin, width, length, dirX, dirY, dirZ, originLocation = item
+
 	baseV = []
 	xOffset = 0
 	yOffset = 0
@@ -69,23 +66,8 @@ def processItem(item, originLocation):
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
 	return baseWire
 
-
-def matchLengths(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
 originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -100,8 +82,8 @@ class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
-
-	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	OriginLocation: EnumProperty(name="OriginLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -113,7 +95,8 @@ class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Wire')
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "originLocation",text="")
+		layout.prop(self, "Replication",text="")
+		layout.prop(self, "OriginLocation",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
@@ -122,16 +105,23 @@ class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
 		else:
 			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		widthList = self.inputs['Width'].sv_get(deepcopy=True)[0]
-		lengthList = self.inputs['Length'].sv_get(deepcopy=True)[0]
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
-		matchLengths([originList, widthList, lengthList, dirXList, dirYList, dirZList])
-		newInputs = zip(originList, widthList, lengthList, dirXList, dirYList, dirZList)
+		originList_flat = Replication.flatten(originList)
+		widthList = self.inputs['Width'].sv_get(deepcopy=True)
+		lengthList = self.inputs['Length'].sv_get(deepcopy=True)
+		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
+		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
+		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
+		widthList = Replication.flatten(widthList)
+		lengthList = Replication.flatten(lengthList)
+		dirXList = Replication.flatten(dirXList)
+		dirYList = Replication.flatten(dirYList)
+		dirZList = Replication.flatten(dirZList)
+		inputs = [originList_flat, widthList, lengthList, dirXList, dirYList, dirZList, [self.OriginLocation]]
+		inputs = Replication.replicateInputs(inputs, self.Replication)
 		outputs = []
-		for anInput in newInputs:
-			outputs.append(processItem(anInput, self.originLocation))
+		for anInput in inputs:
+			outputs.append(processItem(anInput))
+		outputs = Replication.unflatten(outputs, originList)
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

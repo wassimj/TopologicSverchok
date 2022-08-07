@@ -333,18 +333,24 @@ def nodes_index():
 	dglNodes = [("Topologic.DGLAccuracy", "SvDGLAccuracy"),
                 ("Topologic.DGLClassifierByFilePath", "SvDGLClassifierByFilePath"),
                 ("Topologic.DGLDatasetByDGLGraphs", "SvDGLDatasetByDGLGraphs"),
+                ("Topologic.DGLDatasetByImportedCSV_NC", "SvDGLDatasetByImportedCSV_NC"),
                 ("Topologic.DGLDatasetBySamples", "SvDGLDatasetBySamples"),
+                ("Topologic.DGLDatasetBySamples_NC", "SvDGLDatasetBySamples_NC"),
                 ("Topologic.DGLGraphByGraph", "SvDGLGraphByGraph"),
                 ("Topologic.DGLGraphByImportedCSV", "SvDGLGraphByImportedCSV"),
                 ("Topologic.DGLGraphByImportedDGCNN", "SvDGLGraphByImportedDGCNN"),
                 ("Topologic.DGLHyperparameters", "SvDGLHyperparameters"),
                 ("Topologic.DGLOptimizer", "SvDGLOptimizer"),
                 ("Topologic.DGLPredict", "SvDGLPredict"),
-                ("Topologic.DGLTrainClassifier", "SvDGLTrainClassifier")]
+                ("Topologic.DGLPredict_NC", "SvDGLPredict_NC"),
+                ("Topologic.DGLTrainClassifier", "SvDGLTrainClassifier"),
+                ("Topologic.DGLTrainClassifier_NC", "SvDGLTrainClassifier_NC")]
+
 	hullNodes = [("Topologic.TopologyConvexHull", "SvTopologyConvexHull")]
 	homemakerNodes = [("Topologic.HMIFCByCellComplex", "SvHMIFCByCellComplex"),
                 ("Topologic.HMBlenderBIMByIFC", "SvHMBlenderBIMByIFC")]
-	pandasNodes = [("Topologic.GraphExportToCSV", "SvGraphExportToCSV")]
+	pandasNodes = [("Topologic.GraphExportToCSV", "SvGraphExportToCSV"),
+                ("Topologic.GraphExportToCSV_NC", "SvGraphExportToCSV_NC")]
 	plotlyNodes = [("Topologic.DGLPlot", "SvDGLPlot")]
 	ifchoneybeeNodes = [("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
@@ -750,6 +756,7 @@ class NODEVIEW_MT_AddTPSubcategoryGraph(bpy.types.Menu):
             ['SvGraphEdge'],
             ['SvGraphEdges'],
             ['SvGraphExportToCSV'],
+            ['SvGraphExportToCSV_NC'],
             ['SvGraphExportToDGCNN'],
             ['SvGraphIsComplete'],
             ['SvGraphIsErdoesGallai'],
@@ -1041,7 +1048,9 @@ class NODEVIEW_MT_AddTPSubcategoryDGL(bpy.types.Menu):
             ['SvDGLAccuracy'],
             ['SvDGLClassifierByFilePath'],
             ['SvDGLDatasetByDGLGraphs'],
+            ['SvDGLDatasetByImportedCSV_NC'],
             ['SvDGLDatasetBySamples'],
+            ['SvDGLDatasetBySamples_NC'],
             ['SvDGLGraphByGraph'],
             ['SvDGLGraphByImportedCSV'],
             ['SvDGLGraphByImportedDGCNN'],
@@ -1049,7 +1058,9 @@ class NODEVIEW_MT_AddTPSubcategoryDGL(bpy.types.Menu):
             ['SvDGLOptimizer'],
             ['SvDGLPlot'],
             ['SvDGLPredict'],
+            ['SvDGLPredict_NC'],
             ['SvDGLTrainClassifier'],
+            ['SvDGLTrainClassifier_NC'],
 		])
 
 make_class('TPSubcategoryDGL', 'Topologic @ DGL')
