@@ -1,6 +1,6 @@
 # TopologicSverchok
 
-![TopologicSververchok-logo](assets/TopologicSverchok.png)
+![TopologicSververchok-logo](assets/TopologicSverchok-Logo-500x250.png)
 
 **TopologicSverchok** is a [Sverchok](http://nortikin.github.io/sverchok/) implementation of [Topologic](https://topologic.app). 
 
