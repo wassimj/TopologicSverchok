@@ -32,7 +32,7 @@ def processItem(graph, tolerance):
 	for aVertex in vertices:
 		vdict = aVertex.GetDictionary()
 		label = vdict['ID'
-		lables.append([label])
+		labels.append([label])
 	edges = []
 	_ = graph.Edges(vertices, tolerance, edges)
 	startVertices = []
