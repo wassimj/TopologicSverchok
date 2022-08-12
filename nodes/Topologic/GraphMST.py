@@ -80,7 +80,7 @@ class Graph:
 			x = self.find(parent, u) 
 			y = self.find(parent ,v) 
 
-			# If including this edge does't cause cycle, 
+			# If including this edge doesn't cause cycle, 
 						# include it in result and increment the index 
 						# of result for next edge 
 			if x != y: 

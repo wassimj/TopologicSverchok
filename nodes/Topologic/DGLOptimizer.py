@@ -74,7 +74,7 @@ class SvDGLOptimizer(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvDGLOptimizer'
 	bl_label = 'DGL.Optimizer'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
-	Optimizers: EnumProperty(name="Optimizer", description="This will be the selected optimizer from the torch.optim package. The defaul is Adam", default="Adam", items=optimizers, update=update_sockets)
+	Optimizers: EnumProperty(name="Optimizer", description="This will be the selected optimizer from the torch.optim package. The default is Adam", default="Adam", items=optimizers, update=update_sockets)
 
 	Adadelta_epsProp: FloatProperty(name="eps", description="term added to the denominator to improve numerical stability (default: 1e-6)", default=0.000001, precision=6, update=updateNode)
 	Adadelta_lrProp: FloatProperty(name="lr", description="coefficient that scale delta before it is applied to the parameters (default: 1.0)", default=1.0, precision=6, update=updateNode)
