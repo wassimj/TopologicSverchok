@@ -5,6 +5,10 @@
 </a>
 </p>
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 7d70095b9a2efc335ff30379b95c9990eb62e25c
 # TopologicSverchok
 TopologicSverchok is a Sverchok implementation of Topologic which is a software modelling library enabling hierarchical and topological representations of architectural spaces, buildings and artefacts through non-manifold topology. Sverchok (https://github.com/nortikin/sverchok). Sverchok is a powerful parametric tool for architects, allowing geometry to be programmed visually with nodes. 
 
