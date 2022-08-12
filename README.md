@@ -33,6 +33,7 @@ The installation of these optional python modules will activate additional Topol
 12. numpy
 13. pandas
 14. scipy
+15. dgl
 
 Download the latest Release binaries from the Releases link found on the right side of this page (https://github.com/wassimj/TopologicSverchok/releases).
 1. After you download the ZIP file, do NOT unzip.
