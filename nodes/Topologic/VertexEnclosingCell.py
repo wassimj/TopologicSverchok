@@ -84,7 +84,7 @@ class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
-			for anOutput in self.ouputs:
+			for anOutput in self.outputs:
 				anOutput.sv_set([])
 			return
 		inputs_nested = []
