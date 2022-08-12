@@ -97,6 +97,7 @@ def nodes_index():
                 ("Topologic.WireRemoveCollinearEdges", "SvWireRemoveCollinearEdges"),
                 ("Topologic.WireSplit", "SvWireSplit"),
                 ("Topologic.WireStar", "SvWireStar"),
+                ("Topologic.WireTrapezoid", "SvWireTrapezoid"),
                 ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
                 ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
                 ("Topologic.FaceArea", "SvFaceArea"),
@@ -603,6 +604,7 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvRemoveCollinearEdges'],
             ['SvWireSplit'],
             ['SvWireStar'],
+            ['SvWireTrapezoid'],
 		])
 
 make_class('TPSubcategoryWire', 'Topologic @ Wire')

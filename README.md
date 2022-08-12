@@ -1,4 +1,10 @@
 (For installation instructions, scroll to the bottom of the page)
+<p align="center">
+<a href="http://nortikin.github.io/sverchok/">
+<img src="https://topologic.app/wp-content/uploads/2018/10/Topologic-Logo-250x250.png" width="250" title="Topologic">
+</a>
+</p>
+
 # TopologicSverchok
 TopologicSverchok is a Sverchok implementation of Topologic which is a software modelling library enabling hierarchical and topological representations of architectural spaces, buildings and artefacts through non-manifold topology. Sverchok (https://github.com/nortikin/sverchok). Sverchok is a powerful parametric tool for architects, allowing geometry to be programmed visually with nodes. 
 
@@ -26,6 +32,7 @@ The installation of these optional python modules will activate additional Topol
 12. numpy
 13. pandas
 14. scipy
+15. dgl
 
 Download the latest Release binaries from the Releases link found on the right side of this page (https://github.com/wassimj/TopologicSverchok/releases).
 1. After you download the ZIP file, do NOT unzip.
