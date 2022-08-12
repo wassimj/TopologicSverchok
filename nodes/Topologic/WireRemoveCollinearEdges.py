@@ -6,16 +6,6 @@ from sverchok.data_structure import updateNode
 import topologic
 from . import EdgeIsCollinear, WireSplit, WireByVertices
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
 def edgeOtherEnd(edge, vertex):
 	vertices = []
 	_ = edge.Vertices(None, vertices)
@@ -86,19 +76,38 @@ class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireRemoveCollinearEdges'
 	bl_label = 'Wire.RemoveCollinearEdges'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	AngTol: FloatProperty(name='Angular Tolerance', default=0.1, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wire')
-		self.inputs.new('SvStringsSocket', 'Angular Tolerance').prop_name='AngTol'
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 225
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+	
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Angular Tolerance")
+		split.row().prop(self, "AngTol",text="")
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		wires = self.inputs['Wire'].sv_get(deepcopy=False)
-		angTol = self.inputs['Angular Tolerance'].sv_get(deepcopy=False)[0]
-		self.outputs['Wire'].sv_set(recur(wires, angTol))
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input, self.AngTol)
+		if not isinstance(output, list):
+			output = [output]
+		self.outputs['Wire'].sv_set(output)
 
 def register():
     bpy.utils.register_class(SvWireRemoveCollinearEdges)

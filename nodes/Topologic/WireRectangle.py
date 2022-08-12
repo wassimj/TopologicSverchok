@@ -20,7 +20,6 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
 from . import Replication
 
@@ -32,12 +31,12 @@ def wireByVertices(vList):
 	return topologic.Wire.ByEdges(edges)
 
 def processItem(item):
-	origin, width, length, dirX, dirY, dirZ, originLocation = item
+	origin, width, length, dirX, dirY, dirZ, placement = item
 
 	baseV = []
 	xOffset = 0
 	yOffset = 0
-	if originLocation == "LowerLeft":
+	if placement == "LowerLeft":
 		xOffset = width*0.5
 		yOffset = length*0.5
 
@@ -66,16 +65,18 @@ def processItem(item):
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
 	return baseWire
 
-originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Prism (Cell) from the input cuboid parameters    
+	Tooltip: Creates a Rectangle (Wire) from the input parameters    
 	"""
 	bl_idname = 'SvWireRectangle'
 	bl_label = 'Wire.Rectangle'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Width: FloatProperty(name="Width", default=1, min=0.0001, precision=4, update=updateNode)
 	Length: FloatProperty(name="Length", default=1, min=0.0001, precision=4, update=updateNode)
 	Height: FloatProperty(name="Height", default=1, min=0.0001, precision=4, update=updateNode)
@@ -83,7 +84,7 @@ class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
-	OriginLocation: EnumProperty(name="OriginLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
+	Placement: EnumProperty(name="Placement", description="Specify origin placement", default="Center", items=placements, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -93,35 +94,64 @@ class SvWireRectangle(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
-		layout.prop(self, "OriginLocation",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Placement")
+		split.row().prop(self, "Placement",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		originList_flat = Replication.flatten(originList)
-		widthList = self.inputs['Width'].sv_get(deepcopy=True)
-		lengthList = self.inputs['Length'].sv_get(deepcopy=True)
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-		widthList = Replication.flatten(widthList)
-		lengthList = Replication.flatten(lengthList)
-		dirXList = Replication.flatten(dirXList)
-		dirYList = Replication.flatten(dirYList)
-		dirZList = Replication.flatten(dirZList)
-		inputs = [originList_flat, widthList, lengthList, dirXList, dirYList, dirZList, [self.OriginLocation]]
-		inputs = Replication.replicateInputs(inputs, self.Replication)
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		outputs = Replication.unflatten(outputs, originList)
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput+[self.Placement]))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

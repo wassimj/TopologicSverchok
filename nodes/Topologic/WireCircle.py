@@ -25,7 +25,7 @@ import math
 from . import Replication, WireByVertices
 
 
-def processItem(item, originLocation):
+def processItem(item):
 	origin, \
 	radius, \
 	sides, \
@@ -34,14 +34,13 @@ def processItem(item, originLocation):
 	close, \
 	dirX, \
 	dirY, \
-	dirZ = item
+	dirZ, \
+	placement = item
+	print("Circle Origin", origin.X(), origin.Y(), origin.Z())
 	baseV = []
-	topV = []
-	xOffset = 0
-	yOffset = 0
-
 	xList = []
 	yList = []
+
 	if toAngle < fromAngle:
 		toAngle += 360
 	elif toAngle == fromAngle:
@@ -61,10 +60,8 @@ def processItem(item, originLocation):
 
 	baseWire = WireByVertices.processItem([baseV[::-1], close]) #reversing the list so that the normal points up in Blender
 
-	if originLocation == "LowerLeft":
-		xmin = min(xList)
-		ymin = min(yList)
-		baseWire = topologic.TopologyUtility.Translate(baseWire, -xmin, -ymin, 0)
+	if placement == "LowerLeft":
+		baseWire = topologic.TopologyUtility.Translate(baseWire, radius, radius, 0)
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -84,7 +81,7 @@ def processItem(item, originLocation):
 	baseWire = topologic.TopologyUtility.Rotate(baseWire, origin, 0, 0, 1, phi)
 	return baseWire
 
-originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
@@ -94,6 +91,8 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireCircle'
 	bl_label = 'Wire.Circle'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	RadiusProp: FloatProperty(name="Radius", default=1, min=0.0001, precision=4, update=updateNode)
 	SidesProp: IntProperty(name="Sides", default=16, min=3, max=360, update=updateNode)
@@ -103,7 +102,7 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 	DirXProp: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirYProp: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZProp: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
-	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
+	Placement: EnumProperty(name="Placement", description="Specify origin placement", default="Center", items=placements, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -116,49 +115,64 @@ class SvWireCircle(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirYProp'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZProp'
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "originLocation",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Placement")
+		split.row().prop(self, "Placement",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-			originList = Replication.flatten(originList)
-		radiusList = self.inputs['Radius'].sv_get(deepcopy=True)
-		radiusList = Replication.flatten(radiusList)
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
-		sidesList = Replication.flatten(sidesList)
-		fromList = self.inputs['From'].sv_get(deepcopy=True)
-		fromList = Replication.flatten(fromList)
-		toList = self.inputs['To'].sv_get(deepcopy=True)
-		toList = Replication.flatten(toList)
-		closeList = self.inputs['Close'].sv_get(deepcopy=True)
-		closeList = Replication.flatten(closeList)
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
-		dirXList = Replication.flatten(dirXList)
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
-		dirYList = Replication.flatten(dirYList)
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-		dirZList = Replication.flatten(dirZList)
-		inputs = [originList, radiusList, sidesList, fromList, toList, closeList, dirXList, dirYList, dirZList]
-		if ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput, self.originLocation))
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput+[self.Placement]))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

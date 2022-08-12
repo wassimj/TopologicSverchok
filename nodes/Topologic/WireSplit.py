@@ -6,16 +6,6 @@ from sverchok.data_structure import updateNode
 import topologic
 from . import EdgeIsCollinear
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
 def edgeOtherVertex(edge, vertex):
 	vertices = []
 	_ = edge.Vertices(None, vertices)
@@ -78,6 +68,17 @@ def processItem(wire):
 		return wire
 	return wires
 
+def recur(input):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem))
+	else:
+		output = processItem(input)
+	return output
+
 class SvWireSplit(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -85,20 +86,29 @@ class SvWireSplit(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireSplit'
 	bl_label = 'Wire.Split'
+	bl_icon = 'SELECT_DIFFERENCE'
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wire')
 		self.outputs.new('SvStringsSocket', 'Wires')
+		self.width = 150
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		wires = self.inputs['Wire'].sv_get(deepcopy=False)
-
-		wires = flatten(wires)
-		output = []
-		for aWire in wires:
-			output.append(processItem(aWire))
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input)
+		if not isinstance(output, list):
+			output = [output]
 		self.outputs['Wires'].sv_set(output)
 
 def register():

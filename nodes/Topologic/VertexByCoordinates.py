@@ -93,7 +93,6 @@ class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):
 		if len(outputs) == 1:
 			if isinstance(outputs[0], list):
 				outputs = outputs[0]
-		print("OUTPUTS:", outputs)
 		self.outputs['Vertex'].sv_set(outputs)
 
 def register():

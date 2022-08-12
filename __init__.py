@@ -17,13 +17,14 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 2, 0),
+	"version": (0, 8, 2, 1),
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
-	"description": "Topologic",
+	"description": "Topologic enables logical, hierarchical and topological modelling.",
 	"warning": "",
 	"wiki_url": "http://topologic.app",
+    "support": "COMMUNITY",
 	"tracker_url": "https://github.com/wassimj/TopologicSverchok/issues"
 }
 
@@ -336,15 +337,19 @@ def nodes_index():
                 ("Topologic.DGLDatasetByImportedCSV_NC", "SvDGLDatasetByImportedCSV_NC"),
                 ("Topologic.DGLDatasetBySamples", "SvDGLDatasetBySamples"),
                 ("Topologic.DGLDatasetBySamples_NC", "SvDGLDatasetBySamples_NC"),
+                ("Topologic.DGLDatasetGraphs_NC", "SvDGLDatasetGraphs_NC"),
                 ("Topologic.DGLGraphByGraph", "SvDGLGraphByGraph"),
                 ("Topologic.DGLGraphByImportedCSV", "SvDGLGraphByImportedCSV"),
                 ("Topologic.DGLGraphByImportedDGCNN", "SvDGLGraphByImportedDGCNN"),
+                ("Topologic.DGLGraphEdgeData_NC", "SvDGLGraphEdgeData_NC"),
+                ("Topologic.DGLGraphNodeData_NC", "SvDGLGraphNodeData_NC"),
                 ("Topologic.DGLHyperparameters", "SvDGLHyperparameters"),
                 ("Topologic.DGLOptimizer", "SvDGLOptimizer"),
                 ("Topologic.DGLPredict", "SvDGLPredict"),
                 ("Topologic.DGLPredict_NC", "SvDGLPredict_NC"),
                 ("Topologic.DGLTrainClassifier", "SvDGLTrainClassifier"),
-                ("Topologic.DGLTrainClassifier_NC", "SvDGLTrainClassifier_NC")]
+                ("Topologic.DGLTrainClassifier_NC", "SvDGLTrainClassifier_NC"),
+                ("Topologic.DictionaryByDGLData", "SvDictionaryByDGLData")]
 
 	hullNodes = [("Topologic.TopologyConvexHull", "SvTopologyConvexHull")]
 	homemakerNodes = [("Topologic.HMIFCByCellComplex", "SvHMIFCByCellComplex"),
@@ -788,6 +793,7 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
+            ['SvDictionaryByDGLData'],
             ['SvDictionaryByKeysValues'],
             ['SvDictionaryByMergedDictionaries'],
             ['SvDictionaryByObjectProperties'],
@@ -1051,9 +1057,12 @@ class NODEVIEW_MT_AddTPSubcategoryDGL(bpy.types.Menu):
             ['SvDGLDatasetByImportedCSV_NC'],
             ['SvDGLDatasetBySamples'],
             ['SvDGLDatasetBySamples_NC'],
+            ['SvDGLDatasetGraphs_NC'],
             ['SvDGLGraphByGraph'],
             ['SvDGLGraphByImportedCSV'],
             ['SvDGLGraphByImportedDGCNN'],
+            ['SvDGLGraphEdgeData_NC'],
+            ['SvDGLGraphNodeData_NC'],
             ['SvDGLHyperparameters'],
             ['SvDGLOptimizer'],
             ['SvDGLPlot'],

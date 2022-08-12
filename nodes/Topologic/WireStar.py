@@ -22,6 +22,7 @@ from sverchok.data_structure import updateNode
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
 import math
+from . import Replication
 
 def wireByVertices(vList):
 	edges = []
@@ -30,14 +31,9 @@ def wireByVertices(vList):
 	edges.append(topologic.Edge.ByStartVertexEndVertex(vList[-1], vList[0]))
 	return topologic.Wire.ByEdges(edges)
 
-def processItem(item, originLocation):
-	origin = item[0]
-	radiusA = item[1]
-	radiusB = item[2]
-	sides = item[3]*2 # Sides is double the number of rays
-	dirX = item[4]
-	dirY = item[5]
-	dirZ = item[6]
+def processItem(item):
+	origin, radiusA, radiusB, rays, dirX, dirY, dirZ, placement = item
+	sides = rays*2 # Sides is double the number of rays
 	baseV = []
 
 	xList = []
@@ -55,7 +51,7 @@ def processItem(item, originLocation):
 		yList.append(y)
 		baseV.append([x,y])
 
-	if originLocation == "LowerLeft":
+	if placement == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
 		xOffset = origin.X() - xmin
@@ -104,22 +100,26 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
+replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireStar(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Cylinder (Cell) from the input parameters    
+	Tooltip: Creates a Star (Wire) from the input parameters    
 	"""
 	bl_idname = 'SvWireStar'
 	bl_label = 'Wire.Star'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	RadiusA: FloatProperty(name="Radius A", default=1, min=0.0001, precision=4, update=updateNode)
 	RadiusB: FloatProperty(name="Radius B", default=0.4, min=0.0001, precision=4, update=updateNode)
 	Rays: IntProperty(name="Rays", default=5, min=2, max=360, update=updateNode)
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
-	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	Placement: EnumProperty(name="Placement", description="Specify origin placement", default="Center", items=placements, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -130,28 +130,64 @@ class SvWireStar(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Dir Y').prop_name = 'DirY'
 		self.inputs.new('SvStringsSocket', 'Dir Z').prop_name = 'DirZ'
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "originLocation",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Placement")
+		split.row().prop(self, "Placement",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		radiusAList = self.inputs['Radius A'].sv_get(deepcopy=True)[0]
-		radiusBList = self.inputs['Radius B'].sv_get(deepcopy=True)[0]
-		raysList = self.inputs['Rays'].sv_get(deepcopy=True)[0]
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)[0]
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)[0]
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)[0]
-		matchLengths([originList, radiusAList, radiusBList, raysList, dirXList, dirYList, dirZList])
-		newInputs = zip(originList, radiusAList, radiusBList, raysList, dirXList, dirYList, dirZList)
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in newInputs:
-			outputs.append(processItem(anInput, self.originLocation))
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput+[self.Placement]))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

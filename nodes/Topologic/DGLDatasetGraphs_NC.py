@@ -1,16 +1,29 @@
+import sys
+sys.path.append(r"D:\Anaconda3\envs\py310\Lib\site-packages")
 import bpy
-from bpy.props import FloatProperty, StringProperty, BoolProperty
+from bpy.props import IntProperty, FloatProperty, StringProperty, BoolProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
-import topologic
+import dgl
+from dgl.data import DGLDataset
+import torch
+import numpy as np
+
+from . import Replication
 
 def processItem(item):
-	returnItem = None
-	if item:
-		if isinstance(item, topologic.Wire):
-			returnItem = item.IsClosed()
-	return returnItem
+	dataset = item
+	try:
+		_ = dataset[1]
+	except:
+		dataset = [dataset[0]]
+	graphs = []
+	for aGraph in dataset:
+		if isinstance(aGraph, tuple):
+			aGraph = aGraph[0]
+		graphs.append(aGraph)
+	return graphs
 
 def recur(input):
 	output = []
@@ -23,19 +36,18 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvWireIsClosed(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLDatasetGraphs_NC(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs True if the input Wire is closed. Outputs False otherwise   
+	Tooltip: Returns the DGL Graphs found in the input DGL Dataset
 	"""
-	bl_idname = 'SvWireIsClosed'
-	bl_label = 'Wire.IsClosed'
-	bl_icon = 'SELECT_DIFFERENCE'
+	bl_idname = 'SvDGLDatasetGraphs_NC'
+	bl_label = 'DGL.DatasetGraphs_NC'
 
 	def sv_init(self, context):
-		self.inputs.new('SvStringsSocket', 'Wire')
-		self.outputs.new('SvStringsSocket', 'Status')
-		self.width = 150
+		self.inputs.new('SvStringsSocket', 'DGL Dataset')
+		self.outputs.new('SvStringsSocket', 'DGL Graphs')
+		self.width = 200
 		for socket in self.inputs:
 			if socket.prop_name != '':
 				socket.custom_draw = "draw_sockets"
@@ -53,10 +65,10 @@ class SvWireIsClosed(bpy.types.Node, SverchCustomTreeNode):
 		output = recur(input)
 		if not isinstance(output, list):
 			output = [output]
-		self.outputs['Status'].sv_set(output)
+		self.outputs['DGL Graphs'].sv_set(output)
 
 def register():
-	bpy.utils.register_class(SvWireIsClosed)
+	bpy.utils.register_class(SvDGLDatasetGraphs_NC)
 
 def unregister():
-	bpy.utils.unregister_class(SvWireIsClosed)
+	bpy.utils.unregister_class(SvDGLDatasetGraphs_NC)
