@@ -33,7 +33,7 @@ The installation of these optional python modules will activate additional Topol
 * [pyvisgraph](https://github.com/TaipanRex/pyvisgraph)
 * [specklepy](https://github.com/specklesystems/specklepy)
 * [numpy](https://numpy.org/)
-* [pandas](https://pandas.pydata.org/))
+* [pandas](https://pandas.pydata.org/)
 * [scipy](https://scipy.org/)
 * [dgl](https://github.com/dmlc/dgl)
 
