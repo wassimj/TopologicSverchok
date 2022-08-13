@@ -17,9 +17,15 @@ def isInside(ib, face, tolerance):
 def processItem(item):
 	face, cluster = item
 	assert isinstance(face, topologic.Face), "FaceAddInternalBoundaries - Error: The host face input is not a Face"
-	assert isinstance(face, topologic.Cluster), "FaceAddInternalBoundaries - Error: The internal boundaries input is not a Cluster"
-	wires = []
-	_ = cluster.Wires(None, wires)
+	if isinstance(cluster, topologic.Cluster):
+		wires = []
+		_ = cluster.Wires(None, wires)
+	elif isinstance(cluster, topologic.Wire):
+		wires = [cluster]
+	elif isinstance(cluster, list):
+		wires = [w for w in cluster if isinstance(w, topologic.Wire)]
+	else:
+		return face
 	faceeb = face.ExternalBoundary()
 	faceibList = []
 	_ = face.InternalBoundaries(faceibList)
@@ -34,15 +40,16 @@ class SvFaceAddInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
 	Triggers: Topologic
 	Tooltip: Adds the input internal boundaries (Cluster) to the input Face
 	"""
-	bl_idname = 'SvFaceAddInternalBoundary'
-	bl_label = 'Face.AddInternalBoundary'
+	bl_idname = 'SvFaceAddInternalBoundaries'
+	bl_label = 'Face.AddInternalBoundaries'
+	bl_icon = 'SELECT_DIFFERENCE'
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Wires Cluster')
 		self.outputs.new('SvStringsSocket', 'Face')
-		self.width = 175
+		self.width = 200
 		for socket in self.inputs:
 			if socket.prop_name != '':
 				socket.custom_draw = "draw_sockets"

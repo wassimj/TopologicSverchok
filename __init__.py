@@ -98,8 +98,7 @@ def nodes_index():
                 ("Topologic.WireSplit", "SvWireSplit"),
                 ("Topologic.WireStar", "SvWireStar"),
                 ("Topologic.WireTrapezoid", "SvWireTrapezoid"),
-                ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
-                ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
+                ("Topologic.FaceAddInternalBoundaries", "SvFaceAddInternalBoundaries"),
                 ("Topologic.FaceArea", "SvFaceArea"),
                 ("Topologic.FaceBoundingFace", "SvFaceBoundingFace"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
@@ -616,8 +615,7 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
-            ['SvFaceAddFaceAsAperture'],
-            ['SvFaceAddInternalBoundary'],
+            ['SvFaceAddInternalBoundaries'],
             ['SvFaceAngle'],
             ['SvFaceArea'],
             ['SvFaceBoundingFace'],
