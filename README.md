@@ -2,26 +2,39 @@
 
 ![TopologicSververchok-logo](assets/TopologicSverchok-Logo-500x250.png)
 
-**TopologicSverchok** is a [Sverchok](http://nortikin.github.io/sverchok/) implementation of [Topologic](https://topologic.app). 
+**TopologicSverchok** is a [Sverchok](http://nortikin.github.io/sverchok/) implementation of [Topologic](https://topologic.app) both running within [Blender](https://www.blender.org/).
 
 [**Topologic**](https://topologic.app/) is a software modeling library enabling hierarchical and topological representations of architectural spaces, buildings and artefacts through non-manifold topology. 
 
-[**Sverchok**](http://nortikin.github.io/sverchok/) is a powerful parametric tool for architects, allowing geometry to be programmed visually with nodes. 
+[**Sverchok**](http://nortikin.github.io/sverchok/) is a powerful Blender Addon parametric tool for architects, allowing geometry to be programmed visually with nodes. 
 
+[**Blender**]() is a FOSS 3D creation suite. It supports the entirety of the 3D pipeline—modeling, rigging, animation, simulation, rendering, compositing and motion tracking, even video editing and game creation. It has an API for Python scripting for customization and writing specialized tools such as TopologicSverchok.
 
 ## Prerequisites
 
-TopologicSverchok requires the following modules to be installed:
+TopologicSverchok requires the following software to be installed:
 
-* [Blender](https://www.blender.org/)
+* [Blender](https://www.blender.org/) >= v2.93
 * [Sverchok](https://github.com/nortikin/sverchok/)
 * [numpy](https://numpy.org/)
 
-### Optional python modules:
+### Optional Dependencies
 
-The installation of these optional python modules will activate additional TopologicSverchok nodes. These python modules can be installed in the site-packages folder inside the topologicsverchok folder. Familiarity with python module installation is needed.
+The installation of these optional python modules will activate additional TopologicSverchok nodes. These python modules can be installed in the `site-packages` subdirectory. 
 
-* [ifcopenshell]() (recommended that you install BlenderBIM]() and [Homemaker]())
+```bash
+    TopologicSverchok
+    └── site-packages
+```
+
+Familiarity with python module installation is needed.
+
+<details>
+<summary>
+<b>Expand to view optional dependencies</b>
+</summary>
+
+* [ifcopenshell](http://ifcopenshell.org/) (recommended that you install BlenderBIM](https://blenderbim.org/) and [Homemaker](https://github.com/brunopostle/homemaker-addon))
 * [ipfshttpclient](https://pypi.org/project/ipfshttpclient/)
 * [web3](https://web3py.readthedocs.io/en/stable/)
 * [openstudio](https://openstudio.net/)
@@ -36,6 +49,8 @@ The installation of these optional python modules will activate additional Topol
 * [pandas](https://pandas.pydata.org/)
 * [scipy](https://scipy.org/)
 * [dgl](https://github.com/dmlc/dgl)
+
+</details>
 
 ### Binaries
 
