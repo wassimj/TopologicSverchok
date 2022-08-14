@@ -168,10 +168,11 @@ def processItem(item):
 				edge_features = ""
 				edge_features_keys = Replication.flatten(edge_features_keys)
 				for edge_feature_key in edge_features_keys:
-					if len(edge_features) > 0:
-						edge_features = edge_features + ","+ str(round(float(DictionaryValueAtKey.processItem([ed, edge_feature_key])),5))
-					else:
-						edge_features = str(round(float(DictionaryValueAtKey.processItem([ed, edge_feature_key])),5))
+					if edge_feature_key.strip(",;.") != '':
+						if len(edge_features) > 0:
+							edge_features = edge_features + ","+ str(round(float(DictionaryValueAtKey.processItem([ed, edge_feature_key])),5))
+						else:
+							edge_features = str(round(float(DictionaryValueAtKey.processItem([ed, edge_feature_key])),5))
 				edge_feat.append(edge_features)
 		print("EDGE_GRAPH_ID",edge_graph_id)
 		data = [edge_graph_id, edge_src, edge_dst, edge_lab, edge_feat]
