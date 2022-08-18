@@ -1,31 +1,11 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty, IntProperty
+from bpy.props import StringProperty, FloatProperty, IntProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-import time
 
-from . import TopologyClusterFaces, ShellByFaces, FaceByPlanarShell, Replication
-
-def list_level_iter(lst, level, _current_level: int= 1):
-	"""
-	Iterate over all lists with given nesting
-	With level 1 it will return the given list
-	With level 2 it will iterate over all nested lists in the main one
-	If a level does not have lists on that level it will return empty list
-	_current_level - for internal use only
-	"""
-	if _current_level < level:
-		try:
-			for nested_lst in lst:
-				if not isinstance(nested_lst, list):
-					raise TypeError
-				yield from list_level_iter(nested_lst, level, _current_level + 1)
-		except TypeError:
-			yield []
-	else:
-		yield lst
+from . import TopologyClusterFaces, FaceByShell, Replication
 
 def processItem(item):
 	topology, angTol, tolerance = item
@@ -33,15 +13,16 @@ def processItem(item):
 	if (t == 1) or (t == 2) or (t == 4) or (t == 8) or (t == 128):
 		return topology
 	clusters = TopologyClusterFaces.processItem([topology, tolerance])
-	shells = []
-	for aCluster in clusters:
-		faces = []
-		_ = aCluster.Faces(None, faces)
-		shells.append(ShellByFaces.processItem((faces, tolerance)))
 	faces = []
-	shells = Replication.flatten(shells)
-	for aShell in shells:
-		faces.append(FaceByPlanarShell.processItem([aShell, angTol]))
+	for aCluster in clusters:
+		shells = []
+		_ = aCluster.Shells(None, shells)
+		shells = Replication.flatten(shells)
+		for aShell in shells:
+			aFace = FaceByShell.processItem([aShell, angTol])
+			if aFace:
+				if isinstance(aFace, topologic.Face):
+					faces.append(aFace)
 	returnTopology = None
 	if t == 16:
 		returnTopology = topologic.Shell.ByFaces(faces, tolerance)
@@ -63,16 +44,7 @@ def processItem(item):
 			returnTopology = topologic.Cluster.ByTopologies(faces, False)
 	return returnTopology
 
-def recur(input, angTol, tolerance):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input, list):
-		for anItem in input:
-			output.append(recur(anItem, angTol, tolerance))
-	else:
-		output = processItem([input, angTol, tolerance])
-	return output
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -81,35 +53,60 @@ class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyRemoveCoplanarFaces'
 	bl_label = 'Topology.RemoveCoplanarFaces'
-	AngTol: FloatProperty(name='AngTol', default=0.1, min=0, precision=4, update=updateNode)
-	Tol: FloatProperty(name='Tol', default=0.0001, min=0, precision=4, update=updateNode)
-	Level: IntProperty(name='Level', default =1,min=1, update = updateNode)
+	bl_icon = 'SELECT_DIFFERENCE'
+
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	AngTol: FloatProperty(name='Angular Tolerance', default=0.1, min=0, precision=4, update=updateNode)
+	Tol: FloatProperty(name='Tolerance', default=0.0001, min=0, precision=4, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
-		self.inputs.new('SvStringsSocket', 'Level').prop_name='Level'
 		self.inputs.new('SvStringsSocket', 'Angular Tolerance').prop_name='AngTol'
-		self.inputs.new('SvStringsSocket', 'Tol').prop_name='Tol'
+		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name='Tol'
 		self.outputs.new('SvStringsSocket', 'Topology')
+		self.width = 250
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
-		angTol = self.inputs['Angular Tolerance'].sv_get(deepcopy=False)[0][0]
-		tol = self.inputs['Tol'].sv_get(deepcopy=False, default=0.0001)[0][0]
-		level = Replication.flatten(self.inputs['Level'].sv_get(deepcopy=False, default= 1))
-		if isinstance(level,list):
-			level = int(level[0])
-		topologyList = list(list_level_iter(topologyList,level))
-		topologyList = [Replication.flatten(t) for t in topologyList]
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for t in range(len(topologyList)):
-			outputs.append(recur(topologyList[t], angTol, tol))
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Topology'].sv_set(outputs)
-		end = time.time()
-		print("Topology.RemoveCoplanarFaces Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
     bpy.utils.register_class(SvTopologyRemoveCoplanarFaces)

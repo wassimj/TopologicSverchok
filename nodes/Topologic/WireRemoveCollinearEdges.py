@@ -1,10 +1,10 @@
 import bpy
-from bpy.props import StringProperty, FloatProperty
+from bpy.props import StringProperty, FloatProperty, EnumProperty
 from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from . import EdgeIsCollinear, WireSplit, WireByVertices
+from . import EdgeIsCollinear, WireSplit, WireByVertices, Replication
 
 def edgeOtherEnd(edge, vertex):
 	vertices = []
@@ -58,16 +58,8 @@ def processItem(item):
 	else:
 		return None
 
-def recur(input, angTol):
-	output = []
-	if input == None:
-		return []
-	if isinstance(input, list):
-		for anItem in input:
-			output.append(recur(anItem, angTol))
-	else:
-		output = processItem([input, angTol])
-	return output
+
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -78,21 +70,17 @@ class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 	bl_label = 'Wire.RemoveCollinearEdges'
 	bl_icon = 'SELECT_DIFFERENCE'
 
-	AngTol: FloatProperty(name='Angular Tolerance', default=0.1, precision=4, update=updateNode)
+	AngTol: FloatProperty(name='Angular Tolerance', default=0.1, min=0, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wire')
+		self.inputs.new('SvStringsSocket', 'Angular Tolerance').prop_name='AngTol'
 		self.outputs.new('SvStringsSocket', 'Wire')
-		self.width = 225
+		self.width = 250
 		for socket in self.inputs:
 			if socket.prop_name != '':
 				socket.custom_draw = "draw_sockets"
-	
-	def draw_buttons(self, context, layout):
-		row = layout.row()
-		split = row.split(factor=0.5)
-		split.row().label(text="Angular Tolerance")
-		split.row().prop(self, "AngTol",text="")
 
 	def draw_sockets(self, socket, context, layout):
 		row = layout.row()
@@ -100,13 +88,37 @@ class SvWireRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
 		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
 		split.row().prop(self, socket.prop_name, text="")
 
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		input = self.inputs[0].sv_get(deepcopy=False)
-		output = recur(input, self.AngTol)
-		if not isinstance(output, list):
-			output = [output]
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
+		outputs = []
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Wire'].sv_set(output)
 
 def register():

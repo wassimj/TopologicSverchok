@@ -19,17 +19,6 @@ def processItem(item):
 		vert = None
 	return vert
 
-def recur(item, tolerance):
-	output = []
-	if item == None:
-		return []
-	if isinstance(item, list):
-		for subItem in item:
-			output.append(recur(subItem, tolerance))
-	else:
-		output = processItem(item, tolerance)
-	return output
-
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvVertexByCoordinates(bpy.types.Node, SverchCustomTreeNode):

@@ -8,66 +8,82 @@ from . import Replication
 import time
 
 def processItem(item):
-	topology, topologyType = item
-	if topology.GetTypeAsString() == topologyType:
+	topology, subTopologyType = item
+	if topology.GetTypeAsString() == subTopologyType:
 		return [topology]
-	subtopologies = []
-	if topologyType == "Vertex":
-		_ = topology.Vertices(None, subtopologies)
-	elif topologyType == "Edge":
-		_ = topology.Edges(None, subtopologies)
-	elif topologyType == "Wire":
-		_ = topology.Wires(None, subtopologies)
-	elif topologyType == "Face":
-		_ = topology.Faces(None, subtopologies)
-	elif topologyType == "Shell":
-		_ = topology.Shells(None, subtopologies)
-	elif topologyType == "Cell":
-		_ = topology.Cells(None, subtopologies)
-	elif topologyType == "CellComplex":
-		_ = topology.CellComplexes(None, subtopologies)
-	elif topologyType == "Cluster":
-		_ = topology.Clusters(None, subtopologies)
-	elif topologyType == "Aperture":
-		_ = topology.Apertures(None, subtopologies)
-	else:
-		raise Exception("Topology.Subtopologies - Error: Could not retrieve the requested SubTopologies of type "+topologyType)
-	return subtopologies
+	subTopologies = []
+	if subTopologyType == "Vertex":
+		_ = topology.Vertices(None, subTopologies)
+	elif subTopologyType == "Edge":
+		_ = topology.Edges(None, subTopologies)
+	elif subTopologyType == "Wire":
+		_ = topology.Wires(None, subTopologies)
+	elif subTopologyType == "Face":
+		_ = topology.Faces(None, subTopologies)
+	elif subTopologyType == "Shell":
+		_ = topology.Shells(None, subTopologies)
+	elif subTopologyType == "Cell":
+		_ = topology.Cells(None, subTopologies)
+	elif subTopologyType == "CellComplex":
+		_ = topology.CellComplexes(None, subTopologies)
+	elif subTopologyType == "Cluster":
+		_ = topology.Clusters(None, subTopologies)
+	elif subTopologyType == "Aperture":
+		_ = topology.Apertures(subTopologies)
+	return subTopologies
 
-topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Cluster", "Cluster", "", 8), ("Aperture", "Aperture", "", 9)]
+def recur(input, subTopologyType):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem, subTopologyType))
+	else:
+		output = processItem([input, subTopologyType])
+	return output
+
+subTopologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Cluster", "Cluster", "", 8), ("Aperture", "Aperture", "", 9)]
 
 class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Outputs the subtopologies, based on the selected type, of the input Topology    
+	Tooltip: Outputs the subTopologies, based on the selected type, of the input Topology    
 	"""
 	bl_idname = 'SvTopologySubTopologies'
 	bl_label = 'Topology.SubTopologies'
-	SubtopologyType: EnumProperty(name="Subtopology Type", description="Specify subtopology type", default="Vertex", items=topologyTypes, update=updateNode)
+	bl_icon = 'SELECT_DIFFERENCE'
+	
+	SubTopologyType: EnumProperty(name="Subtopology Type", description="Specify subtopology type", default="Vertex", items=subTopologyTypes, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.outputs.new('SvStringsSocket', 'SubTopologies')
-	
+		self.width = 200
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "SubtopologyType",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="SubTopologyType")
+		split.row().prop(self, "SubTopologyType",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['SubTopologies'].sv_set([[]])
-			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=False)
-		topologyList_flat = Replication.flatten(topologyList)
-		outputs = []
-		for anInput in topologyList_flat:
-			outputs.append(processItem([anInput, self.SubtopologyType]))
-		outputs = Replication.unflatten(outputs, topologyList)
-		self.outputs['SubTopologies'].sv_set(outputs)
-		end = time.time()
-		print("Topology.SubTopologies ("+self.SubtopologyType+") Operation consumed "+str(round((end - start)*1000,0))+" ms")
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input, self.SubTopologyType)
+		if not isinstance(output, list):
+			output = [output]
+		self.outputs['SubTopologies'].sv_set(output)
 
 def register():
 	bpy.utils.register_class(SvTopologySubTopologies)

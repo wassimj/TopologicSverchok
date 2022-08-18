@@ -8,7 +8,7 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 from . import Replication
 
 def processItem(item):
-	assert isinstance(item, list), "Cluster.ByTopologies - Error: Input is not a list"
+	assert isinstance(item, list), "Wire.ByEdges - Error: Input is not a list"
 	edges = [x for x in item if isinstance(x, topologic.Edge)]
 	wire = None
 	for anEdge in edges:

@@ -5,18 +5,19 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
 def processItem(item):
 	return item.ExternalBoundary()
+
+def recur(input):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem))
+	else:
+		output = processItem(input)
+	return output
 
 class SvFaceExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -25,22 +26,30 @@ class SvFaceExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceExternalBoundary'
 	bl_label = 'Face.ExternalBoundary'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Wire'].sv_set([])
-			return
-		inputs = self.inputs['Face'].sv_get(deepcopy=False)
-		inputs = flatten(inputs)
-		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		self.outputs['Wire'].sv_set(outputs)
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input)
+		if not isinstance(output, list):
+			output = [output]
+		self.outputs['Wire'].sv_set(output)
 
 def register():
 	bpy.utils.register_class(SvFaceExternalBoundary)
