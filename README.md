@@ -41,7 +41,7 @@ Familiarity with python module installation is needed.
 * [lbt-ladybug](https://pypi.org/project/lbt-ladybug/) >= 0.25.161
 * [lbt-honeybee](https://pypi.org/project/lbt-honeybee/) >= 0.6.12
 * [honeybee-energy](https://pypi.org/project/honeybee-energy/) >= 1.91.49
-* [json](https://docs.python.org/3/library/json.html) >= 2.0.9impor
+* [json](https://docs.python.org/3/library/json.html) >= 2.0.9
 * [py2neo](https://py2neo.org/) >= 2021.2.3
 * [pyvisgraph](https://github.com/TaipanRex/pyvisgraph) >= 0.2.1
 * [specklepy](https://github.com/specklesystems/specklepy) >= 2.7.6
