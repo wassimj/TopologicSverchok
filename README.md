@@ -14,9 +14,9 @@
 
 TopologicSverchok requires the following software to be installed:
 
-* [Blender](https://www.blender.org/) >= v2.93
-* [Sverchok](https://github.com/nortikin/sverchok/)
-* [numpy](https://numpy.org/)
+* [Blender](https://www.blender.org/) >= v3.2
+* [Sverchok](https://github.com/nortikin/sverchok/) >= 1.1.0
+* [numpy](https://numpy.org/) >= 1.22.4
 
 ### Optional Dependencies
 
@@ -35,20 +35,19 @@ Familiarity with python module installation is needed.
 </summary>
 
 * [ifcopenshell](http://ifcopenshell.org/) (recommended that you install BlenderBIM](https://blenderbim.org/) and [Homemaker](https://github.com/brunopostle/homemaker-addon))
-* [ipfshttpclient](https://pypi.org/project/ipfshttpclient/)
-* [web3](https://web3py.readthedocs.io/en/stable/)
-* [openstudio](https://openstudio.net/)
-* [ladybug](https://www.ladybug.tools/)
-* [honeybee](https://www.ladybug.tools/honeybee.html)
-* [honeybee-energy](https://github.com/ladybug-tools/honeybee-energy)
-* [json](https://docs.python.org/3/library/json.html)
-* [py2neo](https://py2neo.org/)
-* [pyvisgraph](https://github.com/TaipanRex/pyvisgraph)
-* [specklepy](https://github.com/specklesystems/specklepy)
-* [numpy](https://numpy.org/)
-* [pandas](https://pandas.pydata.org/)
-* [scipy](https://scipy.org/)
-* [dgl](https://github.com/dmlc/dgl)
+* [ipfshttpclient](https://pypi.org/project/ipfshttpclient/) >= 0.7.0
+* [web3](https://web3py.readthedocs.io/en/stable/) >=5.30.0
+* [openstudio](https://openstudio.net/) >= 3.4.0
+* [lbt-ladybug](https://pypi.org/project/lbt-ladybug/) >= 0.25.161
+* [lbt-honeybee](https://pypi.org/project/lbt-honeybee/) >= 0.6.12
+* [honeybee-energy](https://pypi.org/project/honeybee-energy/) >= 1.91.49
+* [json](https://docs.python.org/3/library/json.html) >= 2.0.9impor
+* [py2neo](https://py2neo.org/) >= 2021.2.3
+* [pyvisgraph](https://github.com/TaipanRex/pyvisgraph) >= 0.2.1
+* [specklepy](https://github.com/specklesystems/specklepy) >= 2.7.6
+* [pandas](https://pandas.pydata.org/) >= 1.4.2
+* [scipy](https://scipy.org/) >= 1.8.1
+* [dgl](https://github.com/dmlc/dgl) >= 0.8.2
 
 </details>
 
