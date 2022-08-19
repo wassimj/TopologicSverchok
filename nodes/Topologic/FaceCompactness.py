@@ -6,24 +6,15 @@ from sverchok.data_structure import updateNode
 import topologic
 import math
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
 def processItem(item):
-	exb = item.ExternalBoundary()
+	face, mantissa = item
+	exb = face.ExternalBoundary()
 	edges = []
 	_ = exb.Edges(None, edges)
 	perimeter = 0.0
 	for anEdge in edges:
 		perimeter = perimeter + abs(topologic.EdgeUtility.Length(anEdge))
-	area = abs(topologic.FaceUtility.Area(item))
+	area = abs(topologic.FaceUtility.Area(face))
 	compactness  = 0
 	#From https://en.wikipedia.org/wiki/Compactness_measure_of_a_shape
 
@@ -32,8 +23,19 @@ def processItem(item):
 	if perimeter <= 0:
 		raise Exception("Error: Face.Compactness: Face perimeter is less than or equal to zero")
 	compactness = (math.pi*(2*math.sqrt(area/math.pi)))/perimeter
-	return compactness
-		
+	return round(compactness, mantissa)
+
+def recur(input, mantissa):
+	output = []
+	if input == None:
+		return []
+	if isinstance(input, list):
+		for anItem in input:
+			output.append(recur(anItem, mantissa))
+	else:
+		output = processItem([input, mantissa])
+	return output
+
 class SvFaceCompactness(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -41,20 +43,38 @@ class SvFaceCompactness(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceCompactness'
 	bl_label = 'Face.Compactness'
+	bl_icon = 'SELECT_DIFFERENCE'
+
+	Mantissa: IntProperty(name="Mantissa", default=4, min=0, max=8, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.outputs.new('SvStringsSocket', 'Compactness')
+		self.width = 150
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+	
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Mantissa")
+		split.row().prop(self, "Mantissa",text="")
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		inputs = self.inputs['Face'].sv_get(deepcopy=True)
-		inputs = flatten(inputs)
-		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
-		self.outputs['Compactness'].sv_set(outputs)
+		input = self.inputs[0].sv_get(deepcopy=False)
+		output = recur(input, self.Mantissa)
+		if not isinstance(output, list):
+			output = [output]
+		self.outputs['Compactness'].sv_set(output)
 
 def register():
 	bpy.utils.register_class(SvFaceCompactness)

@@ -29,7 +29,7 @@ def processItem(item):
 class SvEnergyModelDefaultScheduleSets(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Returns the Defaul Schedule Sets found in the input Energy Model
+	Tooltip: Returns the default Schedule Sets found in the input Energy Model
 	"""
 	bl_idname = 'SvEnergyModelDefaultScheduleSets'
 	bl_label = 'EnergyModel.DefaultScheduleSets'

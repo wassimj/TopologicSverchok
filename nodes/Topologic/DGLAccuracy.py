@@ -16,13 +16,16 @@ from . import Replication
 
 def processItem(item):
 	dgl_labels, dgl_predictions = item
-	
 	num_correct = 0
+	mask = []
 	for i in range(len(dgl_predictions)):
 		if dgl_predictions[i] == dgl_labels[i]:
 			num_correct = num_correct + 1
+			mask.append(True)
+		else:
+			mask.append(False)
 	size = len(dgl_predictions)
-	return [size, num_correct, len(dgl_predictions)- num_correct, num_correct / len(dgl_predictions)]
+	return [size, num_correct, len(dgl_predictions)- num_correct, mask, num_correct / len(dgl_predictions)]
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -43,48 +46,87 @@ class SvDGLAccuracy(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Size')
 		self.outputs.new('SvStringsSocket', 'Correct')
 		self.outputs.new('SvStringsSocket', 'Wrong')
+		self.outputs.new('SvStringsSocket', 'Mask')
 		self.outputs.new('SvStringsSocket', 'Accuracy')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Accuracy'].sv_set([])
-			return
-		labelList = self.inputs['Label'].sv_get(deepcopy=True)
-		predictionList = self.inputs['Prediction'].sv_get(deepcopy=True)
-		inputs = [labelList, predictionList]
-		if ((self.Replication) == "Default"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		if ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(inp)
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		sizeList = []
 		correctList = []
 		wrongList = []
+		maskList = []
 		accuracyList = []
-		for anInput in inputs:
-			size, correct, wrong, accuracy =  processItem(anInput)
+		for anInput in inputs_replicated:
+			size, correct, wrong, mask, accuracy =  processItem(anInput)
 			sizeList.append(size)
 			correctList.append(correct)
 			wrongList.append(wrong)
+			maskList.append(mask)
 			accuracyList.append(accuracy)
-		self.outputs['Size'].sv_set(sizeList)
-		self.outputs['Correct'].sv_set(correctList)
-		self.outputs['Wrong'].sv_set(wrongList)
-		self.outputs['Accuracy'].sv_set(accuracyList)
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			sizeList = Replication.re_interlace(sizeList, inputs_flat)
+			correctList = Replication.re_interlace(correctList, inputs_flat)
+			wrongList = Replication.re_interlace(wrongList, inputs_flat)
+			maskList = Replication.re_interlace(maskList, inputs_flat)
+			accuracyList = Replication.re_interlace(accuracyList, inputs_flat)
+		'''
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			sizeList = Replication.unflatten(sizeList, match_list)
+			correctList = Replication.unflatten(correctList, match_list)
+			wrongList = Replication.unflatten(wrongList, match_list)
+			maskList = Replication.unflatten(maskList, match_list)
+			accuracyList = Replication.unflatten(accuracyList, match_list)
+		'''
+		if len(sizeList) == 1:
+			if isinstance(sizeList[0], list):
+				sizeList = sizeList[0]
+		if len(correctList) == 1:
+			if isinstance(correctList[0], list):
+				correctList = correctList[0]
+		if len(wrongList) == 1:
+			if isinstance(wrongList[0], list):
+				wrongList = wrongList[0]
+		if len(maskList) == 1:
+			if isinstance(maskList[0], list):
+				maskList = maskList[0]
+		if len(accuracyList) == 1:
+			if isinstance(accuracyList[0], list):
+				accuracyList = accuracyList[0]
+
+		self.outputs['Size'].sv_set([sizeList])
+		self.outputs['Correct'].sv_set([correctList])
+		self.outputs['Wrong'].sv_set([wrongList])
+		self.outputs['Mask'].sv_set([maskList])
+		self.outputs['Accuracy'].sv_set([accuracyList])
 
 def register():
 	bpy.utils.register_class(SvDGLAccuracy)

@@ -52,7 +52,7 @@ def processItem(item):
 	w = topologic.Wire.ByEdges(projected_edges)
 	return w
 
-lacing = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Lace", "Lace", "", 5)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvWireProject(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -61,41 +61,57 @@ class SvWireProject(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireProject'
 	bl_label = 'Wire.Project'
-	Lacing: EnumProperty(name="Lacing", description="Lacing", default="Default", items=lacing, update=updateNode)
+	bl_icon = 'SELECT_DIFFERENCE'
+
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Wire')
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Direction')
 		self.outputs.new('SvStringsSocket', 'Wire')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Lacing",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		wireList = self.inputs['Wire'].sv_get(deepcopy=False)
-		wireList = Replication.flatten(wireList)
-		faceList = self.inputs['Face'].sv_get(deepcopy=False)
-		faceList = Replication.flatten(faceList)
-		directionList = self.inputs['Direction'].sv_get(deepcopy=False)
-		directionList = Replication.flatten(directionList)
-		inputs = [wireList, faceList, directionList]
-		if ((self.Lacing) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Lacing) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Lacing) == "Repeat") or ((self.Lacing) == "Default"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Lacing) == "Lace"):
-			inputs = list(Replication.interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Wire'].sv_set(outputs)
 
 def register():

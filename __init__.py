@@ -14,16 +14,18 @@
 # * You should have received a copy of the GNU Affero General Public License
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 2, 0),
+	"version": "0.8.2.3",
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
-	"description": "Topologic",
+	"description": "Topologic enables logical, hierarchical and topological modelling.",
 	"warning": "",
 	"wiki_url": "http://topologic.app",
+    "support": "COMMUNITY",
 	"tracker_url": "https://github.com/wassimj/TopologicSverchok/issues"
 }
 
@@ -55,6 +57,9 @@ from sverchok.utils.logging import info, debug
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+
+__version__ = '0.8.2.3'
+__version_info__ = tuple([ int(num) for num in __version__.split('.')])
 
 #from topologicsverchok import icons
 # make sverchok the root module name, (if sverchok dir not named exactly "sverchok")
@@ -96,12 +101,12 @@ def nodes_index():
                 ("Topologic.WireRemoveCollinearEdges", "SvWireRemoveCollinearEdges"),
                 ("Topologic.WireSplit", "SvWireSplit"),
                 ("Topologic.WireStar", "SvWireStar"),
-                ("Topologic.FaceAddFaceAsAperture", "SvFaceAddFaceAsAperture"),
-                ("Topologic.FaceAddInternalBoundary", "SvFaceAddInternalBoundary"),
+                ("Topologic.WireTrapezoid", "SvWireTrapezoid"),
+                ("Topologic.FaceAddInternalBoundaries", "SvFaceAddInternalBoundaries"),
                 ("Topologic.FaceArea", "SvFaceArea"),
                 ("Topologic.FaceBoundingFace", "SvFaceBoundingFace"),
                 ("Topologic.FaceByEdges", "SvFaceByEdges"),
-                ("Topologic.FaceByPlanarShell", "SvFaceByPlanarShell"),
+                ("Topologic.FaceByShell", "SvFaceByShell"),
                 ("Topologic.FaceByWire", "SvFaceByWire"),
                 ("Topologic.FaceByWires", "SvFaceByWires"),
                 ("Topologic.FaceByVertices", "SvFaceByVertices"),
@@ -336,15 +341,19 @@ def nodes_index():
                 ("Topologic.DGLDatasetByImportedCSV_NC", "SvDGLDatasetByImportedCSV_NC"),
                 ("Topologic.DGLDatasetBySamples", "SvDGLDatasetBySamples"),
                 ("Topologic.DGLDatasetBySamples_NC", "SvDGLDatasetBySamples_NC"),
+                ("Topologic.DGLDatasetGraphs_NC", "SvDGLDatasetGraphs_NC"),
                 ("Topologic.DGLGraphByGraph", "SvDGLGraphByGraph"),
                 ("Topologic.DGLGraphByImportedCSV", "SvDGLGraphByImportedCSV"),
                 ("Topologic.DGLGraphByImportedDGCNN", "SvDGLGraphByImportedDGCNN"),
+                ("Topologic.DGLGraphEdgeData_NC", "SvDGLGraphEdgeData_NC"),
+                ("Topologic.DGLGraphNodeData_NC", "SvDGLGraphNodeData_NC"),
                 ("Topologic.DGLHyperparameters", "SvDGLHyperparameters"),
                 ("Topologic.DGLOptimizer", "SvDGLOptimizer"),
                 ("Topologic.DGLPredict", "SvDGLPredict"),
                 ("Topologic.DGLPredict_NC", "SvDGLPredict_NC"),
                 ("Topologic.DGLTrainClassifier", "SvDGLTrainClassifier"),
-                ("Topologic.DGLTrainClassifier_NC", "SvDGLTrainClassifier_NC")]
+                ("Topologic.DGLTrainClassifier_NC", "SvDGLTrainClassifier_NC"),
+                ("Topologic.DictionaryByDGLData", "SvDictionaryByDGLData")]
 
 	hullNodes = [("Topologic.TopologyConvexHull", "SvTopologyConvexHull")]
 	homemakerNodes = [("Topologic.HMIFCByCellComplex", "SvHMIFCByCellComplex"),
@@ -598,6 +607,7 @@ class NODEVIEW_MT_AddTPSubcategoryWire(bpy.types.Menu):
             ['SvRemoveCollinearEdges'],
             ['SvWireSplit'],
             ['SvWireStar'],
+            ['SvWireTrapezoid'],
 		])
 
 make_class('TPSubcategoryWire', 'Topologic @ Wire')
@@ -609,14 +619,13 @@ class NODEVIEW_MT_AddTPSubcategoryFace(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
-            ['SvFaceAddFaceAsAperture'],
-            ['SvFaceAddInternalBoundary'],
+            ['SvFaceAddInternalBoundaries'],
             ['SvFaceAngle'],
             ['SvFaceArea'],
             ['SvFaceBoundingFace'],
             ['SvFaceByEdges'],
-            ['SvFaceByPlanarShell'],
             ['SvFaceByOffset'],
+            ['SvFaceByShell'],
             ['SvFaceByVertices'],
             ['SvFaceByWire'],
             ['SvFaceByWires'],
@@ -788,6 +797,7 @@ class NODEVIEW_MT_AddTPSubcategoryDictionary(bpy.types.Menu):
 	def draw(self, context):
 		layout = self.layout
 		layout_draw_categories(self.layout, self.bl_label, [
+            ['SvDictionaryByDGLData'],
             ['SvDictionaryByKeysValues'],
             ['SvDictionaryByMergedDictionaries'],
             ['SvDictionaryByObjectProperties'],
@@ -1051,9 +1061,12 @@ class NODEVIEW_MT_AddTPSubcategoryDGL(bpy.types.Menu):
             ['SvDGLDatasetByImportedCSV_NC'],
             ['SvDGLDatasetBySamples'],
             ['SvDGLDatasetBySamples_NC'],
+            ['SvDGLDatasetGraphs_NC'],
             ['SvDGLGraphByGraph'],
             ['SvDGLGraphByImportedCSV'],
             ['SvDGLGraphByImportedDGCNN'],
+            ['SvDGLGraphEdgeData_NC'],
+            ['SvDGLGraphNodeData_NC'],
             ['SvDGLHyperparameters'],
             ['SvDGLOptimizer'],
             ['SvDGLPlot'],

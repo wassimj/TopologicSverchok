@@ -72,7 +72,7 @@ replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate",
 class SvWireByVertices(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Creates a Wire from the list of input Vertices. The Vertices are assumed to be ordered.    
+	Tooltip: Creates a Wire from the list of input Vertices. The Vertices are assumed to be ordered   
 	"""
 	bl_idname = 'SvWireByVertices'
 	bl_label = 'Wire.ByVertices'

@@ -44,7 +44,7 @@ def processItem(item, originLocation, inputMode):
 		b = math.sqrt(abs(a**2 - c**2))
 		w = a*2
 		l = b*2
-	elif inputMode == "Focal Length and Minor Axis Length":
+	elif inputMode == "Focal Length and Minor Axis":
 		origin, c, b, sides, fromAngle, toAngle, close, dirX, dirY, dirZ = item
 		a = math.sqrt(abs(b**2 + c**2))
 		e = c/a
@@ -59,9 +59,6 @@ def processItem(item, originLocation, inputMode):
 	else:
 		raise NotImplementedError
 	baseV = []
-	topV = []
-	xOffset = 0
-	yOffset = 0
 	xList = []
 	yList = []
 
@@ -88,7 +85,7 @@ def processItem(item, originLocation, inputMode):
 	if originLocation == "LowerLeft":
 		xmin = min(xList)
 		ymin = min(yList)
-		ellipse = topologic.TopologyUtility.Translate(ellipse, -xmin, -ymin, 0)
+		ellipse = topologic.TopologyUtility.Translate(ellipse, a, b, 0)
 	x1 = origin.X()
 	y1 = origin.Y()
 	z1 = origin.Z()
@@ -112,7 +109,7 @@ def processItem(item, originLocation, inputMode):
 	v2 = topologic.Vertex.ByCoordinates(-c+origin.X(), 0+origin.Y(),0)
 	foci = topologic.Cluster.ByTopologies([v1, v2])
 	if originLocation == "LowerLeft":
-		foci = topologic.TopologyUtility.Translate(foci, -xmin, -ymin, 0)
+		foci = topologic.TopologyUtility.Translate(foci, a, b, 0)
 	foci = topologic.TopologyUtility.Rotate(foci, origin, 0, 1, 0, theta)
 	foci = topologic.TopologyUtility.Rotate(foci, origin, 0, 0, 1, phi)
 	return [ellipse, foci, a, b, c, e, w, l]
@@ -125,21 +122,21 @@ def update_sockets(self, context):
 	self.inputs['Eccentricity'].hide_safe = True
 	self.inputs['Major Axis Length'].hide_safe = True
 	self.inputs['Minor Axis Length'].hide_safe = True
-	if self.inputMode == "Width and Length":
+	if self.InputMode == "Width and Length":
 		self.inputs['Width'].hide_safe = False
 		self.inputs['Length'].hide_safe = False
-	if self.inputMode == "Focal Length and Eccentricity":
+	if self.InputMode == "Focal Length and Eccentricity":
 		self.inputs['Focal Length'].hide_safe = False
 		self.inputs['Eccentricity'].hide_safe = False
-	elif self.inputMode == "Focal Length and Minor Axis Length":
+	elif self.InputMode == "Focal Length and Minor Axis":
 		self.inputs['Focal Length'].hide_safe = False
 		self.inputs['Minor Axis Length'].hide_safe = False
-	elif self.inputMode == "Major Axis Length and Minor Axis Length":
+	elif self.InputMode == "Major Axis and Minor Axis":
 		self.inputs['Major Axis Length'].hide_safe = False
 		self.inputs['Minor Axis Length'].hide_safe = False
 	updateNode(self, context)
 
-input_items = [("Width and Length", "Width and Length", "", 1),("Focal Length and Eccentricity", "Focal Length and Eccentricity", "", 2),("Focal Length and Minor Axis Length", "Focal Length and Minor Axis Length", "", 3), ("Major Axis Length and Minor Axis Length", "Major Axis Length and Minor Axis Length", "", 4)]
+input_items = [("Width and Length", "Width and Length", "", 1),("Focal Length and Eccentricity", "Focal Length and Eccentricity", "", 2),("Focal Length and Minor Axis", "Focal Length and Minor Axis", "", 3), ("Major Axis and Minor Axis", "Major Axis and Minor Axis", "", 4)]
 originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -150,6 +147,8 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvWireEllipse'
 	bl_label = 'Wire.Ellipse'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 	FocalLengthProp: FloatProperty(name="Focal Length", description="The focal length is the distance from the center of the ellipse to one of the two foci", default=0.866025, min=0.0001, precision=6, update=updateNode)
 	EccentricityProp: FloatProperty(name="Eccentricity", description="Eccentricity is The ratio of distances from the center of the ellipse from either focus to the semi-major axis of the ellipse (e = c/a)", default=0.866025, min=0.0001, max=0.9999, precision=6, update=updateNode)
@@ -164,8 +163,8 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 	DirXProp: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirYProp: FloatProperty(name="Dir Y", default=0, precision=4, update=updateNode)
 	DirZProp: FloatProperty(name="Dir Z", default=1, precision=4, update=updateNode)
-	originLocation: EnumProperty(name="originLocation", description="Specify origin location", default="Center", items=originLocations, update=updateNode)
-	inputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Width and Length", update=update_sockets)
+	Placement: EnumProperty(name="Placement", description="Specify origin placement", default="Center", items=originLocations, update=updateNode)
+	InputMode : EnumProperty(name='Input Mode', description='The input component format of the data', items=input_items, default="Width and Length", update=update_sockets)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Origin')
@@ -191,69 +190,67 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 		self.outputs.new('SvStringsSocket', 'Width')
 		self.outputs.new('SvStringsSocket', 'Length')
 		update_sockets(self, context)
+		self.width = 325
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.35)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "inputMode", expand=False, text="")
-		layout.prop(self, "originLocation",text="")
+		row = layout.row()
+		split = row.split(factor=0.35)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.35)
+		split.row().label(text="Input Mode")
+		split.row().prop(self, "InputMode",text="")
+		row = layout.row()
+		split = row.split(factor=0.35)
+		split.row().label(text="Placement")
+		split.row().prop(self, "Placement",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not (self.inputs['Origin'].is_linked):
-			originList = [topologic.Vertex.ByCoordinates(0,0,0)]
-		else:
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		if self.inputMode == "Width and Length":
-			widthList = self.inputs['Width'].sv_get(deepcopy=True)
-			lengthList = self.inputs['Length'].sv_get(deepcopy=True)
-			widthList = Replication.flatten(widthList)
-			lengthList = Replication.flatten(lengthList)
-			inputs = [widthList, lengthList]
-		elif self.inputMode == "Focal Length and Eccentricity":
-			focalLengthList = self.inputs['Focal Length'].sv_get(deepcopy=True)
-			eccentricityList = self.inputs['Eccentricity'].sv_get(deepcopy=True)
-			focalLengthList = Replication.flatten(focalLengthList)
-			eccentricityList = Replication.flatten(eccentricityList)
-			inputs = [focalLengthList, eccentricityList]
-		elif self.inputMode == "Focal Length and Minor Axis Length":
-			focalLengthList = self.inputs['Focal Length'].sv_get(deepcopy=True)
-			minorAxisLengthList = self.inputs['Minor Axis Length'].sv_get(deepcopy=True)
-			focalLengthList = Replication.flatten(focalLengthList)
-			minorAxisLengthList = Replication.flatten(minorAxisLengthList)
-			inputs = [focalLengthList, minorAxisLengthList]
-		elif self.inputMode == "Major Axis Length and Minor Axis Length":
-			majorAxisLengthList = self.inputs['Major Axis Length'].sv_get(deepcopy=True)
-			minorAxisLengthList = self.inputs['Minor Axis Length'].sv_get(deepcopy=True)
-			majorAxisLengthList = Replication.flatten(majorAxisLengthList)
-			minorAxisLengthList = Replication.flatten(minorAxisLengthList)
-			inputs = [majorAxisLengthList, minorAxisLengthList]
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
-		sidesList = Replication.flatten(sidesList)
-		fromList = self.inputs['From'].sv_get(deepcopy=True)
-		fromList = Replication.flatten(fromList)
-		toList = self.inputs['To'].sv_get(deepcopy=True)
-		toList = Replication.flatten(toList)
-		closeList = self.inputs['Close'].sv_get(deepcopy=True)
-		closeList = Replication.flatten(closeList)
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
-		dirXList = Replication.flatten(dirXList)
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
-		dirYList = Replication.flatten(dirYList)
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-		dirZList = Replication.flatten(dirZList)
-		inputs = [originList,inputs[0], inputs[1],sidesList, fromList, toList, closeList, dirXList,dirYList,dirZList]
-		if ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Default" or (self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
-
+		sockets = [self.inputs['Origin']]
+		if self.InputMode == "Width and Length":
+			sockets.append(self.inputs['Width'])
+			sockets.append(self.inputs['Length'])
+		elif self.InputMode == "Focal Length and Eccentricity":
+			sockets.append(self.inputs['Focal Length'])
+			sockets.append(self.inputs['Eccentricity'])
+		elif self.InputMode == "Focal Length and Minor Axis":
+			sockets.append(self.inputs['Focal Length'])
+			sockets.append(self.inputs['Minor Axis Length'])
+		elif self.InputMode == "Major Axis and Minor Axis":
+			sockets.append(self.inputs['Major Axis Length'])
+			sockets.append(self.inputs['Minor Axis Length'])
+		sockets.append(self.inputs['Sides'])
+		sockets.append(self.inputs['From'])
+		sockets.append(self.inputs['To'])
+		sockets.append(self.inputs['Close'])
+		sockets.append(self.inputs['Dir X'])
+		sockets.append(self.inputs['Dir Y'])
+		sockets.append(self.inputs['Dir Z'])
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in sockets:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		ellipseList = []
 		fociList = []
 		aList = []
@@ -262,9 +259,8 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 		eList = []
 		wList = []
 		lList = []
-
-		for anInput in inputs:
-			ellipse, foci, a, b, c, e, w, l = processItem(anInput, self.originLocation, self.inputMode)
+		for anInput in inputs_replicated:
+			ellipse, foci, a, b, c, e, w, l = processItem(anInput, self.Placement, self.InputMode)
 			ellipseList.append(ellipse)
 			fociList.append(foci)
 			aList.append(a)
@@ -273,6 +269,59 @@ class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
 			eList.append(e)
 			wList.append(w)
 			lList.append(l)
+		inputs_flat = []
+		for anInput in sockets:
+			if anInput.name == 'Origin':
+				if not (self.inputs['Origin'].is_linked):
+					inp = [topologic.Vertex.ByCoordinates(0,0,0)]
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			ellipseList = Replication.re_interlace(ellipseList, inputs_flat)
+			fociList = Replication.re_interlace(fociList, inputs_flat)
+			aList = Replication.re_interlace(aList, inputs_flat)
+			bList = Replication.re_interlace(bList, inputs_flat)
+			cList = Replication.re_interlace(cList, inputs_flat)
+			eList = Replication.re_interlace(eList, inputs_flat)
+			wList = Replication.re_interlace(wList, inputs_flat)
+			lList = Replication.re_interlace(lList, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			ellipseList = Replication.unflatten(ellipseList, match_list)
+			fociList = Replication.unflatten(fociList, match_list)
+			aList = Replication.unflatten(aList, match_list)
+			bList = Replication.unflatten(bList, match_list)
+			cList = Replication.unflatten(cList, match_list)
+			eList = Replication.unflatten(eList, match_list)
+			wList = Replication.unflatten(wList, match_list)
+			lList = Replication.unflatten(lList, match_list)
+		if len(ellipseList) == 1:
+			if isinstance(ellipseList[0], list):
+				ellipseList = ellipseList[0]
+		if len(fociList) == 1:
+			if isinstance(fociList[0], list):
+				fociList = fociList[0]
+		if len(aList) == 1:
+			if isinstance(aList[0], list):
+				aList = aList[0]
+		if len(bList) == 1:
+			if isinstance(bList[0], list):
+				bList = bList[0]
+		if len(cList) == 1:
+			if isinstance(cList[0], list):
+				cList = cList[0]
+		if len(eList) == 1:
+			if isinstance(eList[0], list):
+				eList = eList[0]
+		if len(wList) == 1:
+			if isinstance(wList[0], list):
+				wList = wList[0]
+		if len(lList) == 1:
+			if isinstance(lList[0], list):
+				lList = lList[0]
 		self.outputs['Ellipse'].sv_set(ellipseList)
 		self.outputs['Foci'].sv_set(fociList)
 		self.outputs['Major Axis Length'].sv_set(aList)

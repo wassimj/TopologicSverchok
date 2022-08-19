@@ -9,7 +9,7 @@ from numpy.linalg import norm
 import math
 
 import topologic
-from . import Replication, FaceNormalAtParameters
+from . import Replication, FaceNormalAtParameters, TopologySelfMerge
 
 from math import sqrt
 
@@ -117,7 +117,7 @@ def processItem(item):
 		if len(aCategory) > 0:
 			for index in aCategory:
 				tempList.append(faces[index])
-			returnList.append(topologic.Cluster.ByTopologies(tempList))
+			returnList.append(TopologySelfMerge.processItem(topologic.Cluster.ByTopologies(tempList)))
 	return returnList
 
 class SvTopologyClusterFaces(bpy.types.Node, SverchCustomTreeNode):

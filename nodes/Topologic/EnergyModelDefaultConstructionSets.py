@@ -29,7 +29,7 @@ def processItem(item):
 class SvEnergyModelDefaultConstructionSets(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
-	Tooltip: Returns the Defaul Construction Sets found in the input Energy Model
+	Tooltip: Returns the default Construction Sets found in the input Energy Model
 	"""
 	bl_idname = 'SvEnergyModelDefaultConstructionSets'
 	bl_label = 'EnergyModel.DefaultConstructionSets'

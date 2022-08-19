@@ -25,14 +25,14 @@ def angle_between(v1, v2):
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 def processItem(item):
-	faceA, faceB = item
+	faceA, faceB, mantissa = item
 	if not faceA or not isinstance(faceA, topologic.Face):
 		raise Exception("Face.Angle - Error: Face A is not valid")
 	if not faceB or not isinstance(faceB, topologic.Face):
 		raise Exception("Face.Angle - Error: Face B is not valid")
 	dirA = FaceNormalAtParameters.processItem([faceA, 0.5, 0.5], "XYZ", 3)
 	dirB = FaceNormalAtParameters.processItem([faceB, 0.5, 0.5], "XYZ", 3)
-	return angle_between(dirA, dirB) * 180 / pi # convert to degrees
+	return round((angle_between(dirA, dirB) * 180 / pi), mantissa) # convert to degrees
 		
 class SvFaceAngle(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -41,44 +41,55 @@ class SvFaceAngle(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceAngle'
 	bl_label = 'Face.Angle'
+	bl_icon = 'SELECT_DIFFERENCE'
+
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
+	Mantissa: IntProperty(name="Mantissa", default=4, min=0, max=8, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face A')
 		self.inputs.new('SvStringsSocket', 'Face B')
 		self.outputs.new('SvStringsSocket', 'Angle')
+		self.width = 175
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Mantissa")
+		split.row().prop(self, "Mantissa",text="")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		if not any(socket.is_linked for socket in self.inputs):
-			self.outputs['Angle'].sv_set([])
-			return
-		faceAList = self.inputs['Face A'].sv_get(deepcopy=True)
-		faceAList = Replication.flatten(faceAList)
-		faceBList = self.inputs['Face B'].sv_get(deepcopy=True)
-		faceBList = Replication.flatten(faceBList)
-		inputs = [faceAList, faceBList]
-		if ((self.Replication) == "Default"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat, self.Replication)
 		outputs = []
-		for anInput in inputs:
-			outputs.append(processItem(anInput))
+		for anInput in inputs_replicated:
+			outputs.append(processItem(anInput+[self.Mantissa]))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
+		if len(outputs) == 1:
+			if isinstance(outputs[0], list):
+				outputs = outputs[0]
 		self.outputs['Angle'].sv_set(outputs)
 
 def register():
