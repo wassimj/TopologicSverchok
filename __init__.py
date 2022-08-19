@@ -14,10 +14,11 @@
 # * You should have received a copy of the GNU Affero General Public License
 # * along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": (0, 8, 2, 2),
+	"version": "0.8.2.3",
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -56,6 +57,9 @@ from sverchok.utils.logging import info, debug
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+
+__version__ = '0.8.2.3'
+__version_info__ = tuple([ int(num) for num in __version__.split('.')])
 
 #from topologicsverchok import icons
 # make sverchok the root module name, (if sverchok dir not named exactly "sverchok")
