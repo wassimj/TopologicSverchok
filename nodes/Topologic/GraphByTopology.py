@@ -1509,7 +1509,7 @@ class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
 			inputs = Replication.trim(inputs)
 			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Iterate"):
-			inputs = Replciation.iterate(inputs)
+			inputs = Replication.iterate(inputs)
 			inputs = Replication.transposeList(inputs)
 		elif ((self.Replication) == "Repeat"):
 			inputs = Replication.repeat(inputs)
