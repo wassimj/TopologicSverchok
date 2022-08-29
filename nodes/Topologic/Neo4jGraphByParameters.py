@@ -96,10 +96,10 @@ def transposeList(l):
 	return returnList
 
 def processItem(item):
-	url, username, password, run = item
+	url, username, dbname, password, run = item
 	if not (run):
 		return None
-	return py2neo.Graph(url, auth=(username, password))
+	return py2neo.Graph(url, name = dbname,auth=(username, password))
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -111,6 +111,7 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvNeo4jGraphByParameters'
 	bl_label = 'Neo4jGraph.ByParameters'
 	URL: StringProperty(name="URL", default="bolt://localhost:7687", update=updateNode)
+	DBname: StringProperty(name="DB Name", default="neo4j", update=updateNode)
 	UserName: StringProperty(name="User Name", default="neo4j", update=updateNode)
 	Password: StringProperty(name="Password", default="", update=updateNode)
 	Run: BoolProperty(name="Run", default=True, update=updateNode)
@@ -121,6 +122,7 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'url').prop_name='URL'
 		self.inputs.new('SvStringsSocket', 'username').prop_name='UserName'
 		self.inputs.new('SvStringsSocket', 'password').prop_name='Password'
+		self.inputs.new('SvStringsSocket', 'dbname').prop_name='DBname'
 		self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
 		self.outputs.new('SvStringsSocket', 'Neo4j Graph')
 
@@ -132,13 +134,15 @@ class SvNeo4jGraphByParameters(bpy.types.Node, SverchCustomTreeNode):
 			return
 		urlList = self.inputs['url'].sv_get(deepcopy=True)
 		usernameList = self.inputs['username'].sv_get(deepcopy=True)
+		dbnameList = self.inputs['dbname'].sv_get(deepcopy=True)
 		passwordList = self.inputs['password'].sv_get(deepcopy=True)
 		runList = self.inputs['Run'].sv_get(deepcopy=True)
 		urlList = flatten(urlList)
 		usernameList = flatten(usernameList)
+		dbnameList = flatten(dbnameList)
 		passwordList = flatten(passwordList)
 		runList = flatten(runList)
-		inputs = [urlList, usernameList, passwordList, runList]
+		inputs = [urlList, usernameList, dbnameList, passwordList, runList]
 		if ((self.Replication) == "Trim"):
 			inputs = trim(inputs)
 			inputs = transposeList(inputs)
