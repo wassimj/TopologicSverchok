@@ -193,13 +193,13 @@ topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Face", "F
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 
-class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAddAperturesMK2(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
 	Tooltip: Adds the input Apertures to the input Topology    
 	"""
-	bl_idname = 'SvTopologyAddApertures'
-	bl_label = 'Topology.AddApertures'
+	bl_idname = 'SvTopologyAddAperturesMK2'
+	bl_label = 'Topology.AddAperturesMK2'
 	Exclusive: BoolProperty(name="Exclusive", default=True, update=updateNode)
 	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	subtopologyType: EnumProperty(name="Apply To:", description="Specify subtopology type to apply the apertures to", default="Face", items=topologyTypes, update=updateNode)
@@ -255,7 +255,7 @@ class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 		print("Topology.AddApertures Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
-    bpy.utils.register_class(SvTopologyAddApertures)
+    bpy.utils.register_class(SvTopologyAddAperturesMK2)
 
 def unregister():
-    bpy.utils.unregister_class(SvTopologyAddApertures)
+    bpy.utils.unregister_class(SvTopologyAddAperturesMK2)

@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+from . import VertexNearestVertex, DictionaryValueAtKey, DictionaryByKeysValues, TopologySetDictionary
 import json
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -270,7 +270,53 @@ def internalVertex(topology, tolerance):
 		vst = topology.Centroid()
 	return vst
 
-def processApertures(subTopologies, apertures, exclusive, tolerance):
+def processApertures(subTopologies, apertureCluster, exclusive, tolerance):
+	if not apertureCluster:
+		return None
+	apertures = []
+	cells = []
+	faces = []
+	edges = []
+	vertices = []
+	_ = apertureCluster.Cells(None, cells)
+	_ = apertureCluster.Faces(None, faces)
+	_ = apertureCluster.Vertices(None, vertices)
+	# apertures are assumed to all be of the same topology type.
+	if len(cells) > 0:
+		apertures = cells
+	elif len(faces) > 0:
+		apertures = faces
+	elif len(edges) > 0:
+		apertures = edges
+	elif len(vertices) > 0:
+		apertures = vertices
+	else:
+		apertures = []
+	usedTopologies = []
+	temp_verts = []
+	for i, subTopology in enumerate(subTopologies):
+			usedTopologies.append(0)
+			temp_v = internalVertex(subTopology, tolerance)
+			d = DictionaryByKeysValues.processItem([["id"], [i]])
+			temp_v = TopologySetDictionary.processItem([temp_v, d])
+			temp_verts.append(temp_v)
+	clus = topologic.Cluster.ByTopologies(temp_verts)
+	tree = VertexNearestVertex.kdtree(clus)
+	for aperture in apertures:
+		apCenter = internalVertex(aperture, tolerance)
+		nearest_vert = VertexNearestVertex.find_nearest_neighbor(tree=tree, vertex=apCenter)
+		d = nearest_vert.GetDictionary()
+		i = DictionaryValueAtKey.processItem([d,"id"])
+		subTopology = subTopologies[i]
+		if exclusive == True and usedTopologies[i] == 1:
+			continue
+		context = topologic.Context.ByTopologyParameters(subTopology, 0.5, 0.5, 0.5)
+		_ = topologic.Aperture.ByTopologyContext(aperture, context)
+		if exclusive == True:
+			usedTopologies[i] = 1
+	return None
+
+def processApertures_old(subTopologies, apertures, exclusive, tolerance):
 	usedTopologies = []
 	for subTopology in subTopologies:
 			usedTopologies.append(0)
@@ -337,28 +383,28 @@ def processItem(item):
 				_ = topology.Cells(None, cells)
 			except:
 				pass
-			processApertures(cells, cellApertures, False, 0.001)
+			processApertures(cells, topologic.Cluster.ByTopologies(cellApertures), False, 0.001)
 			faceApertures = getApertures(jsonItem['faceApertures'])
 			faces = []
 			try:
 				_ = topology.Faces(None, faces)
 			except:
 				pass
-			processApertures(faces, faceApertures, False, 0.001)
+			processApertures(faces, topologic.Cluster.ByTopologies(faceApertures), False, 0.001)
 			edgeApertures = getApertures(jsonItem['edgeApertures'])
 			edges = []
 			try:
 				_ = topology.Edges(None, edges)
 			except:
 				pass
-			processApertures(edges, edgeApertures, False, 0.001)
+			processApertures(edges, topologic.Cluster.ByTopologies(edgeApertures), False, 0.001)
 			vertexApertures = getApertures(jsonItem['vertexApertures'])
 			vertices = []
 			try:
 				_ = topology.Vertices(None, vertices)
 			except:
 				pass
-			processApertures(vertices, vertexApertures, False, 0.001)
+			processApertures(vertices, topologic.Cluster.ByTopologies(vertexApertures), False, 0.001)
 			cellDataList = jsonItem['cellDictionaries']
 			cellSelectors = []
 			for cellDataItem in cellDataList:

@@ -42,7 +42,7 @@ def processItem(item, originLocation):
 	dirZ, \
 	tolerance = item
 
-	c = WireCircle.processItem([origin, minorRadius, vSides, 0, 360, False, 0, 1, 0], "Center")
+	c = WireCircle.processItem([origin, minorRadius, vSides, 0, 360, False, 0, 1, 0,"Center"])
 	c = topologic.TopologyUtility.Translate(c, majorRadius, 0, 0)
 	s = TopologySpin.processItem([c, origin, 0, 0, 1, 360, uSides, tolerance])
 	if s.Type() == topologic.Shell.Type():

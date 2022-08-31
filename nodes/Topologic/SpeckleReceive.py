@@ -296,9 +296,9 @@ class SvSpeckleRun(bpy.types.Operator, SvGenericNodeLocator):
 			outputs.append(runItem(anInput))
 		node.outputs['Objects'].sv_set(outputs)
 		tree = node.id_data
-		update_list = make_tree_from_nodes([node.name], tree)
-		update_list = update_list[1:]
-		do_update(update_list, tree.nodes)
+		stree = UpdateTree.get(tree)
+		nodes = stree.nodes_from([node])
+		tree.update_nodes(nodes)
 
 class SvSpeckleReceive(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -307,6 +307,7 @@ class SvSpeckleReceive(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvSpeckleReceive'
 	bl_label = 'Speckle.Receive'
+	Run: BoolProperty(name="Run", default=False, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
 	Output: StringProperty(name="Objects", default="", update=updateNode)
 
@@ -316,6 +317,7 @@ class SvSpeckleReceive(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Stream')
 		self.inputs.new('SvStringsSocket', 'Branch')
 		self.inputs.new('SvStringsSocket', 'Commit')
+		self.inputs.new('SvStringsSocket', 'Run').prop_name = 'Run'
 		self.outputs.new('SvStringsSocket', 'Objects').prop_name = 'Output'
 
 	def draw_buttons(self, context, layout):
@@ -324,13 +326,38 @@ class SvSpeckleReceive(bpy.types.Node, SverchCustomTreeNode):
 		row.scale_y = 2
 		self.wrapper_tracked_ui_draw_op(row, "speckle.reset", icon='CANCEL', text="RESET")
 		row = layout.row(align=True)
-		row.scale_y = 2
-		self.wrapper_tracked_ui_draw_op(row, "speckle.run", icon='PLAY', text="RUN")
 
 	def process(self):
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		self.outputs['Objects'].sv_set([None])
+		runList = self.inputs['Run'].sv_get(deepcopy=True)
+		runList = flatten(runList)
+		if runList[0]:
+			clientList = self.inputs['Client'].sv_get(deepcopy=True)
+			streamList = self.inputs['Stream'].sv_get(deepcopy=True)
+			branchList = self.inputs['Branch'].sv_get(deepcopy=True)
+			commitList = self.inputs['Commit'].sv_get(deepcopy=True)
+			clientList = flatten(clientList)
+			streamList = flatten(streamList)
+			branchList = flatten(branchList)
+			commitList = flatten(commitList)
+
+			inputs = [clientList, streamList, branchList, commitList]
+			if ((self.Replication) == "Trim"):
+				inputs = trim(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Default") or ((self.Replication) == "Iterate"):
+				inputs = iterate(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Repeat"):
+				inputs = repeat(inputs)
+				inputs = transposeList(inputs)
+			elif ((self.Replication) == "Interlace"):
+				inputs = list(interlace(inputs))
+			outputs = []
+			for anInput in inputs:
+				outputs.append(runItem(anInput))
+			self.outputs['Objects'].sv_set(outputs)
 
 def register():
 	bpy.utils.register_class(SvSpeckleReceive)
