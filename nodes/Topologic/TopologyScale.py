@@ -5,91 +5,68 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
+from . import Replication
+from . import TopologyTransferDictionariesBySelectors
 
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
+def cellSelectors(topology):
+	cells = []
+	try:
+		_ = topology.Cells(None, cells)
+	except:
+		cells = []
+	selectors = []
+	for aCell in cells:
+		dict = aCell.GetDictionary()
+		selector = topologic.CellUtility.InternalVertex(aCell, 0.0001)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
 
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
+def faceSelectors(topology):
+	faces = []
+	try:
+		_ = topology.Faces(None, faces)
+	except:
+		faces = []
+	selectors = []
+	for aFace in faces:
+		dict = aFace.GetDictionary()
+		selector = topologic.FaceUtility.InternalVertex(aFace, 0.0001)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
 
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
+def edgeSelectors(topology):
+	edges = []
+	try:
+		_ = topology.Edges(None, edges)
+	except:
+		edges = []
+	selectors = []
+	for anEdge in edges:
+		dict = anEdge.GetDictionary()
+		selector = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
 
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-			# print(base,y)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
+def vertexSelectors(topology):
+	vertices = []
+	try:
+		_ = topology.Vertices(None, vertices)
+	except:
+		vertices = []
+	selectors = []
+	for aVertex in vertices:
+		dict = aVertex.GetDictionary()
+		selector = aVertex
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
 
 def processItem(item):
 	topology = item[0]
@@ -97,15 +74,35 @@ def processItem(item):
 	x = item[2]
 	y = item[3]
 	z = item[4]
-	newTopology = None
-	try:
-		newTopology = topologic.TopologyUtility.Scale(topology, origin, x, y, z)
-	except:
-		print("ERROR: (Topologic>TopologyUtility.Rotate) operation failed.")
-		newTopology = None
-	return newTopology
+	cellSels = cellSelectors(topology)
+	faceSels = faceSelectors(topology)
+	edgeSels = edgeSelectors(topology)
+	vertexSels = vertexSelectors(topology)
+	cellSels_new = []
+	faceSels_new = []
+	edgeSels_new = []
+	vertexSels_new = []
+	for cellSel in cellSels:
+		cellSels_new.append(topologic.TopologyUtility.Scale(cellSel, origin, x, y, z))
+	faceSels_new = []
+	for faceSel in faceSels:
+		faceSels_new.append(topologic.TopologyUtility.Scale(faceSel, origin, x, y, z))
+	for edgeSel in edgeSels:
+		edgeSels_new.append(topologic.TopologyUtility.Scale(edgeSel, origin, x, y, z))
+	for vertexSel in vertexSels:
+		vertexSels_new.append(topologic.TopologyUtility.Scale(vertexSel, origin, x, y, z))
+	topology_new = topologic.TopologyUtility.Scale(topology, origin, x, y, z)
+	if len(cellSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(cellSels_new, topology_new, False, False, False, True, 0.0001)
+	if len(faceSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(faceSels_new, topology_new, False, False, True, False, 0.0001)
+	if len(edgeSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(edgeSels_new, topology_new, False, True, False, False, 0.0001)
+	if len(vertexSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(vertexSels_new, topology_new, True, False, False, False, 0.0001)
+	return topology_new
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -114,54 +111,74 @@ class SvTopologyScale(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyScale'
 	bl_label = 'Topology.Scale'
+	bl_icon = 'SELECT_DIFFERENCE'
 	XFactor: FloatProperty(name="XFactor", default=1, precision=4, update=updateNode)
 	YFactor: FloatProperty(name="YFactor",  default=1, precision=4, update=updateNode)
 	ZFactor: FloatProperty(name="ZFactor",  default=1, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
+		self.width = 175
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Origin')
 		self.inputs.new('SvStringsSocket', 'XFactor').prop_name = 'XFactor'
 		self.inputs.new('SvStringsSocket', 'YFactor').prop_name = 'YFactor'
 		self.inputs.new('SvStringsSocket', 'ZFactor').prop_name = 'ZFactor'
 		self.outputs.new('SvStringsSocket', 'Topology')
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
-		layout.separator()
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
-		originList = []
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		if (self.inputs['Origin'].is_linked):
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-		else:
-			for aTopology in topologyList:
-				originList.append(aTopology.CenterOfMass())
-		xList = self.inputs['XFactor'].sv_get(deepcopy=True)
-		yList = self.inputs['YFactor'].sv_get(deepcopy=True)
-		zList = self.inputs['ZFactor'].sv_get(deepcopy=True)
-		xList = flatten(xList)
-		yList = flatten(yList)
-		zList = flatten(zList)
-		inputs = [topologyList, originList, xList, yList, zList]
-		if ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Topology'].sv_set([])
+			return
+
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput == self.inputs['Origin']:
+				if not anInput.is_linked:
+					inp = topologic.Vertex.ByCoordinates(0,0,0)
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat.copy(), self.Replication)
 		outputs = []
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput == self.inputs['Origin']:
+				if not anInput.is_linked:
+					inp = topologic.Vertex.ByCoordinates(0,0,0)
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
 		self.outputs['Topology'].sv_set(outputs)
 
 def register():

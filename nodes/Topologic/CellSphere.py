@@ -41,7 +41,7 @@ def processItem(item, originLocation):
 	dirZ, \
 	tolerance = item
 
-	c = WireCircle.processItem([origin, radius, vSides, 90, 270, True, 0, 1, 0], "Center")
+	c = WireCircle.processItem([origin, radius, vSides, 90, 270, True, 0, 1, 0, "Center"])
 	c = topologic.Face.ByExternalBoundary(c)
 	s = TopologySpin.processItem([c, origin, 0, 0, 1, 360, uSides, tolerance])
 	if s.Type() == topologic.CellComplex.Type():

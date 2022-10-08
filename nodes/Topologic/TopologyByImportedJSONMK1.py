@@ -373,6 +373,7 @@ def processItem(item):
 		jsondata = json.load(file)
 		for jsonItem in jsondata:
 			brep = jsonItem['brep']
+			brep = brep.replace("CASCADE Topology V3, (c) Open Cascade", "CASCADE Topology V1, (c) Matra-Datavision")
 			topology = topologic.Topology.ByString(brep)
 			dictionary = jsonItem['dictionary']
 			topDictionary = dictionaryByPythonDictionary(dictionary)

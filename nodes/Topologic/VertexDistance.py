@@ -26,7 +26,7 @@ class SvVertexDistance(bpy.types.Node, SverchCustomTreeNode):
 	bl_idname = 'SvVertexDistance'
 	bl_label = 'Vertex.Distance'
 	bl_icon = 'SELECT_DIFFERENCE'
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.width = 175

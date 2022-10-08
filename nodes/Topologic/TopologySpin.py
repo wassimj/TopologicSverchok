@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-from . import Replication, ShellByLoft, CellComplexByLoft, TopologySelfMerge, WireByVertices
+from . import Replication, ShellByLoft, CellComplexByLoft, TopologySelfMerge, WireByVertices, TopologyRotate
 
 def processItem(item):
 	topology, \
@@ -19,7 +19,7 @@ def processItem(item):
 	topologies = []
 	unit_degree = degree / float(sides)
 	for i in range(sides+1):
-		topologies.append(topologic.TopologyUtility.Rotate(topology, origin, dirX, dirY, dirZ, unit_degree*i))
+		topologies.append(TopologyRotate.processItem([topology, origin, dirX, dirY, dirZ, unit_degree*i]))
 	returnTopology = None
 	if topology.Type() == topologic.Vertex.Type():
 		returnTopology = WireByVertices.processItem([topologies, False])
@@ -83,7 +83,7 @@ def processItem(item):
 			pass
 	return returnTopology
 
-replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
+replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 	"""
@@ -92,15 +92,17 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologySpin'
 	bl_label = 'Topology.Spin'
+	bl_icon = 'SELECT_DIFFERENCE'
 	DirX: FloatProperty(name="Dir X", default=0, precision=4, update=updateNode)
 	DirY: FloatProperty(name="Dir Y",  default=0, precision=4, update=updateNode)
 	DirZ: FloatProperty(name="Dir Z",  default=1, precision=4, update=updateNode)
 	Degree: FloatProperty(name="Degree",  default=0, precision=4, update=updateNode)
 	Sides: IntProperty(name="Sides", default=16, min=1, update=updateNode)
-	Tolerance: FloatProperty(name="Tolerance",  default=0.001, precision=4, update=updateNode)
-	Replication: EnumProperty(name="Replication", description="Replication", default="Iterate", items=replication, update=updateNode)
+	Tolerance: FloatProperty(name="Tolerance",  default=0.0001, precision=4, update=updateNode)
+	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
+		self.width = 175
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Origin')
 		self.inputs.new('SvStringsSocket', 'Dir X').prop_name = 'DirX'
@@ -110,47 +112,60 @@ class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
 		self.inputs.new('SvStringsSocket', 'Sides').prop_name = 'Sides'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'Tolerance'
 		self.outputs.new('SvStringsSocket', 'Topology')
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
+
+	def draw_buttons(self, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
 
 	def process(self):
-		originList = []
 		if not any(socket.is_linked for socket in self.outputs):
 			return
-		wireList = self.inputs['Topology'].sv_get(deepcopy=True)
-		wireList = Replication.flatten(wireList)
-		if (self.inputs['Origin'].is_linked):
-			originList = self.inputs['Origin'].sv_get(deepcopy=True)
-			originList = Replication.flatten(originList)
-		else:
-			originList = []
-			for aTopology in wireList:
-				originList.append(aTopology.CenterOfMass())
-		dirXList = self.inputs['Dir X'].sv_get(deepcopy=True)
-		dirYList = self.inputs['Dir Y'].sv_get(deepcopy=True)
-		dirZList = self.inputs['Dir Z'].sv_get(deepcopy=True)
-		degreeList = self.inputs['Degree'].sv_get(deepcopy=True)
-		sidesList = self.inputs['Sides'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-		dirXList = Replication.flatten(dirXList)
-		dirYList = Replication.flatten(dirYList)
-		dirZList = Replication.flatten(dirZList)
-		degreeList = Replication.flatten(degreeList)
-		sidesList = Replication.flatten(sidesList)
-		toleranceList = Replication.flatten(toleranceList)
-		inputs = [wireList, originList, dirXList, dirYList, dirZList, degreeList, sidesList, toleranceList]
-		if ((self.Replication) == "Trim"):
-			inputs = Replication.trim(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = Replication.iterate(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = Replication.repeat(inputs)
-			inputs = Replication.transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(Replication.interlace(inputs))
+		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Topology'].sv_set([])
+			return
+
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput == self.inputs['Origin']:
+				if not anInput.is_linked:
+					inp = topologic.Vertex.ByCoordinates(0,0,0)
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_replicated = Replication.replicateInputs(inputs_flat.copy(), self.Replication)
 		outputs = []
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			if anInput == self.inputs['Origin']:
+				if not anInput.is_linked:
+					inp = topologic.Vertex.ByCoordinates(0,0,0)
+				else:
+					inp = anInput.sv_get(deepcopy=True)
+			else:
+				inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
 		self.outputs['Topology'].sv_set(outputs)
 
 def register():

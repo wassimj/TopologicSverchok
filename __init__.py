@@ -296,6 +296,7 @@ def nodes_index():
                 ("Topologic.EnergyModelDefaultScheduleSets", "SvEnergyModelDefaultScheduleSets"),
                 ("Topologic.EnergyModelExportToGbXML", "SvEnergyModelExportToGbXML"),
                 ("Topologic.EnergyModelExportToHBJSON", "SvEnergyModelExportToHBJSON"),
+                ("Topologic.EnergyModelExportToIDF", "SvEnergyModelExportToIDF"),
                 ("Topologic.EnergyModelExportToOSM", "SvEnergyModelExportToOSM"),
                 ("Topologic.EnergyModelGbXMLString", "SvEnergyModelGbXMLString"),
                 ("Topologic.EnergyModelQuery", "SvEnergyModelQuery"),

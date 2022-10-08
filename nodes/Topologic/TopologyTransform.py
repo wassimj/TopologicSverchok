@@ -5,6 +5,67 @@ from sverchok.data_structure import updateNode
 
 import topologic
 from . import Replication
+from . import TopologyTransferDictionariesBySelectors
+
+def cellSelectors(topology):
+	cells = []
+	try:
+		_ = topology.Cells(None, cells)
+	except:
+		cells = []
+	selectors = []
+	for aCell in cells:
+		dict = aCell.GetDictionary()
+		selector = topologic.CellUtility.InternalVertex(aCell, 0.0001)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
+
+def faceSelectors(topology):
+	faces = []
+	try:
+		_ = topology.Faces(None, faces)
+	except:
+		faces = []
+	selectors = []
+	for aFace in faces:
+		dict = aFace.GetDictionary()
+		selector = topologic.FaceUtility.InternalVertex(aFace, 0.0001)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
+
+def edgeSelectors(topology):
+	edges = []
+	try:
+		_ = topology.Edges(None, edges)
+	except:
+		edges = []
+	selectors = []
+	for anEdge in edges:
+		dict = anEdge.GetDictionary()
+		selector = topologic.EdgeUtility.PointAtParameter(anEdge, 0.5)
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
+
+def vertexSelectors(topology):
+	vertices = []
+	try:
+		_ = topology.Vertices(None, vertices)
+	except:
+		vertices = []
+	selectors = []
+	for aVertex in vertices:
+		dict = aVertex.GetDictionary()
+		selector = aVertex
+		if len(dict.Keys()) > 0:
+			_ = selector.SetDictionary(dict)
+		selectors.append(selector)
+	return selectors
 
 def processItem(item):
 	topology, matrix = item
@@ -33,8 +94,33 @@ def processItem(item):
 	kRotation31 = matrix[2][0]
 	kRotation32 = matrix[2][1]
 	kRotation33 = matrix[2][2]
-
-	return topologic.TopologyUtility.Transform(topology, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33)
+	cellSels = cellSelectors(topology)
+	faceSels = faceSelectors(topology)
+	edgeSels = edgeSelectors(topology)
+	vertexSels = vertexSelectors(topology)
+	cellSels_new = []
+	faceSels_new = []
+	edgeSels_new = []
+	vertexSels_new = []
+	for cellSel in cellSels:
+		cellSels_new.append(topologic.TopologyUtility.Transform(cellSel, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33))
+	faceSels_new = []
+	for faceSel in faceSels:
+		faceSels_new.append(topologic.TopologyUtility.Transform(faceSel, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33))
+	for edgeSel in edgeSels:
+		edgeSels_new.append(topologic.TopologyUtility.Transform(edgeSel, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33))
+	for vertexSel in vertexSels:
+		vertexSels_new.append(topologic.TopologyUtility.Transform(vertexSel, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33))
+	topology_new = topologic.TopologyUtility.Transform(topology, kTranslationX, kTranslationY, kTranslationZ, kRotation11, kRotation12, kRotation13, kRotation21, kRotation22, kRotation23, kRotation31, kRotation32, kRotation33)
+	if len(cellSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(cellSels_new, topology_new, False, False, False, True, 0.0001)
+	if len(faceSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(faceSels_new, topology_new, False, False, True, False, 0.0001)
+	if len(edgeSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(edgeSels_new, topology_new, False, True, False, False, 0.0001)
+	if len(vertexSels_new) > 0:
+		topology_new = TopologyTransferDictionariesBySelectors.processItem(vertexSels_new, topology_new, True, False, False, False, 0.0001)
+	return topology_new
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 		

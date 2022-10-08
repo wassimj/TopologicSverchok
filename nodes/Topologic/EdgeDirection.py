@@ -12,7 +12,10 @@ def unitizeVector(vector):
 	mag = mag ** 0.5
 	unitVector = []
 	for i in range(len(vector)):
-		unitVector.append(vector[i] / mag)
+		if not mag == 0:
+			unitVector.append(vector[i] / mag)
+		else:
+			unitVector.append(vector[i])
 	return unitVector
 
 def processItem(item):
