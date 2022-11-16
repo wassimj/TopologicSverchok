@@ -92,8 +92,11 @@ def transposeList(l):
 def processItem(item):
 	face = item[0]
 	wire = item[1]
-	reverseWire = item[2]
-	return topologic.FaceUtility.TrimByWire(face, wire, reverseWire)
+	reverse = item[2]
+	trimmed_face = topologic.FaceUtility.TrimByWire(face, wire, False)
+	if reverse:
+		trimmed_face = face.Difference(trimmed_face)
+	return trimmed_face
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
@@ -104,13 +107,13 @@ class SvFaceTrimByWire(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvFaceTrimByWire'
 	bl_label = 'Face.TrimByWire'
-	ReverseWire: BoolProperty(name="Reverse Wire", default=False, update=updateNode)
+	Reverse: BoolProperty(name="Reverse", default=False, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
 		self.inputs.new('SvStringsSocket', 'Face')
 		self.inputs.new('SvStringsSocket', 'Wire')
-		self.inputs.new('SvStringsSocket', 'Reverse Wire').prop_name = 'ReverseWire'
+		self.inputs.new('SvStringsSocket', 'Reverse').prop_name = 'Reverse'
 		self.outputs.new('SvStringsSocket', 'Face')
 
 	def draw_buttons(self, context, layout):
@@ -123,9 +126,9 @@ class SvFaceTrimByWire(bpy.types.Node, SverchCustomTreeNode):
 		faceList = flatten(faceList)
 		wireList = self.inputs['Wire'].sv_get(deepcopy=True)
 		wireList = flatten(wireList)
-		reverseWireList = self.inputs['Reverse Wire'].sv_get(deepcopy=True)
-		reverseWireList = flatten(reverseWireList)
-		inputs = [faceList, wireList, reverseWireList]
+		reverseList = self.inputs['Reverse'].sv_get(deepcopy=True)
+		reverseList = flatten(reverseList)
+		inputs = [faceList, wireList, reverseList]
 		outputs = []
 		if ((self.Replication) == "Default"):
 			inputs = repeat(inputs)

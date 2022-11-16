@@ -36,7 +36,6 @@ def processItem(item):
 	dirY, \
 	dirZ, \
 	placement = item
-	print("Circle Origin", origin.X(), origin.Y(), origin.Z())
 	baseV = []
 	xList = []
 	yList = []
@@ -45,12 +44,13 @@ def processItem(item):
 		toAngle += 360
 	elif toAngle == fromAngle:
 		raise Exception("Wire.Circle - Error: To angle cannot be equal to the From Angle")
-	angleRange = toAngle - fromAngle
 	fromAngle = math.radians(fromAngle)
 	toAngle = math.radians(toAngle)
+	angleRange = toAngle - fromAngle
+
 	sides = int(math.floor(sides))
 	for i in range(sides+1):
-		angle = fromAngle + math.radians(angleRange/sides)*i
+		angle = fromAngle + angleRange/sides*i
 		x = math.sin(angle)*radius + origin.X()
 		y = math.cos(angle)*radius + origin.Y()
 		z = origin.Z()

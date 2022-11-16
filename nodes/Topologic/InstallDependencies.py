@@ -23,7 +23,8 @@ dependency_list = ['ipfshttpclient',
             'sklearn',
             'dgl',
             'plotly',
-            'specklepy']
+            'specklepy',
+            'pyobb']
 
 def install_dependency(module):
     # upgrade pip

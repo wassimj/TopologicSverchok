@@ -18,7 +18,7 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": "0.8.2.5",
+	"version": "0.8.2.6",
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -76,6 +76,7 @@ def nodes_index():
                 ("Topologic.VertexCoordinates", "SvVertexCoordinates"),
                 ("Topologic.VertexDistance", "SvVertexDistance"),
                 ("Topologic.VertexEnclosingCell", "SvVertexEnclosingCell"),
+                ("Topologic.VertexNearestTopology", "SvVertexNearestTopology"),
                 ("Topologic.VertexNearestVertex", "SvVertexNearestVertex"),
                 ("Topologic.VertexProject", "SvVertexProject"),
                 ("Topologic.EdgeByStartVertexEndVertex", "SvEdgeByStartVertexEndVertex"),
@@ -131,6 +132,7 @@ def nodes_index():
                 ("Topologic.ShellHyperbolicParaboloid", "SvShellHyperbolicParaboloid"),
                 ("Topologic.ShellInternalBoundaries", "SvShellInternalBoundaries"),
                 ("Topologic.ShellIsClosed", "SvShellIsClosed"),
+                ("Topologic.ShellPie", "SvShellPie"),
                 ("Topologic.ShellTessellatedDisk", "SvShellTessellatedDisk"),
                 ("Topologic.CellCone", "SvCellCone"),
                 ("Topologic.CellCylinder", "SvCellCylinder"),
@@ -171,7 +173,6 @@ def nodes_index():
                 ("Topologic.TopologyApertures", "SvTopologyApertures"),
                 ("Topologic.TopologyBlenderGeometry", "SvTopologyBlenderGeometry"),
                 ("Topologic.TopologyBoolean", "SvTopologyBoolean"),
-                ("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox"),
                 ("Topologic.TopologyByGeometry", "SvTopologyByGeometry"),
                 ("Topologic.TopologyByImportedBRep", "SvTopologyByImportedBRep"),
                 ("Topologic.TopologyByImportedJSONMK1", "SvTopologyByImportedJSONMK1"),
@@ -365,6 +366,7 @@ def nodes_index():
 	ifchoneybeeNodes = [("Topologic.IFCExportToHBJSON", "SvIFCExportToHBJSON")]
 	osifcNodes = [("Topologic.EnergyModelByImportedIFC", "SvEnergyModelByImportedIFC")]
 	osifc = 0
+	pyobbNodes = [("Topologic.TopologyBoundingBox", "SvTopologyBoundingBox")]
 
 	try:
 		import numpy
@@ -472,6 +474,12 @@ def nodes_index():
 		coreNodes = coreNodes+pandasNodes
 	except:
 		print("Topologic - Warning: Could not import pandas so Topologic.GraphExportToCSV is not available.")
+	try:
+		import numpy
+		import pyobb
+		coreNodes = coreNodes+pyobbNodes
+	except:
+		print("Topologic - Warning: Could not import numpy and/or pyobb so some related nodes are not available.")
 	return [("Topologic", coreNodes)]
 
 def make_node_list():
@@ -559,6 +567,7 @@ class NODEVIEW_MT_AddTPSubcategoryVertex(bpy.types.Menu):
             ['SvVertexCoordinates'],
             ['SvVertexDistance'],
             ['SvVertexEnclosingCell'],
+            ['SvVertexNearestTopology'],
             ['SvVertexNearestVertex'],
             ['SvVertexProject'],
 		])
@@ -661,6 +670,7 @@ class NODEVIEW_MT_AddTPSubcategoryShell(bpy.types.Menu):
             ['SvShellHyperbolicParaboloid'],
             ['SvShellInternalBoundaries'],
             ['SvShellIsClosed'],
+            ['SvShellPie'],
             ['SvShellTessellatedDisk'],
 		])
 

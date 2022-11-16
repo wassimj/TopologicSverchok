@@ -20,6 +20,8 @@ def projectVertex(vertex, face, vList):
 
 def processItem(item):
 	wire, face, direction = item
+	print("DIRECTION:",direction)
+	print("DIRECTION.X()", direction.X())
 	large_face = topologic.TopologyUtility.Scale(face, face.CenterOfMass(), 500, 500, 500)
 	try:
 		vList = [direction.X(), direction.Y(), direction.Z()]
@@ -41,8 +43,8 @@ def processItem(item):
 						sv = edge.StartVertex()
 						ev = edge.EndVertex()
 
-						psv = projectVertex(sv, large_face, direction)
-						pev = projectVertex(ev, large_face, direction)
+						psv = projectVertex(sv, large_face, vList)
+						pev = projectVertex(ev, large_face, vList)
 						if psv and pev:
 							try:
 								pe = topologic.Edge.ByStartVertexEndVertex(psv, pev)

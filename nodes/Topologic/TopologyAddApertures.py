@@ -4,93 +4,8 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluster, Topology
-from . import VertexNearestVertex, DictionaryByKeysValues, TopologySetDictionary, DictionaryValueAtKey
-import time
-
-# From https://stackabuse.com/python-how-to-flatten-list-of-lists/
-def flatten(element):
-	returnList = []
-	if isinstance(element, list) == True:
-		for anItem in element:
-			returnList = returnList + flatten(anItem)
-	else:
-		returnList = [element]
-	return returnList
-
-def repeat(list):
-	maxLength = len(list[0])
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		if (len(anItem) > 0):
-			itemToAppend = anItem[-1]
-		else:
-			itemToAppend = None
-		for i in range(len(anItem), maxLength):
-			anItem.append(itemToAppend)
-	return list
-
-# From https://stackoverflow.com/questions/34432056/repeat-elements-of-list-between-each-other-until-we-reach-a-certain-length
-def onestep(cur,y,base):
-    # one step of the iteration
-    if cur is not None:
-        y.append(cur)
-        base.append(cur)
-    else:
-        y.append(base[0])  # append is simplest, for now
-        base = base[1:]+[base[0]]  # rotate
-    return base
-
-def iterate(list):
-	maxLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength > maxLength:
-			maxLength = newLength
-	for anItem in list:
-		for i in range(len(anItem), maxLength):
-			anItem.append(None)
-		y=[]
-		base=[]
-		for cur in anItem:
-			base = onestep(cur,y,base)
-		returnList.append(y)
-	return returnList
-
-def trim(list):
-	minLength = len(list[0])
-	returnList = []
-	for aSubList in list:
-		newLength = len(aSubList)
-		if newLength < minLength:
-			minLength = newLength
-	for anItem in list:
-		anItem = anItem[:minLength]
-		returnList.append(anItem)
-	return returnList
-
-# Adapted from https://stackoverflow.com/questions/533905/get-the-cartesian-product-of-a-series-of-lists
-def interlace(ar_list):
-    if not ar_list:
-        yield []
-    else:
-        for a in ar_list[0]:
-            for prod in interlace(ar_list[1:]):
-                yield [a,]+prod
-
-def transposeList(l):
-	length = len(l[0])
-	returnList = []
-	for i in range(length):
-		tempRow = []
-		for j in range(len(l)):
-			tempRow.append(l[j][i])
-		returnList.append(tempRow)
-	return returnList
+from . import Replication
+from . import VertexNearestTopology, DictionaryByKeysValues, DictionaryValueAtKey
 
 def isInside(aperture, face, tolerance):
 	return (topologic.VertexUtility.Distance(aperture.Topology.Centroid(), face) < tolerance)
@@ -130,48 +45,50 @@ def internalVertex(topology, tolerance):
 	return vst
 
 def processApertures(subTopologies, apertureCluster, exclusive, tolerance):
-    apertures = []
-    cells = []
-    faces = []
-    edges = []
-    vertices = []
-    _ = apertureCluster.Cells(None, cells)
-    _ = apertureCluster.Faces(None, faces)
-    _ = apertureCluster.Vertices(None, vertices)
-    # apertures are assumed to all be of the same topology type.
-    if len(cells) > 0:
-        apertures = cells
-    elif len(faces) > 0:
-        apertures = faces
-    elif len(edges) > 0:
-        apertures = edges
-    elif len(vertices) > 0:
-        apertures = vertices
-    else:
-        apertures = []
-    usedTopologies = []
-    temp_verts = []
-    for i, subTopology in enumerate(subTopologies):
-            usedTopologies.append(0)
-            temp_v = internalVertex(subTopology, tolerance)
-            d = DictionaryByKeysValues.processItem([["id"], [i]])
-            temp_v = TopologySetDictionary.processItem([temp_v, d])
-            temp_verts.append(temp_v)
-    clus = topologic.Cluster.ByTopologies(temp_verts)
-    tree = VertexNearestVertex.kdtree(clus)
-    for aperture in apertures:
-        apCenter = internalVertex(aperture, tolerance)
-        nearest_vert = VertexNearestVertex.find_nearest_neighbor(tree=tree, vertex=apCenter)
-        d = nearest_vert.GetDictionary()
-        i = DictionaryValueAtKey.processItem([d,"id"])
-        subTopology = subTopologies[i]
-        if exclusive == True and usedTopologies[i] == 1:
-            continue
-        context = topologic.Context.ByTopologyParameters(subTopology, 0.5, 0.5, 0.5)
-        _ = topologic.Aperture.ByTopologyContext(aperture, context)
-        if exclusive == True:
-            usedTopologies[i] = 1
-    return None
+	cells = []
+	faces = []
+	edges = []
+	vertices = []
+	apertures = []
+	if not apertureCluster:
+		return None
+	_ = apertureCluster.Cells(None, cells)
+	_ = apertureCluster.Faces(None, faces)
+	_ = apertureCluster.Edges(None, edges)
+	_ = apertureCluster.Vertices(None, vertices)
+	# apertures are assumed to all be of the same topology type.
+	if len(cells) > 0:
+		apertures = cells
+	elif len(faces) > 0:
+		apertures = faces
+	elif len(edges) > 0:
+		apertures = edges
+	elif len(vertices) > 0:
+		apertures = vertices
+	else:
+		apertures = []
+	usedTopologies = []
+	topologyType = subTopologies[0].GetTypeAsString()
+	tempTopologies = []
+	for i in range(len(subTopologies)):
+		usedTopologies.append(0)
+		d = DictionaryByKeysValues.processItem([["index"], [i]])
+		tempTopology = subTopologies[i].DeepCopy()
+		_ = tempTopology.SetDictionary(d)
+		tempTopologies.append(tempTopology)
+	cluster = topologic.Cluster.ByTopologies(tempTopologies)
+	for aperture in apertures:
+		apCenter = internalVertex(aperture, tolerance)
+		nearestTempTopology = VertexNearestTopology.processItem([apCenter, cluster, False, topologyType])
+		index = DictionaryValueAtKey.processItem([nearestTempTopology.GetDictionary(), "index"])
+		nearestTopology = subTopologies[index]
+		if exclusive == True and usedTopologies[i] == 1:
+			continue
+		context = topologic.Context.ByTopologyParameters(nearestTopology, 0.5, 0.5, 0.5)
+		_ = topologic.Aperture.ByTopologyContext(aperture, context)
+		if exclusive == True:
+			usedTopologies[i] = 1
+	return None
 
 def processItem(item):
 	topology = item[0].DeepCopy()
@@ -192,7 +109,6 @@ def processItem(item):
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Face", "Face", "", 3)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-
 class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	Triggers: Topologic
@@ -200,59 +116,68 @@ class SvTopologyAddApertures(bpy.types.Node, SverchCustomTreeNode):
 	"""
 	bl_idname = 'SvTopologyAddApertures'
 	bl_label = 'Topology.AddApertures'
+	bl_icon = 'SELECT_DIFFERENCE'
 	Exclusive: BoolProperty(name="Exclusive", default=True, update=updateNode)
-	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	subtopologyType: EnumProperty(name="Apply To:", description="Specify subtopology type to apply the apertures to", default="Face", items=topologyTypes, update=updateNode)
+	ToleranceProp: FloatProperty(name="Tolerance", default=0.0001, precision=4, update=updateNode)
 	Replication: EnumProperty(name="Replication", description="Replication", default="Default", items=replication, update=updateNode)
 
 	def sv_init(self, context):
+		self.width = 200
 		self.inputs.new('SvStringsSocket', 'Topology')
 		self.inputs.new('SvStringsSocket', 'Aperture Cluster')
 		self.inputs.new('SvStringsSocket', 'Exclusive').prop_name = 'Exclusive'
 		self.inputs.new('SvStringsSocket', 'Tolerance').prop_name = 'ToleranceProp'
 		self.outputs.new('SvStringsSocket', 'Topology')
+		for socket in self.inputs:
+			if socket.prop_name != '':
+				socket.custom_draw = "draw_sockets"
+
+	def draw_sockets(self, socket, context, layout):
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text=(socket.name or "Untitled") + f". {socket.objects_number or ''}")
+		split.row().prop(self, socket.prop_name, text="")
 
 	def draw_buttons(self, context, layout):
-		layout.prop(self, "Replication",text="")
-		layout.prop(self, "subtopologyType",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Replication")
+		split.row().prop(self, "Replication",text="")
+		row = layout.row()
+		split = row.split(factor=0.5)
+		split.row().label(text="Apply To")
+		split.row().prop(self, "subtopologyType",text="")
 
 	def process(self):
-		start = time.time()
 		if not any(socket.is_linked for socket in self.outputs):
 			return
 		if not any(socket.is_linked for socket in self.inputs):
+			self.outputs['Distance'].sv_set([])
 			return
-		topologyList = self.inputs['Topology'].sv_get(deepcopy=True)
-		aperturesList = self.inputs['Aperture Cluster'].sv_get(deepcopy=True)
-		exclusiveList = self.inputs['Exclusive'].sv_get(deepcopy=True)
-		toleranceList = self.inputs['Tolerance'].sv_get(deepcopy=True)
-
-		topologyList = flatten(topologyList)
-		aperturesList = flatten(aperturesList)
-		exclusiveList = flatten(exclusiveList)
-		toleranceList = flatten(toleranceList)
-		subTopologiesList = [self.subtopologyType]
-		inputs = [topologyList, aperturesList, exclusiveList, toleranceList, subTopologiesList]
-		if ((self.Replication) == "Default"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		if ((self.Replication) == "Trim"):
-			inputs = trim(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Iterate"):
-			inputs = iterate(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Repeat"):
-			inputs = repeat(inputs)
-			inputs = transposeList(inputs)
-		elif ((self.Replication) == "Interlace"):
-			inputs = list(interlace(inputs))
+		inputs_nested = []
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_nested.append(inp)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_nested.append([self.subtopologyType])
+		inputs_flat.append([self.subtopologyType])
+		inputs_replicated = Replication.replicateInputs(inputs_flat.copy(), self.Replication)
 		outputs = []
-		for anInput in inputs:
+		for anInput in inputs_replicated:
 			outputs.append(processItem(anInput))
+		inputs_flat = []
+		for anInput in self.inputs:
+			inp = anInput.sv_get(deepcopy=True)
+			inputs_flat.append(Replication.flatten(inp))
+		inputs_flat.append([self.subtopologyType])
+		if self.Replication == "Interlace":
+			outputs = Replication.re_interlace(outputs, inputs_flat)
+		else:
+			match_list = Replication.best_match(inputs_nested, inputs_flat, self.Replication)
+			outputs = Replication.unflatten(outputs, match_list)
 		self.outputs['Topology'].sv_set(outputs)
-		end = time.time()
-		print("Topology.AddApertures Operation consumed "+str(round(end - start,2))+" seconds")
 
 def register():
     bpy.utils.register_class(SvTopologyAddApertures)

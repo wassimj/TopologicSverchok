@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from sverchok.data_structure import updateNode
 
 import topologic
-from . import VertexNearestVertex, DictionaryValueAtKey, DictionaryByKeysValues, TopologySetDictionary
+from . import VertexNearestVertex, DictionaryValueAtKey, DictionaryByKeysValues, TopologySetDictionary, TopologyAddApertures
 import json
 
 # From https://stackabuse.com/python-how-to-flatten-list-of-lists/
@@ -384,28 +384,28 @@ def processItem(item):
 				_ = topology.Cells(None, cells)
 			except:
 				pass
-			processApertures(cells, topologic.Cluster.ByTopologies(cellApertures), False, 0.001)
+			TopologyAddApertures.processApertures(cells, topologic.Cluster.ByTopologies(cellApertures), False, 0.0001)
 			faceApertures = getApertures(jsonItem['faceApertures'])
 			faces = []
 			try:
 				_ = topology.Faces(None, faces)
 			except:
 				pass
-			processApertures(faces, topologic.Cluster.ByTopologies(faceApertures), False, 0.001)
+			TopologyAddApertures.processApertures(faces, topologic.Cluster.ByTopologies(faceApertures), False, 0.0001)
 			edgeApertures = getApertures(jsonItem['edgeApertures'])
 			edges = []
 			try:
 				_ = topology.Edges(None, edges)
 			except:
 				pass
-			processApertures(edges, topologic.Cluster.ByTopologies(edgeApertures), False, 0.001)
+			TopologyAddApertures.processApertures(edges, topologic.Cluster.ByTopologies(edgeApertures), False, 0.0001)
 			vertexApertures = getApertures(jsonItem['vertexApertures'])
 			vertices = []
 			try:
 				_ = topology.Vertices(None, vertices)
 			except:
 				pass
-			processApertures(vertices, topologic.Cluster.ByTopologies(vertexApertures), False, 0.001)
+			TopologyAddApertures.processApertures(vertices, topologic.Cluster.ByTopologies(vertexApertures), False, 0.001)
 			cellDataList = jsonItem['cellDictionaries']
 			cellSelectors = []
 			for cellDataItem in cellDataList:
