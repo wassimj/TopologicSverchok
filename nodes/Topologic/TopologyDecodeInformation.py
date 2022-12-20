@@ -128,7 +128,7 @@ def processItem(topology):
 			finalString = finalString+finalList[i]+'\n'
 	return finalString
 
-class SvTopologyDecodeInformation(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyDecodeInformation(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Dictionaries, Selectors, and Type Filters of the input Topology to a CSV String   

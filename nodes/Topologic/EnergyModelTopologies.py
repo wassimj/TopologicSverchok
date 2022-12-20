@@ -129,7 +129,7 @@ def processItem(item):
             cells.append(spaceCell)
     return [cells, apertures, shadingFaces]
 		
-class SvEnergyModelTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the Topologies found in the input Energy Model

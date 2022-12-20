@@ -6,7 +6,7 @@ from . import ifc_topologic
 import topologic
 import numpy as np
 
-class SvIFCAdd2ndLevelBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCAdd2ndLevelBoundaries(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Add 2nd level boundaries
   Tooltip: Remove 1st level boundaries and add 2nd level boundaries

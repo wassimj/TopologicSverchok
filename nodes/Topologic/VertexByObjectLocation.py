@@ -29,7 +29,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvVertexByObjectLocation(bpy.types.Node, SverchCustomTreeNode):
+class SvVertexByObjectLocation(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Vertex from the location of the input Blender object  

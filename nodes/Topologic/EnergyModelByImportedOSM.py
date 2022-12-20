@@ -29,7 +29,7 @@ def processItem(item):
         model = model.get()
     return model
 		
-class SvEnergyModelByImportedOSM(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelByImportedOSM(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates an Energy Model from the input OSM file

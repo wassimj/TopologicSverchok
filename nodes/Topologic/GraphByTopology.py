@@ -1434,7 +1434,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphByTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphByTopology(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Dual Graph of the input Topology

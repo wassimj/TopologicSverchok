@@ -6,7 +6,7 @@ import topologic
 from . import ifc_topologic
 import ifcopenshell
 
-class SvIFCCreateSpaces(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCCreateSpaces(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Create IFC Space
   Tooltip: Creates IFC spaces from unconnected faces of IfcBuildingElements

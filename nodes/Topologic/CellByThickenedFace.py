@@ -59,7 +59,7 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-class SvCellByThickenedFace(bpy.types.Node, SverchCustomTreeNode):
+class SvCellByThickenedFace(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell by thickening the input Face    

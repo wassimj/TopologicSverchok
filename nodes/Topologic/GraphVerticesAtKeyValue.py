@@ -137,7 +137,7 @@ def processItem(vertexList, item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphVerticesAtKeyValue(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphVerticesAtKeyValue(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Vertices that have the input Value at the input Key

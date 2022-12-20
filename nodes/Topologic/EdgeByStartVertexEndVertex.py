@@ -25,7 +25,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEdgeByStartVertexEndVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeByStartVertexEndVertex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates an Edge from the input Vertices

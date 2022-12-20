@@ -12,7 +12,7 @@ def processItem():
 		progTypes.append(prog_type_lib.program_type_by_identifier(progIdentifier))
 	return [progTypes, progIdentifiers]
 
-class SvHBProgramTypes(bpy.types.Node, SverchCustomTreeNode):
+class SvHBProgramTypes(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the available HB program types

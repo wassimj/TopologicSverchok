@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-class SvWireType(bpy.types.Node, SverchCustomTreeNode):
+class SvWireType(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the type number of the Wire class

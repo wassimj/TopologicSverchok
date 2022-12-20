@@ -29,7 +29,7 @@ def recur(input):
 		output = processItem([input])
 	return output
 
-class SvFaceBoundingFace(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceBoundingFace(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the axis-aligned bounding Face of the input Face    

@@ -21,7 +21,7 @@ def processItem(item):
 		return True
 	return False
 		
-class SvEdgeIsCollinear(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeIsCollinear(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Edges are collinear, outputs False otherwise.

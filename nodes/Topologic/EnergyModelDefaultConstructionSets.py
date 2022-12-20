@@ -26,7 +26,7 @@ def processItem(item):
         names.append(aSet.name().get())
     return [sets, names]
 		
-class SvEnergyModelDefaultConstructionSets(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelDefaultConstructionSets(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the default Construction Sets found in the input Energy Model

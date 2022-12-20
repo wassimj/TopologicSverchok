@@ -18,7 +18,7 @@ def flatten(element):
 def processItem(item):
 	return item.ExternalBoundary()
 
-class SvCellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
+class SvCellExternalBoundary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the external boundary (Shell) of the input Cell    

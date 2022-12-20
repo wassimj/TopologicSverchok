@@ -49,7 +49,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvCellByShell(bpy.types.Node, SverchCustomTreeNode):
+class SvCellByShell(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell from the input Shell. The Shell has to be closed

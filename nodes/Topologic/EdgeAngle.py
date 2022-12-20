@@ -68,7 +68,7 @@ def processItem(item):
 			ang = 180 - ang
 	return round(ang, mantissa)
 		
-class SvEdgeAngle(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeAngle(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the angle, in degrees, of the input Edge from another Edge

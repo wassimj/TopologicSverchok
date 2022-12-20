@@ -187,7 +187,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvSpeckleObjects(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleObjects(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Receive Speckle Objects   

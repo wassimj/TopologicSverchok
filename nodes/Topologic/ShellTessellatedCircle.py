@@ -97,7 +97,7 @@ def matchLengths(list):
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
 
-class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
+class SvCellCylinder(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cylinder (Cell) from the input parameters    

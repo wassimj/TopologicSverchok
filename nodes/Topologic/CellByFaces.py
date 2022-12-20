@@ -29,7 +29,7 @@ def processItem(item, tol):
 	else:
 		raise Exception("CellByFaces - Could not create a valid Cell")
 
-class SvCellByFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvCellByFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell from the list of input Faces  

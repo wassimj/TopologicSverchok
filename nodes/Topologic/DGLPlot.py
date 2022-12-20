@@ -89,7 +89,7 @@ class SvDGLPlotRun(bpy.types.Operator, SvGenericNodeLocator):
 	def sv_execute(self, context, node):
 		sv_execute(node)
 
-class SvDGLPlot(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLPlot(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates an interactive plot from the input parameters

@@ -59,7 +59,7 @@ def processItem(item):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvCellComplexByLoft(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexByLoft(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a CellComplex by lofting through the input Wires. The Wires must be closed and ordered

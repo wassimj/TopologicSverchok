@@ -104,7 +104,7 @@ def processItem(item):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvContextByTopologyParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvContextByTopologyParameters(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Context from the input Topology and parameters   

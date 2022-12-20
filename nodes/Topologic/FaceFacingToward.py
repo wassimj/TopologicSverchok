@@ -127,7 +127,7 @@ def processItem(item):
 		return [False, ang]
 	return [True, ang]
 
-class SvFaceFacingToward(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceFacingToward(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Face is facing toward the input Vertex. Outputs False otherwise.  

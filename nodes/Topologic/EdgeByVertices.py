@@ -29,7 +29,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvEdgeByVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeByVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates an Edge from the input Vertices

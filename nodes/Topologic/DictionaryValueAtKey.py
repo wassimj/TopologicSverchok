@@ -47,7 +47,7 @@ def processItem(item):
 	else:
 		return None
 
-class SvDictionaryValueAtKey(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionaryValueAtKey(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: outputs the value from the input Dictionary associated with the input key   

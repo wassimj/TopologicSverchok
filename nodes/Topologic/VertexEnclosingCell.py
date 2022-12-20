@@ -44,7 +44,7 @@ def processItem(input):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvVertexEnclosingCell(bpy.types.Node, SverchCustomTreeNode):
+class SvVertexEnclosingCell(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Cell that contains the input Vertex from the list of input CellCluster

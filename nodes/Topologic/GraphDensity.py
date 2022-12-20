@@ -20,7 +20,7 @@ def flatten(element):
 def processItem(item):
 	return item.Density()
 
-class SvGraphDensity(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphDensity(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the density of the input Graph

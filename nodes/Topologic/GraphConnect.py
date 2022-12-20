@@ -105,7 +105,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphConnect(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphConnect(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Connects the input Vertices within the input Graph by Edges

@@ -10,7 +10,7 @@ import time
 def processItem(item):
 	return item.Topology()
 
-class SvGraphTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphTopology(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Topology of the input Graph

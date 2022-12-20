@@ -21,7 +21,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvCellInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvCellInternalBoundaries(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the internal boundaries (Shells) of the input Cell    

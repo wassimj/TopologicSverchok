@@ -235,7 +235,7 @@ def processItem(item):
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
 
-class SvTopologyDivide(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyDivide(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Divide the input Topology using the input Tool and place the result in its Contents   

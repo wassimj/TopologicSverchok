@@ -120,7 +120,7 @@ def processItem(item):
 			returnList.append(TopologySelfMerge.processItem(topologic.Cluster.ByTopologies(tempList)))
 	return returnList
 
-class SvTopologyClusterFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyClusterFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Clusters the Faces of the input Topology according to the input parameters

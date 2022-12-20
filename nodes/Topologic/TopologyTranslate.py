@@ -133,7 +133,7 @@ def processDirectionDistance(item):
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 input_items = [("XYZ", "XYZ", "", 1),("Direction/Distance", "Direction/Distance", "", 2)]
 
-class SvTopologyTranslate(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyTranslate(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Translates the input Topology based on the input X,Y,Z translation values    

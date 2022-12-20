@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-class SvFaceType(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceType(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the type number of the Face class

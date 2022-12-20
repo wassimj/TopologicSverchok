@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-class SvEdgeType(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeType(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the type number of the Edge class

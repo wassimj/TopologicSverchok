@@ -100,7 +100,7 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-class SvTopologyBoundingBox(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyBoundingBox(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell that represents the bounding box of the input Topology    

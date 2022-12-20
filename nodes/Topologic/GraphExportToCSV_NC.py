@@ -204,7 +204,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 	
-class SvGraphExportToCSV_NC(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphExportToCSV_NC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Exports the input Graph to a CSV file compatible with DGL

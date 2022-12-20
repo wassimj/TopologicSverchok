@@ -23,7 +23,7 @@ def processItem(bObject):
 	color = bObject.color
 	return (color[0],color[1], color[2], color[3])
 
-class SvColorByObjectColor(bpy.types.Node, SverchCustomTreeNode):
+class SvColorByObjectColor(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a color from the input Blender object color property   

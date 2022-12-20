@@ -12,7 +12,7 @@ def processItem():
 		constrSets.append(constr_set_lib.construction_set_by_identifier(constrIdentifier))
 	return [constrSets, constrIdentifiers]
 
-class SvHBConstructionSets(bpy.types.Node, SverchCustomTreeNode):
+class SvHBConstructionSets(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the available HB construction sets

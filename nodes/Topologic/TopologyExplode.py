@@ -173,7 +173,7 @@ def processItem(item):
 topologyTypes = [("Self", "Self", "", 1),("Vertex", "Vertex", "", 2),("Edge", "Edge", "", 3),("Face", "Face", "", 4), ("Cell", "Cell", "", 5)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvTopologyExplode(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyExplode(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Pulls apart (explodes) the sub-topologies of the input Topology based on the input origin, scale factor, and topology type filter

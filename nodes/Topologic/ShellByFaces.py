@@ -55,7 +55,7 @@ def processItem(item):
 	else:
 		return shell
 
-class SvShellByFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvShellByFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Shell from the list of input Faces  

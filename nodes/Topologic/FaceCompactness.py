@@ -36,7 +36,7 @@ def recur(input, mantissa):
 		output = processItem([input, mantissa])
 	return output
 
-class SvFaceCompactness(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceCompactness(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the compactness (isoperimetric quotient) measure of the input Face    

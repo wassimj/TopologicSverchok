@@ -150,7 +150,7 @@ def processItem(item):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvColorByValueInRange(bpy.types.Node, SverchCustomTreeNode):
+class SvColorByValueInRange(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a color from the input value within the input range   

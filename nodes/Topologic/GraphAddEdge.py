@@ -269,7 +269,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphAddEdge(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphAddEdge(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Adds the input Edge to the input Graph

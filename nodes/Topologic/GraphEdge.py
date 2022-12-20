@@ -19,7 +19,7 @@ def processItem(item):
 	tolerance = item[3]
 	return graph.Edge(vertexA, vertexB, tolerance)
 
-class SvGraphEdge(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphEdge(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Edge connecting the input Vertices within the input Graph

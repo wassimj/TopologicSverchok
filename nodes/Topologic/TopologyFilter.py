@@ -178,7 +178,7 @@ topologyTypes = [("Any", "Any", "", 1),("Vertex", "Vertex", "", 2),("Edge", "Edg
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 searchType = [("Equal To", "Equal To", "", 1),("Contains", "Contains", "", 2),("Starts With", "Starts With", "", 3),("Ends With", "Ends With", "", 4),("Not Equal To", "Not Equal To", "", 5),("Does Not Contain", "Does Not Contain", "", 6)]
 
-class SvTopologyFilter(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyFilter(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Filters the input list of Topologies based on the input Topology type filter    

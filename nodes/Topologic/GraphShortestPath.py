@@ -103,7 +103,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphShortestPath(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphShortestPath(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Wire that represents the shortest path between the two input Graph Vertices

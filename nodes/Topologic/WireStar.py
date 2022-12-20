@@ -103,7 +103,7 @@ def matchLengths(list):
 placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvWireStar(bpy.types.Node, SverchCustomTreeNode):
+class SvWireStar(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Star (Wire) from the input parameters    

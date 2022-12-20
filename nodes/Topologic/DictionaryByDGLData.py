@@ -37,7 +37,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvDictionaryByDGLData(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionaryByDGLData(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the edge data of the input DGL Graph

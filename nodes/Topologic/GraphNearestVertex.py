@@ -108,7 +108,7 @@ def processItem(input):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvGraphNearestVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphNearestVertex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Finds the nearest Graph Vertex to the input Vertex

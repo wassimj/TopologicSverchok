@@ -25,7 +25,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 	
-class SvDictionaryKeys(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionaryKeys(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the list of values of the input Dictionary   

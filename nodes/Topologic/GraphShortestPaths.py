@@ -73,7 +73,7 @@ def processItem(item):
 			graph = topologic.Graph.ByVerticesEdges(vertices, edges)
 	return shortestPaths
 
-class SvGraphShortestPaths(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphShortestPaths(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a list of Wires that represents the shortest paths between the two input Graph Vertices found within the time limit in seconds

@@ -21,7 +21,7 @@ def processItem(item):
 		return None
 
 
-class SvTopologyCentroid(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyCentroid(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Create a Vertex that represents the centroid of the vertices of the input Topology

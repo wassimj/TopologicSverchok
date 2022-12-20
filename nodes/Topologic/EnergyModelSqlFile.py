@@ -21,7 +21,7 @@ def flatten(element):
 def processItem(item):
     return item.sqlFile().get()
 		
-class SvEnergyModelSqlFile(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelSqlFile(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the SQL file found in the input Energy Model

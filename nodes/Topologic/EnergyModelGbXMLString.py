@@ -24,7 +24,7 @@ def flatten(element):
 def processItem(item):
 	return openstudio.gbxml.GbXMLForwardTranslator().modelToGbXMLString(item)
 
-class SvEnergyModelGbXMLString(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelGbXMLString(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Exports the input Energy Model to a gbXML file   

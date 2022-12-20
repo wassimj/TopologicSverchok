@@ -45,7 +45,7 @@ def recur(input, subTopologyType):
 
 subTopologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Cluster", "Cluster", "", 8), ("Aperture", "Aperture", "", 9)]
 
-class SvTopologySubTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySubTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the subTopologies, based on the selected type, of the input Topology    

@@ -68,7 +68,7 @@ def recur(input, hostTopology, topologyType):
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7)]
 
-class SvTopologySuperTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySuperTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the supertopologies found within the host Topology, based on the selected type of the input Topology    

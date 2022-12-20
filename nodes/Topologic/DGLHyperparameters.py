@@ -139,7 +139,7 @@ def update_sockets(self, context):
 	updateNode(self, context)
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvDGLHyperparameters(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLHyperparameters(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a DGL Hyperparameters Object from the input parameters

@@ -94,7 +94,7 @@ def processItem(item):
 
 	return [return1, return2, return3, return4, return5, return6, return7, return8, return9, return10]
 
-class SvCellComplexDecompose(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexDecompose(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a list of categorised boundaries (Faces) of the input CellComplex    

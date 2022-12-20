@@ -120,7 +120,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEnergyModelQuery(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelQuery(SverchCustomTreeNode, bpy.types.Node):
     """
     Triggers: Topologic
     Tooltip: Query results from the input energy model

@@ -101,7 +101,7 @@ def processItem(item):
 		_ = topology.SetDictionary(dictionary)
 	return topology
 
-class SvTopologySetDictionary(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySetDictionary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Sets the input Dictionary to the input Topology   

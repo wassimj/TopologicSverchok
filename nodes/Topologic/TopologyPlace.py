@@ -37,7 +37,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 		
-class SvTopologyPlace(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyPlace(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Places the input Topology at the new input location    

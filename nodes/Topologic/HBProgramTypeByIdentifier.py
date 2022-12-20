@@ -17,7 +17,7 @@ def flatten(element):
 def processItem(item):
 	return prog_type_lib.program_type_by_identifier(item)
 
-class SvHBProgramTypeByIdentifier(bpy.types.Node, SverchCustomTreeNode):
+class SvHBProgramTypeByIdentifier(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the HB Program Type associated with the input Program Identifier

@@ -23,7 +23,7 @@ def processItem(item):
 	_ = graph.IsolatedVertices(vertices)
 	return vertices
 
-class SvGraphIsolatedVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphIsolatedVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Vertices that are isolated (not connected to any edges) within the input Graph

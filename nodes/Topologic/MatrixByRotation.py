@@ -75,7 +75,7 @@ def processItem(item, order):
 order = [("XYZ", "XYZ", "", 1),("XZY", "XZY", "", 2),("YXZ", "YXZ", "", 3),("YZX", "YZX", "", 4),("ZXY", "ZXY", "", 5), ("ZYX", "ZYX", "", 6)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 		
-class SvMatrixByRotation(bpy.types.Node, SverchCustomTreeNode):
+class SvMatrixByRotation(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a Matrix based on the input rotation values    

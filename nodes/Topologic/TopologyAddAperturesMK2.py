@@ -193,7 +193,7 @@ topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Face", "F
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
 
-class SvTopologyAddAperturesMK2(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAddAperturesMK2(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Adds the input Apertures to the input Topology    

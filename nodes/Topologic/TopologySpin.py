@@ -85,7 +85,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologySpin(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySpin(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Spins the input Wire based on the input number of sides, rotation origin, axis of rotation, and degrees    

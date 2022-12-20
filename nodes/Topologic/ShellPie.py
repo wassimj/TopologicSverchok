@@ -150,7 +150,7 @@ def processItem(item):
 placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvShellPie(bpy.types.Node, SverchCustomTreeNode):
+class SvShellPie(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Pie Shape (Shell) from the input parameters    

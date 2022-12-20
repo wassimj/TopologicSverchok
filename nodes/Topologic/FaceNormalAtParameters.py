@@ -119,7 +119,7 @@ def processItem(item, outputType, decimals):
 outputTypes = [("XYZ", "XYZ", "", 1),("XY", "XY", "", 2),("XZ", "XZ", "", 3),("YZ", "YZ", "", 4),("X", "X", "", 5), ("Y", "Y", "", 6),("Z", "Z", "", 7)]
 lacing = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Lace", "Lace", "", 4)]
 
-class SvFaceNormalAtParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceNormalAtParameters(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the normal of the input Face at the input UV parameters    

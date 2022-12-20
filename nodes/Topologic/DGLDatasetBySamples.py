@@ -51,7 +51,7 @@ def processItem(item):
 		raise NotImplementedError
 	return GraphDGL(dgl_graphs, dgl_labels, node_attr_key)
 
-class SvDGLDatasetBySamples(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLDatasetBySamples(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a DGL Dataset by DGL Samples

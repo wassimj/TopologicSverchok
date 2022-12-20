@@ -17,7 +17,7 @@ def processItem(item):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 		
-class SvMatrixByScaling(bpy.types.Node, SverchCustomTreeNode):
+class SvMatrixByScaling(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a Matrix based on the input scaling values    

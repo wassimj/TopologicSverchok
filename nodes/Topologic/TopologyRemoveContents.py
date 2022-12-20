@@ -22,7 +22,7 @@ def nest_level(obj):
     # Adding 1, because 'obj' is a list (here is the recursion magic):
     return max_level + 1
 
-class SvTopologyRemoveContents(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyRemoveContents(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Removes the input Topology contents from the input Topology    

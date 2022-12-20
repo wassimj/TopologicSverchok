@@ -57,7 +57,7 @@ def processItem(item):
 	
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvCellByLoft(bpy.types.Node, SverchCustomTreeNode):
+class SvCellByLoft(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cell by lofting through the input Wires. The Wires must be closed and ordered

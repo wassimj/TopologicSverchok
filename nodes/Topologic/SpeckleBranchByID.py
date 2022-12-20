@@ -100,7 +100,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvSpeckleBranchByID(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleBranchByID(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Retrieves the Speckle Branch from a list of input Branches by the input ID   

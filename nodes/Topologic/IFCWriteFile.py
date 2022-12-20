@@ -2,7 +2,7 @@
 import bpy
 from sverchok.node_tree import SverchCustomTreeNode
 
-class SvIFCWriteFile(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCWriteFile(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Write IFC file
   Tooltip: Write an IFC file from path

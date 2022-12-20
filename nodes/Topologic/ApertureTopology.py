@@ -20,7 +20,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvApertureTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvApertureTopology(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Topology of the input Aperture   

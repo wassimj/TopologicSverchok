@@ -22,7 +22,7 @@ def processItem(item):
 	return paths
 
 
-class SvGraphAllPaths(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphAllPaths(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs all the found Paths, within the allowed time limit in seconds, that connect the input Vertices within the input Graph

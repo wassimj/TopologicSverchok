@@ -30,7 +30,7 @@ def recur(input, mantissa):
 		output = processItem([input, mantissa])
 	return output
 
-class SvWireLength(bpy.types.Node, SverchCustomTreeNode):
+class SvWireLength(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the length of the input Wire    

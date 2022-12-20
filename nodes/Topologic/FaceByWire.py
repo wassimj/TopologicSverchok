@@ -22,7 +22,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 	
-class SvFaceByWire(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceByWire(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Face from the input planar closed Wire   

@@ -132,7 +132,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEnergyModelRunSimulation(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelRunSimulation(SverchCustomTreeNode, bpy.types.Node):
     """
     Triggers: Topologic
     Tooltip: Runs an EnergyPlus simulation from the input energy model

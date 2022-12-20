@@ -21,7 +21,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvCellComplexNonManifoldFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexNonManifoldFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the non-manifold Faces of the input CellComplex    

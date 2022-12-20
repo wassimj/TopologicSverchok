@@ -20,7 +20,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyByOCCTShape(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByOCCTShape(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Topology of the input OCCT shape (TopoDS_Shape)   

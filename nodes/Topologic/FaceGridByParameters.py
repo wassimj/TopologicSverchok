@@ -195,7 +195,7 @@ def processItem(item):
 		uvWire = uCluster.Merge(vCluster)
 	return [uCluster, vCluster, uvWire]
 
-class SvFaceGridByParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceGridByParameters(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a grid of edges based on the input face and input parameters    

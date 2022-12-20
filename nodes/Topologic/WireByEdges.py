@@ -35,7 +35,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvWireByEdges(bpy.types.Node, SverchCustomTreeNode):
+class SvWireByEdges(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Wire from the list of input Edges    

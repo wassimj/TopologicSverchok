@@ -36,7 +36,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvDGLDatasetGraphs_NC(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLDatasetGraphs_NC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the DGL Graphs found in the input DGL Dataset

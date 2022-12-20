@@ -15,7 +15,7 @@ def processItem(graph, tolerance):
 	_ = graph.Edges(vertices, tolerance, edges)
 	return edges
 
-class SvGraphEdges(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphEdges(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Edges of the input Graph

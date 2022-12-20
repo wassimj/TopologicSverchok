@@ -25,7 +25,7 @@ def recur(input):
 		output = processItem([input])
 	return output
 
-class SvEdgeEndVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeEndVertex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the start Vertex of the input Edge

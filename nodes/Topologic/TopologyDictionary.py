@@ -30,7 +30,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvTopologyDictionary(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyDictionary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Dictionary of the input Topology   

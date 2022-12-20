@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-class SvTopologyDifference(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyDifference(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology representing the Boolean Difference of the two input Topologies (A-B)

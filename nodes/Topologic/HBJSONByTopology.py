@@ -307,7 +307,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvHBJSONByTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvHBJSONByTopology(SverchCustomTreeNode, bpy.types.Node):
     """
     Triggers: Topologic
     Tooltip: Returns an HSJSON string based on the input Topology and parameters

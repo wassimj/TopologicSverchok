@@ -49,7 +49,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvTopologyMergeAll(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyMergeAll(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Merges all the input Topologies into one Topology

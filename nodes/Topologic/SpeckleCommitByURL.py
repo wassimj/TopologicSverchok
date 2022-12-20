@@ -138,7 +138,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvSpeckleCommitByURL(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleCommitByURL(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Retrieves the Speckle Commit from the input URL   

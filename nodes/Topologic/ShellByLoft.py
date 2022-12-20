@@ -52,7 +52,7 @@ def processItem(item):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvShellByLoft(bpy.types.Node, SverchCustomTreeNode):
+class SvShellByLoft(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Shell by lofting through the input Wires. The Wires must be open, non-branching, have the same edge orientation, have the same number of edges, and ordered

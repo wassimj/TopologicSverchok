@@ -5,7 +5,7 @@ import numpy as np
 from . import topologic_lib
 import topologic
 
-class SvIFCClashDetection(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCClashDetection(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Clash detection
   Tooltip: Detect clashes between building elements

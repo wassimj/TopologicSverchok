@@ -128,7 +128,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvDGLTrainClassifier_NC(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLTrainClassifier_NC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Trains a DGL Classifier for Node Classification

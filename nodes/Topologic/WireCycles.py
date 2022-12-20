@@ -132,7 +132,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvWireCycles(bpy.types.Node, SverchCustomTreeNode):
+class SvWireCycles(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the closed cycles (Wires) with the maximum number of input Vertices found in the input Wire    

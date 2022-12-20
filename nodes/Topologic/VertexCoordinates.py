@@ -53,7 +53,7 @@ def recur(input, outputType, mantissa):
 
 outputTypes = [("XYZ", "XYZ", "", 1),("XY", "XY", "", 2),("XZ", "XZ", "", 3),("YZ", "YZ", "", 4),("X", "X", "", 5), ("Y", "Y", "", 6),("Z", "Z", "", 7)]
 
-class SvVertexCoordinates(bpy.types.Node, SverchCustomTreeNode):
+class SvVertexCoordinates(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the coordinates of the input Vertex    

@@ -21,7 +21,7 @@ def processItem(item):
 		return None
 
 
-class SvTopologyCenterOfMass(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyCenterOfMass(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Create a Vertex that represents the center of mass of the input Topology

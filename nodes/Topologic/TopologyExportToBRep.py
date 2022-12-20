@@ -113,7 +113,7 @@ def processItem(item, overwrite):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyExportToBRep(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyExportToBRep(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Exports the input Topology to a BREP file   

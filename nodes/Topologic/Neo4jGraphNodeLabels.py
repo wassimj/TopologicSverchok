@@ -29,7 +29,7 @@ def processItem(item):
 	neo4jGraph = item
 	return neo4jGraph.schema.node_labels
 
-class SvNeo4jGraphNodeLabels(bpy.types.Node, SverchCustomTreeNode):
+class SvNeo4jGraphNodeLabels(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Graph from the input Neo4j Graph   

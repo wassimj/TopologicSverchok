@@ -40,7 +40,7 @@ def processItem(item):
 	flat_item = topologic.TopologyUtility.Rotate(flat_item, origin, 0, 1, 0, -theta)
 	return flat_item
 
-class SvFaceFlatten(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceFlatten(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Moves the input Face to the XY plane, the item's center of mass ends up at the origin

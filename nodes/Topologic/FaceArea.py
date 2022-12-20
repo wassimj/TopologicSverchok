@@ -25,7 +25,7 @@ def recur(input, mantissa):
 		output = processItem([input, mantissa])
 	return output
 	
-class SvFaceArea(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceArea(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the area of the input Face    

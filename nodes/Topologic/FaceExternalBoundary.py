@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvFaceExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceExternalBoundary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the external boundary (Wire) of the input Face    

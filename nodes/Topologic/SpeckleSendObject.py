@@ -377,7 +377,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvSpeckleSendObject(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleSendObject(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Send Blender Object to Speckle

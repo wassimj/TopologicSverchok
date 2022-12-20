@@ -9,7 +9,7 @@ from topologic import Vertex, Edge, Wire, Face, Shell, Cell, CellComplex, Cluste
 def processItem(item):
 	return topologic.Topology.DeepCopy(Topology.ByString(item))
 		
-class SvTopologyByString(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByString(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology from the input BREP string

@@ -145,7 +145,7 @@ def processItem(item):
 		returnObject = convexHull3D(topology, tol, 'QJ')
 	return returnObject
 
-class SvTopologyConvexHull(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyConvexHull(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Create a convex hull of the input Topology

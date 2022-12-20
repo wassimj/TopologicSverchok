@@ -755,7 +755,7 @@ class SvDGLTrainClassifierRun(bpy.types.Operator, SvGenericNodeLocator):
 		sv_execute(node)
 
 
-class SvDGLTrainClassifier(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLTrainClassifier(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Train the DGL Classifier with the input Dataset and the input Hyperparameters   

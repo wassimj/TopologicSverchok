@@ -430,7 +430,7 @@ def processItem(item):
 		return topologies
 	return None
 		
-class SvTopologyByImportedJSONMK1(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByImportedJSONMK1(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology from the input BREP file

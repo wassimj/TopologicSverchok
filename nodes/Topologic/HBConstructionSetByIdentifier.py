@@ -17,7 +17,7 @@ def flatten(element):
 def processItem(item):
 	return constr_set_lib.construction_set_by_identifier(item)
 
-class SvHBConstructionSetByIdentifier(bpy.types.Node, SverchCustomTreeNode):
+class SvHBConstructionSetByIdentifier(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the HB Construction Set associated with the input Construction Set Identifier

@@ -18,7 +18,7 @@ def flatten(element):
 def processItem(item):
 	return item.IsClosed()
 
-class SvShellIsClosed(bpy.types.Node, SverchCustomTreeNode):
+class SvShellIsClosed(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Wire is closed. Outputs False otherwise   

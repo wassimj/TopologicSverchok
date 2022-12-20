@@ -393,7 +393,7 @@ def recur(input, hostTopology, topologyType):
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4), ("Cell", "Cell", "", 6)]
 
-class SvTopologyAdjacentTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAdjacentTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the adjacent topologies, based on the selected type, of the input Topology    

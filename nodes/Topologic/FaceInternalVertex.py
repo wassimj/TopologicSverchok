@@ -95,7 +95,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvFaceInternalVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceInternalVertex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Vertex guaranteed to be inside the input Face

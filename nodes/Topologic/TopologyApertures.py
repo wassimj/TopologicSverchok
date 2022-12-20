@@ -23,7 +23,7 @@ def processItem(item):
 		apTopologies.append(topologic.Aperture.Topology(aperture))
 	return [apertures, apTopologies]
 		
-class SvTopologyApertures(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyApertures(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Apertures of the input Topology    

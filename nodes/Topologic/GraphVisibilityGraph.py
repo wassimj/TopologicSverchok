@@ -45,7 +45,7 @@ def processItem(cluster):
 	graph = topologic.Graph(tpVertices, tpEdges)
 	return graph
 
-class SvGraphVisibilityGraph(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphVisibilityGraph(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a 2D Visibility Graph of the input Cluster of Wires

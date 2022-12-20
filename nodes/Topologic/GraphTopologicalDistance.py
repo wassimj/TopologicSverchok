@@ -100,7 +100,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphTopologicalDistance(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphTopologicalDistance(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the topological distance between the input Vertices within the input Graph

@@ -19,7 +19,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEdgeVertexByParameter(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeVertexByParameter(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Vertex at the parameter value of the input Edge

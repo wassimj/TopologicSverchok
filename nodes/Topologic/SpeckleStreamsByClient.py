@@ -94,7 +94,7 @@ def transposeList(l):
 def processItem(item):
 	return item.stream.list()
 
-class SvSpeckleStreamsByClient(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleStreamsByClient(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Retrieves the Speckle Streams from the input Client   

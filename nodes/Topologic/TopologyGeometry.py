@@ -125,7 +125,7 @@ def processItem(item):
 
 
 
-class SvTopologyGeometry(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyGeometry(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Converts the input Topology into a geometry

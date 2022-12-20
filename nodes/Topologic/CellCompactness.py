@@ -32,7 +32,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvCellCompactness(bpy.types.Node, SverchCustomTreeNode):
+class SvCellCompactness(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the compactness (sphericity) measure of the input Cell    

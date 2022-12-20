@@ -72,7 +72,7 @@ def processItem(item):
 placements = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1), ("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvWireTrapezoid(bpy.types.Node, SverchCustomTreeNode):
+class SvWireTrapezoid(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Trapezoid (Wire) from the input parameters    
