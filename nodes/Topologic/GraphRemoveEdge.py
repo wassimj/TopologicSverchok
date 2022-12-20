@@ -102,7 +102,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphRemoveEdge(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphRemoveEdge(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Removes the input Edge from the input Graph

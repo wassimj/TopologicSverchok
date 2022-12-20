@@ -33,7 +33,7 @@ def recur(item, tolerance):
 		output = processItem(item, tolerance)
 	return output
 
-class SvCellInternalVertex(bpy.types.Node, SverchCustomTreeNode):
+class SvCellInternalVertex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Vertex guaranteed to be inside the input Cell

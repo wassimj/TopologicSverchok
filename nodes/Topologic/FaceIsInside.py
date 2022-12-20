@@ -101,7 +101,7 @@ def processItem(item):
 
 lacing = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Lace", "Lace", "", 5)]
 
-class SvFaceIsInside(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceIsInside(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Vertex is inside the input Face. Returns False otherwise

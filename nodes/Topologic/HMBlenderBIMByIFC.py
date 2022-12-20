@@ -5,7 +5,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from blenderbim.bim import import_ifc
 from blenderbim.bim.ifc import IfcStore
 
-class SvHMBlenderBIMByIFC(bpy.types.Node, SverchCustomTreeNode):
+class SvHMBlenderBIMByIFC(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Load an IFC file object in BlenderBIM
   Tooltip: Load an IFC file object in BlenderBIM

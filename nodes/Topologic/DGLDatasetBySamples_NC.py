@@ -22,7 +22,7 @@ def processItem(item):
 	else:
 		raise NotImplementedError
 
-class SvDGLDatasetBySamples_NC(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLDatasetBySamples_NC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a DGL Dataset by DGL Samples

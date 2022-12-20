@@ -43,7 +43,7 @@ def processItem(sources):
 		return newDict
 	return None
 
-class SvDictionaryByMergedDictionaries(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionaryByMergedDictionaries(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Dictionary by merging a list of input Dictionaries   

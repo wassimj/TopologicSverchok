@@ -21,7 +21,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvFaceInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceInternalBoundaries(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the internal boundaries (Wires) of the input Face    

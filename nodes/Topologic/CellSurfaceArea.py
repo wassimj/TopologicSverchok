@@ -24,7 +24,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvCellSurfaceArea(bpy.types.Node, SverchCustomTreeNode):
+class SvCellSurfaceArea(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the surface area of the input Cell    

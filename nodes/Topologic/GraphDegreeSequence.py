@@ -22,7 +22,7 @@ def processItem(item):
 	_ = item.DegreeSequence(sequence)
 	return sequence
 
-class SvGraphDegreeSequence(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphDegreeSequence(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the degree sequence of the input Graph

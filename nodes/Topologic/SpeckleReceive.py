@@ -300,7 +300,7 @@ class SvSpeckleRun(bpy.types.Operator, SvGenericNodeLocator):
 		nodes = stree.nodes_from([node])
 		tree.update_nodes(nodes)
 
-class SvSpeckleReceive(bpy.types.Node, SverchCustomTreeNode):
+class SvSpeckleReceive(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Receive Speckle Objects   

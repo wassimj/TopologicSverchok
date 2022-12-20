@@ -6,7 +6,7 @@ from sverchok.data_structure import updateNode
 import topologic
 import re
 
-class SvTopologicVersion(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologicVersion(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the current version of Topologic    

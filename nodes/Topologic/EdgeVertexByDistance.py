@@ -49,7 +49,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEdgeVertexByDistance(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeVertexByDistance(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Vertex at the distance from the start Vertex of the input Edge or an optional Vertex

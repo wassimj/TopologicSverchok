@@ -23,7 +23,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvWireIsClosed(bpy.types.Node, SverchCustomTreeNode):
+class SvWireIsClosed(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Wire is closed. Outputs False otherwise   

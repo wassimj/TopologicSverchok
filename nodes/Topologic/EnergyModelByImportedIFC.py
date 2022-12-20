@@ -5,7 +5,7 @@ import openstudio
 import ifcopenshell
 from . import ifc_topologic
 
-class SvEnergyModelByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelByImportedIFC(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Energy model by IFC
   Tooltip: Creates an Energy Model from the input IFC

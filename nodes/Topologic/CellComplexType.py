@@ -5,7 +5,7 @@ from sverchok.data_structure import updateNode
 
 import topologic
 
-class SvCellComplexType(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexType(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the type number of the CellComplex class

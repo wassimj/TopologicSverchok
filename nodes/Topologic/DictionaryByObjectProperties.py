@@ -68,7 +68,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvDictionaryByObjectProperties(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionaryByObjectProperties(SverchCustomTreeNode, bpy.types.Node):
 
 	"""
 	Triggers: Topologic

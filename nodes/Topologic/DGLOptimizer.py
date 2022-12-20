@@ -65,7 +65,7 @@ optimizers = [("Adadelta", "Adadelta", "", 1),
 				]
 """
 
-class SvDGLOptimizer(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLOptimizer(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a DGL Optimizer Object from the input parameters

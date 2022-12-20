@@ -24,7 +24,7 @@ def processItem(item):
 		topology = None
 	return topology
 
-class SvContextTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvContextTopology(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Topology of the input Context   

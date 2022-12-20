@@ -68,7 +68,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 	
-class SvGraphExportToDGCNN(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphExportToDGCNN(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Exports the input Graph to a text file compatible with DGCNN

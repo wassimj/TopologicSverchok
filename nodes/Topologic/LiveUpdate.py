@@ -1,7 +1,7 @@
 import bpy
 from sverchok.node_tree import SverchCustomTreeNode
 
-class SvTopologicLiveUpate(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologicLiveUpate(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Enables Live Updating in Blender  

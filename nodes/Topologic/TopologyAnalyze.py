@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyAnalyze(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAnalyze(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the analysis of the input Topology    

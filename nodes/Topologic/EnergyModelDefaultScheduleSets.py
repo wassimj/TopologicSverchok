@@ -26,7 +26,7 @@ def processItem(item):
         names.append(aSet.name().get())
     return [sets, names]
 		
-class SvEnergyModelDefaultScheduleSets(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelDefaultScheduleSets(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the default Schedule Sets found in the input Energy Model

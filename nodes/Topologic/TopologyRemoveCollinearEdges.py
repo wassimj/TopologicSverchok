@@ -118,7 +118,7 @@ def processItem(topology, angTol, tolerance):
 			returnTopology = topology
 	return returnTopology
 
-class SvTopologyRemoveCollinearEdges(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyRemoveCollinearEdges(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Removes any collinear edges from the input Topology    

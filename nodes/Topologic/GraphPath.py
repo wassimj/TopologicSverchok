@@ -18,7 +18,7 @@ def processItem(item):
 	vertexB = item[2]
 	return graph.Path(vertexA, vertexB)
 
-class SvGraphPath(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphPath(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a Path that connects the input Vertices within the input Graph

@@ -119,7 +119,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEnergyModelRowNames(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelRowNames(SverchCustomTreeNode, bpy.types.Node):
     """
     Triggers: Topologic
     Tooltip: Returns the row names from the input energy model, report name, and table name

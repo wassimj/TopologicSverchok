@@ -20,7 +20,7 @@ def flatten(element):
 def processItem(item):
 	return item.Diameter()
 
-class SvGraphDiameter(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphDiameter(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the diameter of the input Graph

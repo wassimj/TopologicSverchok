@@ -20,7 +20,7 @@ def flatten(element):
 def processItem(item):
 	return item.IsComplete()
 
-class SvGraphIsComplete(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphIsComplete(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Graph is complete (all vertices are connected to each other). Outputs False otherwise.

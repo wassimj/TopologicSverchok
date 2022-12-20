@@ -45,7 +45,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyIsPlanar(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyIsPlanar(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the vertices of the input Topology are coplanar. Outputs False otherwise   

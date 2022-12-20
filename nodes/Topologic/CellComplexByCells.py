@@ -41,7 +41,7 @@ def recur(item, tolerance):
 		output = processItem([item, tolerance])
 	return output
 
-class SvCellComplexByCells(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexByCells(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a CellComplex from the list of input Cells  

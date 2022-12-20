@@ -25,7 +25,7 @@ def processItem(item):
 	neo4jGraph.delete_all()
 	return neo4jGraph
 
-class SvNeo4jGraphDeleteAll(bpy.types.Node, SverchCustomTreeNode):
+class SvNeo4jGraphDeleteAll(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Deletes all Nodes and Edges in the input Neo4j Graph   

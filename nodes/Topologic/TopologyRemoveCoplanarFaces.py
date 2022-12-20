@@ -46,7 +46,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyRemoveCoplanarFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyRemoveCoplanarFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Removes any coplanar faces from the input Topology    

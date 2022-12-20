@@ -33,7 +33,7 @@ def matchLengths(list):
 			anItem.append(itemToAppend)
 	return list
 
-class SvTopologyIsSame(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyIsSame(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the two input Topologies are the same. Outpute False otherwise.   

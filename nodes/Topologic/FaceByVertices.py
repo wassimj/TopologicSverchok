@@ -44,7 +44,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvFaceByVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceByVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Face from the list of input Vertices. The Vertices are assumed to be ordered. The last Vertex will be automatically connected to the first Vertex to close the loop.    

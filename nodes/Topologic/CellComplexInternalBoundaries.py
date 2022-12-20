@@ -21,7 +21,7 @@ def processItem(item):
 	_ = item.InternalBoundaries(faces)
 	return faces
 
-class SvCellComplexInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexInternalBoundaries(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the internal boundaries (Faces) of the input CellComplex    

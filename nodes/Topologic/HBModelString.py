@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvHBModelString(bpy.types.Node, SverchCustomTreeNode):
+class SvHBModelString(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the HBJSON string of the input HB Model    

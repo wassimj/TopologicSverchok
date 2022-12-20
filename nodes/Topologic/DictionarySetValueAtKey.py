@@ -56,7 +56,7 @@ def processItem(item, key, value):
 	else:
 		raise Exception("Dictionary.SetValueAtKey - Error: Input is not a dictionary")
 
-class SvDictionarySetValueAtKey(bpy.types.Node, SverchCustomTreeNode):
+class SvDictionarySetValueAtKey(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: sets the value associated with the input key to the input dictionary

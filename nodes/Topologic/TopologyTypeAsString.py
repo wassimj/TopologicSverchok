@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyType(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyType(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the type of the input Topology as an integer ID and a string Name

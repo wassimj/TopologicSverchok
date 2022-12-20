@@ -44,7 +44,7 @@ def processItem(topology, tolerance):
 	elif t == 64: #CellComplex
 		return topologic.CellComplex.ByFaces(faceTriangles, tolerance)
 
-class SvTopologyTriangulate(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyTriangulate(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a Topology with triangulated faces of the input Topology

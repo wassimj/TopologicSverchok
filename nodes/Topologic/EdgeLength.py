@@ -25,7 +25,7 @@ def recur(input, mantissa):
 		output = processItem([input, mantissa])
 	return output
 
-class SvEdgeLength(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeLength(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the length of the input Edge    

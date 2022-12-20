@@ -32,7 +32,7 @@ replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate",
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7), ("Host Topology", "Host Topology", "", 8)]
 
 
-class SvTopologyAddContent(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAddContent(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Adds the input Topology content to the input Topology. If the type is set to Topology, the content will be added to the input topology. Otherwise, it will be added to the closest sub-topology of the specified type.   

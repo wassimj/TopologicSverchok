@@ -154,7 +154,7 @@ def processItem(item):
 
 	return topologic.Graph.ByVerticesEdges(vertices,edges)
 
-class SvGraphByNeo4jGraph(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphByNeo4jGraph(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Graph from the input Neo4j Graph   

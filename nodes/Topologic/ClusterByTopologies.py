@@ -22,7 +22,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvClusterByTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvClusterByTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cluster from the list of input Topologies  

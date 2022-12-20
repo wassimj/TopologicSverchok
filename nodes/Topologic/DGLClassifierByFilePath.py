@@ -21,7 +21,7 @@ def processItem(item):
 	"""
 	return torch.load(item)
 
-class SvDGLClassifierByFilePath(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLClassifierByFilePath(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the model saved at the input file path

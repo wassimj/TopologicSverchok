@@ -89,7 +89,7 @@ def processItem(item, originLocation):
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvCellCylinder(bpy.types.Node, SverchCustomTreeNode):
+class SvCellCylinder(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Cylinder (Cell) from the input parameters    

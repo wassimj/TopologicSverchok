@@ -262,7 +262,7 @@ def update_sockets(self, context):
 	updateNode(self, context)
 
 defaultID = str(uuid.uuid4())
-class SvTopologyByGeometry(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByGeometry(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology from the input geometry

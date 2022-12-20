@@ -68,7 +68,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvFaceByShell(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceByShell(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Face from the input Shell. The Shell must be planar within the input Angular Tolerance

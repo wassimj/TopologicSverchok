@@ -67,7 +67,7 @@ def processItem(item):
 		return resultingTopologies[0]
 	return item.SelfMerge()
 
-class SvTopologySelfMerge(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySelfMerge(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Self-merges the input Topology

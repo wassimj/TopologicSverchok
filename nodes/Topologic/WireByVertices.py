@@ -69,7 +69,7 @@ def recurForCluster(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvWireByVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvWireByVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Wire from the list of input Vertices. The Vertices are assumed to be ordered   

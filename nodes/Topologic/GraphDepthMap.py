@@ -114,7 +114,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphDepthMap(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphDepthMap(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a depthmap (see https://en.wikipedia.org/wiki/Space_syntax) from an input graph, an input graph vertex, and a list of target graph vertices. If targets are left blank, it will use all vertices in the graph

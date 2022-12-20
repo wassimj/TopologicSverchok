@@ -4,7 +4,7 @@ from sverchok.node_tree import SverchCustomTreeNode
 from . import ifc_topologic
 from . import topologic_lib
 
-class SvIFCBuildingElements(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCBuildingElements(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Building elements cells
   Tooltip: Get Cells from IfcBuildingElements

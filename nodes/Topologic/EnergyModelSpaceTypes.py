@@ -31,7 +31,7 @@ def processItem(item):
         colors.append([red,green,blue])
     return [types, names, colors]
 		
-class SvEnergyModelSpaceTypes(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelSpaceTypes(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the Space Types, Names, and Colors found in the input Energy Model

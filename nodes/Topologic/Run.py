@@ -25,7 +25,7 @@ class SvExecuteRun(bpy.types.Operator, SvGenericNodeLocator):
 		nodes = stree.nodes_from([node])
 		tree.update_nodes(nodes)
 		
-class SvTopologicRun(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologicRun(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True when Run button is pressed then outputs False

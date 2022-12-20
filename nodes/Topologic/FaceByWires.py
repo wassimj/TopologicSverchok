@@ -27,7 +27,7 @@ def recur(input):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 	
-class SvFaceByWires(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceByWires(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Face from the input planar closed external boundary Wire and a list of planar closed internal boundary wires   

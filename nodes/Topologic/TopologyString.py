@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyString(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyString(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the BREP string of the input Topology    

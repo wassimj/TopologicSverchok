@@ -63,7 +63,7 @@ def processItem(item):
 	else:
 		return cellComplex
 
-class SvCellComplexByFaces(bpy.types.Node, SverchCustomTreeNode):
+class SvCellComplexByFaces(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a CellComplex from the list of input Faces  

@@ -3,7 +3,7 @@ import bpy
 from sverchok.node_tree import SverchCustomTreeNode
 import ifcopenshell
 
-class SvIFCReadFile(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCReadFile(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Read IFC file
   Tooltip: Read an IFC file from path

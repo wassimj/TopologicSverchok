@@ -21,7 +21,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvTopologyContext(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyContext(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Contexts of the input Topology    

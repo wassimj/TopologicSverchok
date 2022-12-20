@@ -49,7 +49,7 @@ def processItem(inputCells, superCells, tol):
 					unused[i] = False
 	return sets
 
-class SvCellSets(bpy.types.Node, SverchCustomTreeNode):
+class SvCellSets(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: bundles the input Cells into Sets

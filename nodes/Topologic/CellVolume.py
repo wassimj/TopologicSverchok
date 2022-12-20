@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvCellVolume(bpy.types.Node, SverchCustomTreeNode):
+class SvCellVolume(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the volume of the input Cell    

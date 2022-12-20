@@ -114,7 +114,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvEnergyModelUnits(bpy.types.Node, SverchCustomTreeNode):
+class SvEnergyModelUnits(SverchCustomTreeNode, bpy.types.Node):
     """
     Triggers: Topologic
     Tooltip: Returns the units from the input energy model, report name, table name, and column name

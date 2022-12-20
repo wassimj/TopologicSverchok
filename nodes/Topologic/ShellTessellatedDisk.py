@@ -171,7 +171,7 @@ def matchLengths(list):
 
 originLocations = [("Bottom", "Bottom", "", 1),("Center", "Center", "", 2),("LowerLeft", "LowerLeft", "", 3)]
 
-class SvShellTessellatedDisk(bpy.types.Node, SverchCustomTreeNode):
+class SvShellTessellatedDisk(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a tessellated Circle (Shell) from the input parameters    

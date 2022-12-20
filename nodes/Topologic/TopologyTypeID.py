@@ -31,7 +31,7 @@ def processItem(topologyType):
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7),("Cluster", "Cluster", "", 8)]
 
-class SvTopologyTypeID(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyTypeID(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the ID of the selected Topology Type    

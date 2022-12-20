@@ -17,7 +17,7 @@ import numpy as np
 from . import ifc_topologic
 import json
 
-class SvIFCExportToHBJSON(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCExportToHBJSON(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Export analytical model to HBJSON
   Tooltip: Exports the analytical model in IFC to HBJSON

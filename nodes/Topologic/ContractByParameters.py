@@ -143,7 +143,7 @@ def processItem(item, data):
 
 replication = [("Trim", "Trim", "", 1),("Iterate", "Iterate", "", 2),("Repeat", "Repeat", "", 3),("Interlace", "Interlace", "", 4)]
 
-class SvContractByParameters(bpy.types.Node, SverchCustomTreeNode):
+class SvContractByParameters(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Contract from the input parameters   

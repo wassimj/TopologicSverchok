@@ -32,7 +32,7 @@ def processItem(item):
 		returnTopology = returnTopology.SelfMerge()
 	return returnTopology
 
-class SvShellExternalBoundary(bpy.types.Node, SverchCustomTreeNode):
+class SvShellExternalBoundary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the external boundary (Wire) of the input Shell    

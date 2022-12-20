@@ -85,7 +85,7 @@ def processItem():
         status.append(f"{module}: {flag}.")
     return status
 
-class SvTopologicInstallDependencies(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologicInstallDependencies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Installs Topologic's optional Python dependencies

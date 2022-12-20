@@ -19,7 +19,7 @@ def processItem(item):
 		topologyC = None
 	return topologyC
 
-class SvTopologySymmetricDifference(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySymmetricDifference(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology representing the Boolean Symmetric Difference of the two input Topologies

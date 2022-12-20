@@ -41,7 +41,7 @@ def recur(item):
 		output = processItem(item)
 	return output
 
-class SvFaceByEdges(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceByEdges(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Face from the list of input Edges    

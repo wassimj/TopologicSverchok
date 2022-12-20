@@ -21,7 +21,7 @@ def processItem(item):
     molior_object.execute()
     return molior_object.file
 
-class SvHMIFCByCellComplex(bpy.types.Node, SverchCustomTreeNode):
+class SvHMIFCByCellComplex(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs a Homemaker IFC of the input CellComplex    

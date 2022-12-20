@@ -20,7 +20,7 @@ def flatten(element):
 def processItem(item):
 	return item.MinimumDelta()
 
-class SvGraphMinimumDelta(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphMinimumDelta(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the minimum delta of the input Graph

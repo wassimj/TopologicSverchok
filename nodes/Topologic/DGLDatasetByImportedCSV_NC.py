@@ -16,7 +16,7 @@ def processItem(item):
 	graphs_folder_path = item
 	return dgl.data.CSVDataset(graphs_folder_path, force_reload=True)
 
-class SvDGLDatasetByImportedCSV_NC(bpy.types.Node, SverchCustomTreeNode):
+class SvDGLDatasetByImportedCSV_NC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a DGL Dataset by Imported CSV FILE for Node Classification

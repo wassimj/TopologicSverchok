@@ -101,7 +101,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphByVerticesEdges(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphByVerticesEdges(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Graph from a list of vertices and edges   

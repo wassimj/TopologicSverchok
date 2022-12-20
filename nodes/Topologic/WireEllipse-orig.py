@@ -143,7 +143,7 @@ input_items = [("Width and Length", "Width and Length", "", 1),("Focal Length an
 originLocations = [("Center", "Center", "", 1),("LowerLeft", "LowerLeft", "", 2)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvWireEllipse(bpy.types.Node, SverchCustomTreeNode):
+class SvWireEllipse(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates an Ellipse (Wire) from the input parameters    

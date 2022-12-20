@@ -20,7 +20,7 @@ def processItem(graph):
 	else:
 		return []
 
-class SvGraphVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Vertices of the input Graph

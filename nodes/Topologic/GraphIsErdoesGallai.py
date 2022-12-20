@@ -98,7 +98,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphIsErdoesGallai(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphIsErdoesGallai(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns True if the input sequence satisfies the Erdoes Gallai theorem within the input Graph. Returns False otherwise.

@@ -100,7 +100,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphAdjacentVertices(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphAdjacentVertices(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the Vertices adjacent to the input Vertex within the input Graph

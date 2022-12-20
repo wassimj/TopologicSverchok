@@ -203,7 +203,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvNeo4jGraphSetGraph(bpy.types.Node, SverchCustomTreeNode):
+class SvNeo4jGraphSetGraph(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Sets the input Topologic Graph to the input Neo4j Graph. This will delete all previous remote graphs. 

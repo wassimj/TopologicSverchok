@@ -34,7 +34,7 @@ def processItem(item):
 	dirB = FaceNormalAtParameters.processItem([faceB, 0.5, 0.5], "XYZ", 3)
 	return round((angle_between(dirA, dirB) * 180 / pi), mantissa) # convert to degrees
 		
-class SvFaceAngle(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceAngle(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the angle, in degrees, of the input Face from another Face

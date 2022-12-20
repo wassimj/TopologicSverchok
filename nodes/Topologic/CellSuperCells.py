@@ -42,7 +42,7 @@ def processItem(inputCells, tol):
 	_ = cluster.Cells(superCells)
 	return superCells
 
-class SvCellSuperCells(bpy.types.Node, SverchCustomTreeNode):
+class SvCellSuperCells(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the Super Cells representing detached bundles of the input Cells

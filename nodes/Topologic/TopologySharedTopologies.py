@@ -113,7 +113,7 @@ def processItem(input):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologySharedTopologies(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySharedTopologies(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns the shared topologies of the two input toplogies of a certain type specified by the input type filters

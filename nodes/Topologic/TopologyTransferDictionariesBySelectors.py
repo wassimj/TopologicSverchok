@@ -233,7 +233,7 @@ def processItem(sources, sink, tranVertices, tranEdges, tranFaces, tranCells, to
 		_ = transferDictionaries(sources, sinkCells, tolerance)
 	return sink
 
-class SvTopologyTransferDictionariesBySelectors(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyTransferDictionariesBySelectors(SverchCustomTreeNode, bpy.types.Node):
 
 	"""
 	Triggers: Topologic

@@ -43,7 +43,7 @@ def recur(input, mantissa):
 		output = processItem([input, mantissa])
 	return output
 
-class SvEdgeDirection(bpy.types.Node, SverchCustomTreeNode):
+class SvEdgeDirection(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the direction vector of the input Edge    

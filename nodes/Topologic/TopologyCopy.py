@@ -31,7 +31,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvTopologyCopy(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyCopy(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology that represents a copy of the input Topology  

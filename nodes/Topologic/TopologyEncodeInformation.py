@@ -177,7 +177,7 @@ def processItem(topology, csv_string, tolerance):
 		topology = transferDictionaries(selectors, dictionaries, topologyType, topology, tolerance)
 	return topology
 
-class SvTopologyEncodeInformation(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyEncodeInformation(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Embeds the Dictionaries derived from the input CSV data into the input Topology

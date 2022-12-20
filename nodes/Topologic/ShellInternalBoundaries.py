@@ -26,7 +26,7 @@ def processItem(item):
 			ibEdges.append(anEdge)
 	return ibEdges
 
-class SvShellInternalBoundaries(bpy.types.Node, SverchCustomTreeNode):
+class SvShellInternalBoundaries(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the external boundary (Wire) of the input Shell    

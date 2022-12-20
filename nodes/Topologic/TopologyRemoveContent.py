@@ -99,7 +99,7 @@ def processItem(item):
 		contentList = [contentList]
 	return topology.RemoveContents(contentList)
 
-class SvTopologyRemoveContent(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyRemoveContent(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Removes the content from the input Topology    

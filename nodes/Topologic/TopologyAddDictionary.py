@@ -232,7 +232,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyAddDictionary(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyAddDictionary(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Adds the input Dictionary to the input Topology. This method merges the input Dictionary with any existing Dictionary

@@ -11,7 +11,7 @@ def processItem(filePath):
 	os.system("start "+filePath)
 	return True
 
-class SvTopologicOpenFilePath(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologicOpenFilePath(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Opens the input file path

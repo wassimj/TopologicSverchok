@@ -103,7 +103,7 @@ def processItem(item):
 
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvGraphVertexDegree(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphVertexDegree(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the degree (number of connected Edges) of input Vertex within the input Graph

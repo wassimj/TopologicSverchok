@@ -24,7 +24,7 @@ def processItem(item):
 		status = (topologic.CellUtility.Contains(topology, vertex, tolerance) == 0)
 	return status
 
-class SvCellIsInside(bpy.types.Node, SverchCustomTreeNode):
+class SvCellIsInside(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Returns True if the input Vertex is inside the input Cell. Returns False otherwise

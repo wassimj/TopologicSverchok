@@ -79,7 +79,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 
-class SvWireSplit(bpy.types.Node, SverchCustomTreeNode):
+class SvWireSplit(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Split the input Wire into one or more manifold wires.

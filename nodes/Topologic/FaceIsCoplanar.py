@@ -43,7 +43,7 @@ def processItem(item):
 	dirB = FaceNormalAtParameters.processItem([faceB, 0.5, 0.5], "XYZ", 3)
 	return collinear(dirA, dirB, tol)
 		
-class SvFaceIsCoplanar(bpy.types.Node, SverchCustomTreeNode):
+class SvFaceIsCoplanar(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs True if the input Faces are coplanar, outputs False otherwise.

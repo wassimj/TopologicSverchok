@@ -5,7 +5,7 @@ from . import topologic_lib
 from . import ifc_topologic
 import topologic
 
-class SvIFCConnectBuildingElements(bpy.types.Node, SverchCustomTreeNode):
+class SvIFCConnectBuildingElements(SverchCustomTreeNode, bpy.types.Node):
   """
   Triggers: Connect building elements
   Tooltip: Add IfcRelConnectsElements that connect IfcBuildingElements

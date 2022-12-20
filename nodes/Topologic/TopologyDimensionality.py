@@ -19,7 +19,7 @@ def recur(input):
 		output = processItem(input)
 	return output
 		
-class SvTopologyDimensionality(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyDimensionality(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the dimensionality of the input Topology    

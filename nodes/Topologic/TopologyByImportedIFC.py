@@ -136,7 +136,7 @@ def processItem(filePath, typeList):
 			returnList.append(topology)
 	return returnList
 
-class SvTopologyByImportedIFC(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyByImportedIFC(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Creates a Topology from the input IFC file 

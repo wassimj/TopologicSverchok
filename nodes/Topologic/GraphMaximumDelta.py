@@ -20,7 +20,7 @@ def flatten(element):
 def processItem(item):
 	return item.MaximumDelta()
 
-class SvGraphMaximumDelta(bpy.types.Node, SverchCustomTreeNode):
+class SvGraphMaximumDelta(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the maximum delta of the input Graph

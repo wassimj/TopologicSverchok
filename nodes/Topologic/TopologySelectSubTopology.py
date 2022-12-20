@@ -115,7 +115,7 @@ def processItem(item, topologyType):
 
 topologyTypes = [("Vertex", "Vertex", "", 1),("Edge", "Edge", "", 2),("Wire", "Wire", "", 3),("Face", "Face", "", 4),("Shell", "Shell", "", 5), ("Cell", "Cell", "", 6),("CellComplex", "CellComplex", "", 7)]
 
-class SvTopologySelectSubTopology(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologySelectSubTopology(SverchCustomTreeNode, bpy.types.Node):
 	"""
 	Triggers: Topologic
 	Tooltip: Outputs the subtopology of the input Topology, of the specified type, closest to the input selector Vertex.    

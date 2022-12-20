@@ -293,7 +293,7 @@ def processItem(item):
 booleanOps = [("Union", "Union", "", 1),("Difference", "Difference", "", 2),("Intersect", "Intersect", "", 3),("SymDif", "SymDif", "", 4),("Merge", "Merge", "", 5), ("Slice", "Slice", "", 6),("Impose", "Impose", "", 7), ("Imprint", "Imprint", "", 8)]
 replication = [("Default", "Default", "", 1),("Trim", "Trim", "", 2),("Iterate", "Iterate", "", 3),("Repeat", "Repeat", "", 4),("Interlace", "Interlace", "", 5)]
 
-class SvTopologyBoolean(bpy.types.Node, SverchCustomTreeNode):
+class SvTopologyBoolean(SverchCustomTreeNode, bpy.types.Node):
 
 	"""
 	Triggers: Topologic
