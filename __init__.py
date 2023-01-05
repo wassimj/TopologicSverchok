@@ -19,7 +19,7 @@ bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
 	"version": "0.8.3.0",
-	"blender": (3, 2, 0),
+	"blender": (3, 4, 1),
 	"location": "Node Editor",
 	"category": "Node",
 	"description": "Topologic enables logical, hierarchical and topological modelling.",
