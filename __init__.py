@@ -18,7 +18,7 @@
 bl_info = {
 	"name": "Topologic",
 	"author": "Wassim Jabi",
-	"version": "0.8.2.6",
+	"version": "0.8.3.0",
 	"blender": (3, 2, 0),
 	"location": "Node Editor",
 	"category": "Node",
@@ -501,7 +501,7 @@ def unregister_nodes():
 
 node_categories = [
     {"Topologic": [
-        {"Vertex": [
+        {"TP Vertex": [
             'SvVertexByCoordinates',
             'SvVertexByObjectLocation',
             'SvVertexCoordinates',
@@ -511,7 +511,7 @@ node_categories = [
             'SvVertexNearestVertex',
             'SvVertexProject',
         ]},
-        {"Edge": [
+        {"TP Edge": [
             'SvEdgeAngle',
             'SvEdgeByStartVertexEndVertex',
             'SvEdgeByVertices',
@@ -524,7 +524,7 @@ node_categories = [
             'SvEdgeVertexByDistance',
             'SvEdgeVertexByParameter',
         ]},
-        {"Wire": [
+        {"TP Wire": [
             'SvWireByEdges',
             'SvWireByVertices',
             'SvWireCircle',
@@ -541,7 +541,7 @@ node_categories = [
             'SvWireStar',
             'SvWireTrapezoid',
         ]},
-        {"Face": [
+        {"TP Face": [
             'SvFaceAddInternalBoundaries',
             'SvFaceAngle',
             'SvFaceArea',
@@ -567,7 +567,7 @@ node_categories = [
             'SvFaceVertexByParameters',
             'SvFaceVertexParameters',
         ]},
-        {"Shell": [
+        {"TP Shell": [
             'SvShellByFaces',
             'SvShellByLoft',
             'SvShellExternalBoundary',
@@ -577,7 +577,7 @@ node_categories = [
             'SvShellPie',
             'SvShellTessellatedDisk',
         ]},
-        {"Cell": [
+        {"TP Cell": [
             'SvCellByFaces',
             'SvCellCone',
             'SvCellCylinder',
@@ -599,7 +599,7 @@ node_categories = [
             'SvCellTorus',
             'SvCellVolume',
         ]},
-        {"CellComplex": [
+        {"TP CellComplex": [
             'SvCellComplexByCells',
             'SvCellComplexByFaces',
             'SvCellComplexByLoft',
@@ -609,10 +609,10 @@ node_categories = [
             'SvCellComplexNonManifoldFaces',
             'SvCellComplexPrism',
         ]},
-        {"Cluster": [
+        {"TP Cluster": [
             'SvClusterByTopologies',
         ]},
-        {"Topology": [
+        {"TP Topology": [
             'SvTopologyAddApertures',
             'SvTopologyAddContent',
             'SvTopologyAdjacentTopologies',
@@ -673,19 +673,19 @@ node_categories = [
             'SvTopologyTypeID',
             'SvTopologicRun',
         ]},
-        {"Aperture": [
+        {"TP Aperture": [
             'SvApertureByTopologyContext',
             'SvApertureTopology',
         ]},
-        {"Color": [
+        {"TP Color": [
             'SvColorByObjectColor',
             'SvColorByValueInRange',
         ]},
-        {"Context": [
+        {"TP Context": [
             'SvContextByTopologyParameters',
             'SvContextTopology',
         ]},
-        {"Dictionary": [
+        {"TP Dictionary": [
             'SvDictionaryByDGLData',
             'SvDictionaryByKeysValues',
             'SvDictionaryByMergedDictionaries',
@@ -695,7 +695,7 @@ node_categories = [
             'SvDictionaryKeys',
             'SvDictionaryValues',
         ]},
-        {"Graph": [
+        {"TP Graph": [
             'SvGraphAddEdge',
             'SvGraphAddVertex',
             'SvGraphAdjacentVertices',
@@ -735,13 +735,13 @@ node_categories = [
             'SvGraphVerticesAtKeyValue',
             'SvGraphVisibilityGraph',
         ]},
-        {"Matrix": [
+        {"TP Matrix": [
             'SvMatrixByRotation',
             'SvMatrixByScaling',
             'SvMatrixByTranslation',
             'SvMatrixMultiply',
         ]},
-        {"Openstudio": [
+        {"TP Openstudio": [
             'SvEnergyModelByImportedIFC',
             'SvEnergyModelByImportedOSM',
             'SvEnergyModelByTopology',
@@ -763,7 +763,7 @@ node_categories = [
             'SvEnergyModelTopologies',
             'SvEnergyModelUnits',
         ]},
-        {"Honeybee": [
+        {"TP Honeybee": [
             'SvHBModelByTopology',
             'SvHBModelExportToHBJSON',
             'SvHBModelString',
@@ -772,7 +772,7 @@ node_categories = [
             'SvHBProgramTypeByIdentifier',
             'SvHBProgramTypes',
         ]},
-        {"IFC": [
+        {"TP IFC": [
             'SvIFCAdd2ndLevelBoundaries',
             'SvIFCBuildingElements',
             'SvEnergyModelByImportedIFC',
@@ -784,19 +784,19 @@ node_categories = [
             'SvIFCWriteFile',
             'SvTopologyByImportedIFC',
         ]},
-        {"Blockchain": [
+        {"TP Blockchain": [
             'SvContractByParameters',
             'SvTopologyByImportedIPFS',
             'SvTopologyExportToIPFS',
         ]},
-        {"Neo4j": [
+        {"TP Neo4j": [
             'SvGraphByNeo4jGraph',
             'SvNeo4jGraphByParameters',
             'SvNeo4jGraphDeleteAll',
             'SvNeo4jGraphNodeLabels',
             'SvNeo4jGraphSetGraph',
         ]},
-        {"Speckle": [
+        {"TP Speckle": [
             'SvSpeckleBranchByID',
             'SvSpeckleBranchesByStream',
             'SvSpeckleClientByHost',
@@ -814,7 +814,7 @@ node_categories = [
             'SvSpeckleStreamByURL',
             'SvSpeckleStreamsByClient',
         ]},
-        {"DGL": [
+        {"TP DGL": [
             'SvDGLAccuracy',
             'SvDGLClassifierByFilePath',
             'SvDGLDatasetByDGLGraphs',
@@ -835,11 +835,11 @@ node_categories = [
             'SvDGLTrainClassifier',
             'SvDGLTrainClassifier_NC',
         ]},
-        {"Homemaker": [
+        {"TP Homemaker": [
             'SvHMIFCByCellComplex',
             'SvHMBlenderBIMByIFC',
         ]},
-        {"Utilities": [
+        {"TP Utilities": [
             'SvTopologicInstallDependencies',
             'SvTopologicOpenFilePath',
             'SvTopologicVersion',
