@@ -66,6 +66,6 @@ Download the latest Release binaries from the Releases link found on the right s
 1. Once Topologic appears in the list of Add-ons, click the empty check box to activate it
 1. Close the `Preferences..` window
 1. Switch over to the Scripting workspace
-1. Open the Editor Type pull-down menu icon in the top-left corner and witch to sverchok node
+1. Open the Editor Type pull-down menu icon in the top-left corner and switch to Sverchok Nodes
 1. Select the `+ New` button to start a new sverchok node tree
 1. The Topologic nodes should now be available under the Add menu
